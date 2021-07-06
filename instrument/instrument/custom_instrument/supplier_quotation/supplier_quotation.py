@@ -25,6 +25,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "Supplier Quotation : {0}".format(doc.name),
-			message = "Supplier Quotation : " + "http://localhost:8000/app/supplier-quotation/{0}".format(doc.name),
+			message = "Supplier Quotation : " + "https://uatrushabhinstruments.indictranstech.com/app/supplier-quotation/{0}".format(doc.name),
 			attachments = file_att,
 			)

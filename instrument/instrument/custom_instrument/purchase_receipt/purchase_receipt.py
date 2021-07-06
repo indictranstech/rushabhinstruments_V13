@@ -23,6 +23,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "Purchase Receipt : {0}".format(doc.name),
-			message = "Purchase Receipt: "+"http://localhost:8000/app/purchase-receipt/{0}".format(doc.name),
+			message = "Purchase Receipt: "+"https://uatrushabhinstruments.indictranstech.com/app/purchase-receipt/{0}".format(doc.name),
 			attachments = file_att,
 			)
