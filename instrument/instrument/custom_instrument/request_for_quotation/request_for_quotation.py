@@ -26,6 +26,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "Request For Quotation : {0}".format(doc.name),
-			message = "Request For Quotation : " + "http://localhost:8000/app/request-for-quotation/{0}".format(doc.name),
+			message = "Request For Quotation : " + "https://uatrushabhinstruments.indictranstech.com/app/request-for-quotation/{0}".format(doc.name),
 			attachments = file_att,
 			)

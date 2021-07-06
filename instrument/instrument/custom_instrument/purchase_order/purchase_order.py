@@ -25,9 +25,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "Purchase Order : {0}".format(doc.name),
-			message = "Purchase Order : " + "http://localhost:8000/app/purchase-order/{0}".format(doc.name),
-			# message = "<a href = http://localhost:8000/app/purchase-order/{0}</a>".format(doc.name),
-			# message = "Purchase Order Submitted successfully. used user Id for Login :<br> User Id : {0} ".format(email_id),
-			# message = "<a href="{{0}}">"{{1}}"Purchase Order </a>".format(frappe.utils.get_url_to_form(doc.doctype, doc.name),doc.name),
+			message = "Purchase Order : " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-order/{0}".format(doc.name),
 			attachments = file_att,
 			)

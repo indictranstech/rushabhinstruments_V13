@@ -22,6 +22,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "	Delivery Note : {0}".format(doc.name),
-			message = "Delivery Note: "+"http://localhost:8000/app/delivery-note/{0}".format(doc.name),
+			message = "Delivery Note: "+"https://uatrushabhinstruments.indictranstech.com/app/delivery-note/{0}".format(doc.name),
 			attachments = file_att,
 			)
