@@ -24,6 +24,6 @@ def on_submit(doc, method = None):
 			sender = sender,
 			recipients = recipient,
 			subject = "Purchase Invoice : {0}".format(doc.name),
-			message = "Purchase Invoice:  " + "http://localhost:8000/app/purchase-invoice/{0}".format(doc.name),
+			message = "Purchase Invoice:  " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-invoice/{0}".format(doc.name),
 			attachments = file_att,
 			)
