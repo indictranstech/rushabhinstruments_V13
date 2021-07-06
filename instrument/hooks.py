@@ -145,13 +145,13 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
 # 	"all": [
 # 		"instrument.tasks.all"
 # 	],
-# 	"daily": [
-# 		"instrument.tasks.daily"
-# 	],
+	"daily": [
+		"instrument.instrument.custom_instrument.blanket_order.blanket_order.blanket_order_daily_remainder"
+	],
 # 	"hourly": [
 # 		"instrument.tasks.hourly"
 # 	],
@@ -161,7 +161,7 @@ doc_events = {
 # 	"monthly": [
 # 		"instrument.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------
