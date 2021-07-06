@@ -12,7 +12,7 @@ app_license = "MIT"
 # Includes in <head>
 # ------------------
 
-fixtures = ['Custom Field', 'Property Setter', 'Print Format', 'Role', 'Letter Head', 'Print Style', 'Print Settings']
+fixtures = ['Custom Field', 'Property Setter', 'Print Format', 'Role', 'Letter Head', 'Print Style', 'Print Settings', 'Email Template']
 
 doctype_js = {
 	
@@ -82,6 +82,9 @@ doc_events = {
 	"Delivery Note" :{
 		"on_submit" : "instrument.instrument.custom_instrument.delivery_note.delivery_note.on_submit"
 	},
+	"Blanket Order" :{
+		"on_submit" : "instrument.instrument.custom_instrument.blanket_order.blanket_order.on_submit"
+	},
 }
 
 # application home page (will override Website Settings)
@@ -150,7 +153,7 @@ scheduler_events = {
 # 		"instrument.tasks.all"
 # 	],
 	"daily": [
-		"instrument.instrument.custom_instrument.blanket_order.blanket_order.blanket_order_daily_remainder"
+		"instrument.instrument.custom_instrument.blanket_order.blanket_order.generate_po_against_blanket_order_reminder"
 	],
 # 	"hourly": [
 # 		"instrument.tasks.hourly"

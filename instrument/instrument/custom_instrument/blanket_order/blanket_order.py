@@ -2,63 +2,43 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from datetime import date, timedelta, datetime
+from frappe.utils import getdate, get_datetime, flt, nowdate, cstr, today
 
 
-@frappe.whitelist()
-def blanket_order_daily_remainder():
-    sender = "shubhangi.r@indictranstech.com"
-    recipient = "shubhngirut27@gmail.com"
-    Blanket_Orders = frappe.db.sql("select name,from_date,to_date,updated_date,frequency from `tabBlanket Order`",as_dict=1)
-    print("Blanket_Order_Data...$$$$$$$$",Blanket_Orders)
-    date_todate = datetime.today()
-    date_today = date_todate.date()
-    blanket_order_list = []
-    if Blanket_Orders:
-        for row in Blanket_Orders:
-            if not row.updated_date == None:
-                if not row.frequency == None:
-                    print("dates value3333333333",row.updated_date + timedelta(days=row.frequency))
-                    print("todayssssssssssssssssssssssssss",date_today)
-                    if date_today == row.updated_date + timedelta(days=row.frequency):
-                        blanket_order_list.append(row)
-                        # update updated date
+def on_submit(doc, method):
+    for row in doc.items:
+        row.updated_date = getdate(nowdate())
+
+
+def generate_po_against_blanket_order_reminder():
+    data = {}
+    blanket_orders_name = frappe.db.sql("""SELECT name from `tabBlanket Order` where docstatus=1 and blanket_order_type='Purchasing' """, as_dict=1)
+
+    for name in blanket_orders_name:
+        order_name = frappe.get_list("Blanket Order Item", {"parent": name.get("name")}, ["name", "item_code", "item_name", "updated_date", "delivery_quantity", "frequency_in_day", "parent"])
+        item_list = {}
+        for row in order_name:
+            if row.get("frequency_in_day"):
+                today_date = row.get("updated_date")+timedelta(days=int(row.get("frequency_in_day")))
             else:
-                if row.from_date:
-                    if not row.frequency == None:
-                        if date_today == row.from_date + timedelta(days=row.frequency):
-                            blanket_order_list.append(row)
-                            # update updated date
-
-    print("blanket_list",blanket_order_list)
-    list1 = []
-    for i in blanket_order_list:
-        #blanket = frappe.db.sql(""" SELECT *  FROM tabBlanket Order 
-        #       WHERE name = '{0}'""".format(i.name),as_dict=1)
-        blanket = frappe.get_doc("Blanket Order", {"name": i.name})
-        # blanket1 = frappe.get_doc("Blanket Order",i.name)
-        # list1 = []
-        for t in blanket.get("items"):
-            list1.append({  'blanket_order':i.name,
-                            'item_code':t.item_code,
-                            'qty':t.qty
-                        })
-    print("tested,,,,,,,,,,,,,,,,,",list1)
-    message = "Dear Team,"+"<br>"+"Following Blanket Order are due"+"<br>"+"<br>"
-    print("messsssssssssssssssssssssssssssssssssssss",message)
-    message = message + "<table class ='table table-bordered'><tr><th style='text-align: center'>Blanket Order</th><th style='text-align: center'>Item Code</th><th style='text-align: center'>Quantity</th></tr>"
-    for record in list1:
-        message = message + "<tr>"\
-        "<td>"+record.blanket_order+"</td>"\
-        "<td style='text-align: center'>"+record.item_code+"</td>"\
-        "<td style='text-align: center'>"+record.qty+"</td>"\
-        "</tr>"
-    message =message + "</table>"+"<br>"+"<br>"+"Best Regards,"+"<br>"+"Team Rushabh Instrument"
-
-    frappe.sendmail(
-            sender = sender,
-            recipients = recipient,
-            subject = "Blanket Order Reminder",
-            message = message,
-            )
-    print("shubhangi email triger")
-
+                today_date = row.get("updated_date")
+            if getdate(today_date) == getdate(nowdate()):
+                frappe.db.set_value("Blanket Order Item", row.get("name"), "updated_date", getdate(nowdate()))
+                item_list[row.get("item_name")] = row.get("delivery_quantity")
+        email_template = frappe.get_doc("Email Template", "Blanket Order")
+        if item_list:
+            data["name"]=name.get("name")
+            data["item_list"]=item_list
+            message = frappe.render_template(email_template.response_html, data)
+            try:
+                frappe.sendmail(
+                    recipients = ["jitendra.r@indictranstech.com"],
+                    sender = None,
+                    subject = email_template.subject,
+                    message = message,
+                    delayed=False
+                )
+            except frappe.OutgoingEmailError:
+                pass
+        item_list.clear()
+   
