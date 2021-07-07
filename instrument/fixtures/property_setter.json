@@ -1,6 +1,23 @@
 [
  {
   "default_value": null,
+  "doc_type": "Sales Order",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "contact_email",
+  "modified": "2021-07-06 07:14:05.552875",
+  "name": "Sales Order-contact_email-hidden",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
+ },
+ {
+  "default_value": null,
   "doc_type": "Production Plan",
   "docstatus": 0,
   "doctype": "Property Setter",
