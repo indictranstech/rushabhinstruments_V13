@@ -19,7 +19,7 @@ doctype_js = {
 	"Purchase Order": "instrument/custom_instrument/purchase_order/purchase_order.js",
 	"Purchase Receipt": "instrument/custom_instrument/purchase_order/purchase_receipt.js",
 	"Purchase Invoice": "instrument/custom_instrument/purchase_order/purchase_invoice.js",
-	"Request For Quotation": "instrument/custom_instrument/request_for_quotation/request_for_quotation.js",
+	"Request for Quotation": "instrument/custom_instrument/request_for_quotation/request_for_quotation.js",
 	"Supplier Quotation": "instrument/custom_instrument/supplier_quotation/supplier_quotation.js",
 	"Sales Order": "instrument/custom_instrument/sales_order/sales_order.js",
 	"Sales Invoice": "instrument/custom_instrument/sales_invoice/sales_invoice.js",
@@ -67,7 +67,7 @@ doc_events = {
 	"Purchase Invoice" :{
 		"on_submit" : "instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.on_submit"
 	},
-	"Request For Quotation" :{
+	"Request for Quotation" :{
 		"on_submit" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.on_submit"
 	},
 	"Supplier Quotation" :{

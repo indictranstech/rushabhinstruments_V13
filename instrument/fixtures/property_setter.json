@@ -2242,5 +2242,22 @@
   "property_type": "Int",
   "row_name": null,
   "value": "2"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Request for Quotation Supplier",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "email_id",
+  "modified": "2021-07-06 23:29:40.936915",
+  "name": "Request for Quotation Supplier-email_id-columns",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "columns",
+  "property_type": "Int",
+  "row_name": null,
+  "value": "2"
  }
 ]

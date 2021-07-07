@@ -50,5 +50,18 @@
   "response_html": "<p>Hello</p><br>\n<p>Reminder to generate a PO against {{ name or \"\"}} blanket order for below listed Products.</p>\n<div class=\"conatiner\">\n    <table class=\"table table-bordered\" border=\"1px\" bordercolor=\"#000000\" style=\"width: 50%;\">\n        <tr>\n            <td style=\"text-align: center; width:10%\">Sr. No</td>\n            <td style=\"text-align: center; width:70%\">Product Name</td>\n            <td style=\"text-align: center; width:20%\">Quantity</td>\n        </tr>\n        {% for k, v in item_list.items() %}\n        <tr>\n            <td style=\"text-align: center; width:10%\">{{loop.index or \"\"}}</td>\n            <td style=\"text-align: center; width:70%\">{{ k or \"\" }}</td>\n            <td style=\"text-align: center; width:20%\">{{ v or \"\" }}</td>\n        </tr>\n        {% endfor %}\n    </table>\n</div>\n",
   "subject": "Generate PO against the Blanket Order Reminder",
   "use_html": 1
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Email Template",
+  "modified": "2021-07-07 00:17:42.481774",
+  "name": "Request for Quotation",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "response": null,
+  "response_html": "<p>Dear {{salutation or \"\"}}. {{supplier_name}}</p><br>\n<p>Please supply the specified items at the best possible rates.</p><br>\n<p>Regards,<br>{{ username }}</p>\n\n",
+  "subject": "Request for Quotation",
+  "use_html": 1
  }
 ]

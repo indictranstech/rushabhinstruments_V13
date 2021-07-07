@@ -32,7 +32,7 @@ def generate_po_against_blanket_order_reminder():
             message = frappe.render_template(email_template.response_html, data)
             try:
                 frappe.sendmail(
-                    recipients = ["jitendra.r@indictranstech.com"],
+                    recipients = [frappe.db.get_value("Email Setting",{"email_name": "Purchase Order Email"},"email_id")],
                     sender = None,
                     subject = email_template.subject,
                     message = message,
