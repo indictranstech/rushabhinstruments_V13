@@ -1,12 +1,12 @@
 [
  {
-  "content": "<img src=\"/files/Rushabh Letter head Graphic.jpg\" style=\"width: 100%;\">",
+  "content": "<img src=\"/files/Rushabh Letter head Graphic.jpg\">",
   "disabled": 0,
   "docstatus": 0,
   "doctype": "Letter Head",
   "footer": null,
   "image": "/files/Rushabh Letter head Graphic.jpg",
-  "is_default": 0,
+  "is_default": 1,
   "letter_head_name": "Rushabh letterhead",
   "modified": "2021-05-26 06:17:40.358787",
   "name": "Rushabh letterhead",
