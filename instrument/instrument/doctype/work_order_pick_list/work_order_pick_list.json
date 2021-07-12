@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "creation": "2021-07-12 01:58:43.724515",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "purpose",
+  "section_break_3",
+  "work_orders",
+  "column_break_5",
+  "for_qty",
+  "section_break_7",
+  "locations"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "default": "Material Transfer for Manufacture",
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "label": "Purpose",
+   "options": "\nMaterial Transfer for Manufacture"
+  },
+  {
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "work_orders",
+   "fieldtype": "Table",
+   "label": "Work Orders",
+   "options": "Pick Orders"
+  },
+  {
+   "fieldname": "column_break_5",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "for_qty",
+   "fieldtype": "Float",
+   "label": "Qty of Finished Goods Item"
+  },
+  {
+   "fieldname": "section_break_7",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "locations",
+   "fieldtype": "Table",
+   "label": "Item Locations",
+   "options": "Pick List Items"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-07-12 03:39:16.288914",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Work Order Pick List",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
