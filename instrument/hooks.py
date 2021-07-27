@@ -85,6 +85,9 @@ doc_events = {
 	"Blanket Order" :{
 		"on_submit" : "instrument.instrument.custom_instrument.blanket_order.blanket_order.on_submit"
 	},
+	"Serial No" : {
+	"autoname" : "instrument.instrument.custom_instrument.serial_no.serial_no.autoname"
+	}
 }
 
 # application home page (will override Website Settings)
