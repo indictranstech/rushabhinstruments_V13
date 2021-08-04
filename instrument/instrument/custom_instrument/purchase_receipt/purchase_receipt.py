@@ -26,3 +26,9 @@ def on_submit(doc, method = None):
 			message = "Purchase Receipt: "+"https://uatrushabhinstruments.indictranstech.com/app/purchase-receipt/{0}".format(doc.name),
 			attachments = file_att,
 			)
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_warehouse_for_query(doctype, txt, searchfield, start, page_len, filters):
+	item_doc = frappe.get_cached_doc('Item', filters.get('parent'))
+	return frappe.db.sql(""" SELECT warehouse FROM `tabItem Locations` where parent = '{0}' """.format(filters.get("parent")))
