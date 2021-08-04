@@ -17,13 +17,15 @@ fixtures = ['Custom Field', 'Property Setter', 'Print Format', 'Role', 'Letter H
 doctype_js = {
 	
 	"Purchase Order": "instrument/custom_instrument/purchase_order/purchase_order.js",
-	"Purchase Receipt": "instrument/custom_instrument/purchase_order/purchase_receipt.js",
-	"Purchase Invoice": "instrument/custom_instrument/purchase_order/purchase_invoice.js",
+	"Purchase Receipt": "instrument/custom_instrument/purchase_receipt/purchase_receipt.js",
+	"Purchase Invoice": "instrument/custom_instrument/purchase_invoice/purchase_invoice.js",
 	"Request for Quotation": "instrument/custom_instrument/request_for_quotation/request_for_quotation.js",
 	"Supplier Quotation": "instrument/custom_instrument/supplier_quotation/supplier_quotation.js",
 	"Sales Order": "instrument/custom_instrument/sales_order/sales_order.js",
 	"Sales Invoice": "instrument/custom_instrument/sales_invoice/sales_invoice.js",
 	"Delivery Note": "instrument/custom_instrument/delivery_note/delivery_note.js",
+	"Work Order" : "instrument/custom_instrument/work_order/work_order.js"
+
 }
 
 # include js, css files in header of desk.html
@@ -46,7 +48,7 @@ doctype_js = {
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+# doctype_list_js = {"Work Order" : "instrument/custom_instrument/work_order/work_order_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -87,6 +89,12 @@ doc_events = {
 	},
 	"Serial No" : {
 	"autoname" : "instrument.instrument.custom_instrument.serial_no.serial_no.autoname"
+	},
+	"BOM" : {
+	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate"
+	},
+	"Work Order" : {
+	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.update_work_order"
 	}
 }
 
