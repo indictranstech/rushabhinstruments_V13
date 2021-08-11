@@ -94,7 +94,12 @@ doc_events = {
 	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate"
 	},
 	"Work Order" : {
-	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.update_work_order"
+	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
+	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
+	"on_update" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock"
+	},
+	"Item" : {
+	"validate" :"instrument.instrument.custom_instrument.item.item.validate"
 	}
 }
 
