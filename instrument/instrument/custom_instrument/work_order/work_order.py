@@ -10,7 +10,7 @@ def check_stock(doc,method):
 			if item.item_code in ohs:
 				if item.required_qty <= ohs.get(item.item_code):
 					final_item_status.append('Full Qty Available')
-				elif item.required_qty > ohs.get(item.item_code) && ohs.get(item.item_code) > 0:
+				elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0:
 					final_item_status.append('Partial Qty Available')
 				else : 
 					final_item_status.append('Qty Not Available')
