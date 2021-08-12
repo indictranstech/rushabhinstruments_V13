@@ -96,7 +96,8 @@ doc_events = {
 	"Work Order" : {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
 	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
-	"on_update" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock"
+	"on_update" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
+	"validate" : "instrument.instrument.custom_instrument.work_order.work_order.add_bom_level"
 	},
 	"Item" : {
 	"validate" :"instrument.instrument.custom_instrument.item.item.validate"
