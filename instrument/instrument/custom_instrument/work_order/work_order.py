@@ -44,3 +44,14 @@ def get_current_stock():
 	current_stock = frappe.db.sql("""SELECT item_code,sum(actual_qty) as qty from `tabBin` where warehouse != '{0}' group by item_code """.format(wip_warehouse),as_dict=1)
 	ohs_dict = {item.item_code : item.qty for item in current_stock}
 	return ohs_dict
+
+@frappe.whitelist()
+def add_bom_level(doc,method):
+	if doc.bom_no:
+		bom_level = frappe.db.get_value("BOM",{'name' : doc.bom_no},'bom_level')
+		if bom_level:
+			doc.bom_level = bom_level
+			
+			# frappe.db.set_value("Work Order",doc.name,'bom_level',bom_level)
+			# frappe.db.commit()
+			# doc.reload()
