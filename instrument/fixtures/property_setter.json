@@ -2446,5 +2446,39 @@
   "property_type": "Text",
   "row_name": null,
   "value": "FO-.YYYY.-\nMFG-WO-.YYYY.-"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Production Plan Sub Assembly Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "type_of_manufacturing",
+  "modified": "2021-08-12 04:12:25.289667",
+  "name": "Production Plan Sub Assembly Item-type_of_manufacturing-in_list_view",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Production Plan Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "planned_start_date",
+  "modified": "2021-08-12 04:27:03.059864",
+  "name": "Production Plan Item-planned_start_date-in_list_view",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "in_list_view",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "0"
  }
 ]
