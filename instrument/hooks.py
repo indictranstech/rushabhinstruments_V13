@@ -101,6 +101,11 @@ doc_events = {
 	},
 	"Item" : {
 	"validate" :"instrument.instrument.custom_instrument.item.item.validate"
+	},
+	"Production Plan":{
+	"on_update" : "instrument.instrument.custom_instrument.production_plan.production_plan.on_update",
+	"validate" : "instrument.instrument.custom_instrument.production_plan.production_plan.validate"
+
 	}
 }
 
