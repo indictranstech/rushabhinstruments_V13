@@ -8,7 +8,10 @@ def on_update(doc,method):
 	if doc.sub_assembly_items:
 		for row in doc.sub_assembly_items:
 			if row.production_item in ohs:
+				req_qty = row.qty
 				row.available_quantity = ohs.get(row.production_item)
+				row.calculated_required_quantity = abs(req_qty - ohs.get(row.production_item)) if req_qty > ohs.get(row.production_item) else 0
+				row.qty = row.calculated_required_quantity
 
 @frappe.whitelist()
 def validate(doc,method):
