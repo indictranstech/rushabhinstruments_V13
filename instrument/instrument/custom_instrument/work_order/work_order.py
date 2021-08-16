@@ -1,19 +1,29 @@
 from __future__ import unicode_literals
 import frappe
+import json
 
 @frappe.whitelist()
 def check_stock(doc,method):
 	if doc.get('__islocal')!= 1:
 		final_item_status = []
+		final_item_percent = []
 		ohs = get_current_stock()
 		for item in doc.required_items:
 			if item.item_code in ohs:
 				if item.required_qty <= ohs.get(item.item_code):
 					final_item_status.append('Full Qty Available')
+					percent_stock = 100
+					final_item_percent.append(percent_stock)
+				# elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0:
 				elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0:
 					final_item_status.append('Partial Qty Available')
+					percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+					final_item_percent.append(percent_stock)
+
 				else : 
 					final_item_status.append('Qty Not Available')
+					percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+					final_item_percent.append(percent_stock)
 
 		status_list = ['Full Qty Available']
 		status_list_pa = ['Partial Qty Available']
@@ -23,18 +33,26 @@ def check_stock(doc,method):
 		check_na = all(item in status_list_na for item in final_item_status)
 		if check == True:
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Full Qty Available')
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
 			frappe.db.commit()
 			doc.reload()
 		elif check_pa == True:
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Partial Qty Available')
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
 			frappe.db.commit()
 			doc.reload()
 		elif check_na == True : 
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Qty Not Available')
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
 			frappe.db.commit()
 			doc.reload()
-		else :
+		elif 'Qty Not Available' in final_item_status and 'Partial Qty Available' in final_item_status: 
+			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Qty Available For Some Items')
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.commit()
+		else: 
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Partial Qty Available')
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
 			frappe.db.commit()
 			doc.reload()
 	doc.reload()
@@ -55,3 +73,4 @@ def add_bom_level(doc,method):
 			# frappe.db.set_value("Work Order",doc.name,'bom_level',bom_level)
 			# frappe.db.commit()
 			# doc.reload()
+

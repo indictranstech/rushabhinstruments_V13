@@ -24,7 +24,8 @@ doctype_js = {
 	"Sales Order": "instrument/custom_instrument/sales_order/sales_order.js",
 	"Sales Invoice": "instrument/custom_instrument/sales_invoice/sales_invoice.js",
 	"Delivery Note": "instrument/custom_instrument/delivery_note/delivery_note.js",
-	"Work Order" : "instrument/custom_instrument/work_order/work_order.js"
+	"Work Order" : "instrument/custom_instrument/work_order/work_order.js",
+	"Stock Entry" : "instrument/custom_instrument/stock_entry/stock_entry.js"
 
 }
 
@@ -91,7 +92,8 @@ doc_events = {
 	"autoname" : "instrument.instrument.custom_instrument.serial_no.serial_no.autoname"
 	},
 	"BOM" : {
-	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate"
+	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate",
+	"on_update" : "instrument.instrument.custom_instrument.bom.bom.validate"
 	},
 	"Work Order" : {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
