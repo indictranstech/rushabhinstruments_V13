@@ -1,5 +1,9 @@
 frappe.ui.form.on("Purchase Receipt", {
 	refresh:function(frm){
+		if(frm.doc.__islocal){
+			frm.set_value("apply_putaway_rule",1)
+
+		}
 		//Filter Accepted warehouse
 		frm.set_query("warehouse", "items", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
