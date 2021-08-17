@@ -31,28 +31,29 @@ def check_stock(doc,method):
 		check =  all(item in status_list for item in final_item_status)
 		check_pa = all(item in status_list_pa for item in final_item_status)
 		check_na = all(item in status_list_na for item in final_item_status)
+		min_value = min(final_item_percent) if len(final_item_percent) > 1 else 0
 		if check == True:
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Full Qty Available')
-			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min_value)
 			frappe.db.commit()
 			doc.reload()
 		elif check_pa == True:
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Partial Qty Available')
-			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min_value)
 			frappe.db.commit()
 			doc.reload()
 		elif check_na == True : 
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Qty Not Available')
-			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min_value)
 			frappe.db.commit()
 			doc.reload()
 		elif 'Qty Not Available' in final_item_status and 'Partial Qty Available' in final_item_status: 
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Qty Available For Some Items')
-			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min_value)
 			frappe.db.commit()
 		else: 
 			frappe.db.set_value("Work Order",doc.name,'item_stock_status','Partial Qty Available')
-			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min(final_item_percent))
+			frappe.db.set_value("Work Order",doc.name,'stock_percentage',min_value)
 			frappe.db.commit()
 			doc.reload()
 	doc.reload()
