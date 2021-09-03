@@ -32,3 +32,9 @@ def on_submit(doc, method = None):
 def get_warehouse_for_query(doctype, txt, searchfield, start, page_len, filters):
 	item_doc = frappe.get_cached_doc('Item', filters.get('parent'))
 	return frappe.db.sql(""" SELECT warehouse FROM `tabItem Locations` where parent = '{0}' """.format(filters.get("parent")))
+
+@frappe.whitelist()
+def get_engineering_revision(item_code,purchase_order_item):
+	if item_code and purchase_order_item:
+		engineering_revision = frappe.db.get_value("Purchase Order Item",{'name':purchase_order_item,item_code:item_code},'engineering_revision')
+		return engineering_revision

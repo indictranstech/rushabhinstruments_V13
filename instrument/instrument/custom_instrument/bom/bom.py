@@ -84,3 +84,14 @@ def validate(doc,method):
 		row.update({"idx":cont})
 		doc.append("exploded_items",row)
 		cont = cont + 1
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
+@frappe.whitelist()
+def get_engineering_revision(item_code):
+	if item_code:
+		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
+		return engineering_revision

@@ -75,3 +75,29 @@ def add_bom_level(doc,method):
 			# frappe.db.commit()
 			# doc.reload()
 
+@frappe.whitelist()
+def on_submit(doc,method):
+	if doc.required_items:
+		for item in doc.required_items:
+			if item.engineering_revision:
+				er_rev = frappe.get_doc("Engineering Revision",item.engineering_revision)
+				if er_rev :
+					if not (er_rev.start_date and er_rev.start_transaction and er_rev.document_type):
+						er_rev.start_date = doc.planned_start_date
+						er_rev.document_type = "Work Order"
+						er_rev.start_transaction = doc.name
+					er_rev.last_date = doc.planned_start_date
+					er_rev.end_document_type = "Work Order"
+					er_rev.end_transaction = doc.name
+					er_rev.save(ignore_permissions = True)
+
+@frappe.whitelist()
+def get_engineering_revision(item_code):
+	if item_code:
+		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
+		return engineering_revision
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))

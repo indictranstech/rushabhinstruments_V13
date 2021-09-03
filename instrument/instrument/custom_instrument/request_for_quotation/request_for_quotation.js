@@ -2,9 +2,15 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Request for Quotation', {
-	// refresh: function(frm) {
-
-	// }
+	refresh: function(frm) {
+		frm.set_query("engineering_revision", "items", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.get_engineering_revisions_for_filter",
+				filters:{ 'item_code': row.item_code }
+			}
+		});	
+	}
 });
 
 
@@ -23,4 +29,22 @@ frappe.ui.form.on('Request for Quotation Supplier', {
 		}
     }
 
+});
+frappe.ui.form.on('Request for Quotation Item', {
+    item_code: function(frm, cdt, cdn) {
+		var row = locals[cdt][cdn]
+		if(row.item_code){
+			frappe.call({
+				"method" :"instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.get_engineering_revision",
+				"args" : {
+					item_code : row.item_code,
+				},
+				callback:function(r){
+					if(r.message){
+						frappe.model.set_value(row.doctype, row.name, 'engineering_revision', r.message)
+					}
+				}
+			})
+		}
+    }
 });
