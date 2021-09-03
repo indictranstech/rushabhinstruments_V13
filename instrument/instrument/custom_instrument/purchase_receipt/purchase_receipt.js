@@ -14,3 +14,26 @@ frappe.ui.form.on("Purchase Receipt", {
 		// });	
 	}
 })
+frappe.ui.form.on('Purchase Receipt Item', {	
+	item_code: function(frm, cdt, cdn){
+		var row = locals[cdt][cdn]
+		if(row.item_code && row.purchase_order_item){
+			frappe.call({
+				"method" :"instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.get_engineering_revision",
+				"args" : {
+					item_code : row.item_code,
+					purchase_order_item : row.purchase_order_item
+				},
+				callback:function(r){
+					if(r.message){
+						frappe.model.set_value(row.doctype, row.name, 'engineering_revision', r.message)
+					}
+				}
+			})
+		}
+		// var qty = row.no_of_batches * row.batch_size * row.planned_bom_quantity
+		// frappe.model.set_value(row.doctype, row.name, 'qty', qty)
+		// var df = frappe.meta.get_docfield("Material Request Item","qty", cur_frm.doc.name);
+		// df.read_only = 1;
+	}
+});

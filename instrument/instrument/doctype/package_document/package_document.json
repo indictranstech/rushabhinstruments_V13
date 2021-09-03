@@ -1,0 +1,91 @@
+{
+ "actions": [],
+ "autoname": "format:{item_code}_{revision}_{package_type}",
+ "creation": "2021-08-23 04:26:15.811270",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "revision",
+  "package_type",
+  "description",
+  "attachment",
+  "file_locations"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Data",
+   "label": "Revision"
+  },
+  {
+   "fieldname": "package_type",
+   "fieldtype": "Select",
+   "label": "Package Type",
+   "options": "Purchasing_Package\nManufacturing_Package\nEngineering_Package"
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Table",
+   "label": "Attachment",
+   "options": "Attachment Table"
+  },
+  {
+   "fieldname": "file_locations",
+   "fieldtype": "Table",
+   "label": "File Locations",
+   "options": "File Locations Table"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-08-30 03:58:00.132634",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Package Document",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Engineer",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "title_field": "package_type",
+ "track_changes": 1
+}

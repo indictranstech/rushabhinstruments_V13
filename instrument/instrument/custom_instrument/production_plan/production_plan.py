@@ -9,13 +9,28 @@ def on_update(doc,method):
 	if doc.sub_assembly_items:
 		for row in doc.sub_assembly_items:
 			if row.production_item in ohs:
-				if flt(row.original_required_qty) <= 0:
-					row.original_required_qty = row.qty 
-				else:
-					pass 
-				row.available_quantity = ohs.get(row.production_item)
-				row.calculated_required_quantity = abs(row.original_required_qty - ohs.get(row.production_item)) if ohs.get(row.production_item) <= 0 else 0
-				row.qty = row.calculated_required_quantity
+				qty = row.qty
+				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'original_required_qty',qty)
+				frappe.db.commit()
+				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'available_quantity',ohs.get(row.production_item))
+				frappe.db.commit()
+				calculated_required_quantity = (flt(qty) - flt(ohs.get(row.production_item)) if flt(ohs.get(row.production_item)) < flt(qty) else 0)
+				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'qty',calculated_required_quantity)
+				frappe.db.commit()
+	doc.reload()
+				# if flt(row.original_required_qty) <= 0:
+				# 	# row.original_required_qty = row.qty 
+				# 	frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'original_required_qty',row.qty)
+				# else:
+				# 	pass 
+				# frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'available_quantity',ohs.get(row.production_item))
+				# # row.available_quantity = ohs.get(row.production_item)
+				# calculated_required_quantity = abs(flt(row.original_required_qty) - flt(ohs.get(row.production_item))) if ohs.get(row.production_item) <= 0 else 0
+				# frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'calculated_required_quantity',calculated_required_quantity)
+				# # row.calculated_required_quantity = abs(row.original_required_qty - ohs.get(row.production_item)) if ohs.get(row.production_item) <= 0 else 0
+				# frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'qty',calculated_required_quantity)
+				# frappe.db.commit()
+				# # row.qty = row.calculated_required_quantity
 
 @frappe.whitelist()
 def validate(doc,method):

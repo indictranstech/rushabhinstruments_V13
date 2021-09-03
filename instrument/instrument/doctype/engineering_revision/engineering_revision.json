@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "autoname": "format:{item_code}_{revision}",
+ "creation": "2021-08-23 04:36:00.887238",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "revision",
+  "start_date",
+  "last_date",
+  "column_break_3",
+  "is_default",
+  "is_active",
+  "document_type",
+  "start_transaction",
+  "end_document_type",
+  "end_transaction",
+  "section_break_6",
+  "purchasing_package",
+  "manufacturing_package",
+  "engineering_package"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "revision",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Revision"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_default",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Default"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "purchasing_package",
+   "fieldtype": "Table",
+   "label": "Purchasing Package",
+   "options": "Purchasing Package Table"
+  },
+  {
+   "fieldname": "manufacturing_package",
+   "fieldtype": "Table",
+   "label": "Manufacturing Package",
+   "options": "Manufacturing Package Table"
+  },
+  {
+   "fieldname": "engineering_package",
+   "fieldtype": "Table",
+   "label": "Engineering Package",
+   "options": "Engineering Package Table"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "last_date",
+   "fieldtype": "Date",
+   "label": "Last Date"
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "Start Document Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "start_transaction",
+   "fieldtype": "Dynamic Link",
+   "label": "Start Transaction",
+   "options": "document_type"
+  },
+  {
+   "fieldname": "end_document_type",
+   "fieldtype": "Link",
+   "label": "End Document Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "end_transaction",
+   "fieldtype": "Dynamic Link",
+   "label": "End Transaction",
+   "options": "end_document_type"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-08-30 03:57:12.379328",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Engineering Revision",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Engineer",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
