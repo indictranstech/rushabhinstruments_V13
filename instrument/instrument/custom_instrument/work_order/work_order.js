@@ -8,25 +8,26 @@ frappe.ui.form.on('Work Order', {
 				filters:{ 'item_code': row.item_code }
 			}
 		});	
-		if(frm.doc.required_items){
-			frm.doc.required_items.forEach(function(row){
-				if(row['item_code']){
-					frappe.call({
-						"method" :"instrument.instrument.custom_instrument.work_order.work_order.get_engineering_revision",
-						"args" : {
-							item_code : row['item_code'],
-							bom_no : frm.doc.bom_no
-						},
-						callback:function(r){
-							if(r.message){
-								frappe.model.set_value(row.doctype, row.name, 'engineering_revision', r.message)
+		if(frm.doc.__unsaved){
+			if(frm.doc.required_items){
+				frm.doc.required_items.forEach(function(row){
+					if(row['item_code']){
+						frappe.call({
+							"method" :"instrument.instrument.custom_instrument.work_order.work_order.get_engineering_revision",
+							"args" : {
+								item_code : row['item_code'],
+								bom_no : frm.doc.bom_no
+							},
+							callback:function(r){
+								if(r.message){
+									frappe.model.set_value(row.doctype, row.name, 'engineering_revision', r.message)
+								}
 							}
-						}
-					})
-				}
+						})
+					}
 
-			})
-		}
-		
+				})
+			}
+		}		
 	}
 });
