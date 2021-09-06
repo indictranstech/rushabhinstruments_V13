@@ -27,7 +27,8 @@ doctype_js = {
 	"Work Order": "instrument/custom_instrument/work_order/work_order.js",
 	"Stock Entry": "instrument/custom_instrument/stock_entry/stock_entry.js",
 	"Item": "instrument/custom_instrument/item/item.js",
-	"BOM":"instrument/custom_instrument/bom/bom.js"
+	"BOM":"instrument/custom_instrument/bom/bom.js",
+	"Job Card" : "instrument/custom_instrument/job_card/job_card.js"
  
 }
 
