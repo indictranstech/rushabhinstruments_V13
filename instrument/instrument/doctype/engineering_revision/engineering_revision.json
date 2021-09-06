@@ -79,41 +79,47 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "label": "Start Date"
+   "label": "Start Date",
+   "read_only": 1
   },
   {
    "fieldname": "last_date",
    "fieldtype": "Date",
-   "label": "Last Date"
+   "label": "Last Date",
+   "read_only": 1
   },
   {
    "fieldname": "document_type",
    "fieldtype": "Link",
    "label": "Start Document Type",
-   "options": "DocType"
+   "options": "DocType",
+   "read_only": 1
   },
   {
    "fieldname": "start_transaction",
    "fieldtype": "Dynamic Link",
    "label": "Start Transaction",
-   "options": "document_type"
+   "options": "document_type",
+   "read_only": 1
   },
   {
    "fieldname": "end_document_type",
    "fieldtype": "Link",
    "label": "End Document Type",
-   "options": "DocType"
+   "options": "DocType",
+   "read_only": 1
   },
   {
    "fieldname": "end_transaction",
    "fieldtype": "Dynamic Link",
    "label": "End Transaction",
-   "options": "end_document_type"
+   "options": "end_document_type",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-08-30 03:57:12.379328",
+ "modified": "2021-09-06 02:00:00.042854",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Engineering Revision",
