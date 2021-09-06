@@ -92,10 +92,14 @@ def on_submit(doc,method):
 					er_rev.save(ignore_permissions = True)
 
 @frappe.whitelist()
-def get_engineering_revision(item_code):
+def get_engineering_revision(item_code,bom_no):
 	if item_code:
 		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
-		return engineering_revision
+		er_from_bom = frappe.db.get_value("BOM Item",{'parent':bom_no,'item_code':item_code},'engineering_revision')
+		if er_from_bom:
+			return er_from_bom
+		else:
+			return engineering_revision
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs

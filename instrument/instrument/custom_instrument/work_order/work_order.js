@@ -1,6 +1,5 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
-		console.log("--------------")
 		//Filter Engineering Revision
 		frm.set_query("engineering_revision", "required_items", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
@@ -15,7 +14,8 @@ frappe.ui.form.on('Work Order', {
 					frappe.call({
 						"method" :"instrument.instrument.custom_instrument.work_order.work_order.get_engineering_revision",
 						"args" : {
-							item_code : row['item_code']
+							item_code : row['item_code'],
+							bom_no : frm.doc.bom_no
 						},
 						callback:function(r){
 							if(r.message){
