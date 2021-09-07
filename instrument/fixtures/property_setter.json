@@ -2415,23 +2415,6 @@
  },
  {
   "default_value": null,
-  "doc_type": "Purchase Order",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "naming_series",
-  "modified": "2021-07-26 03:43:47.928183",
-  "name": "Purchase Order-naming_series-options",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
-  "property": "options",
-  "property_type": "Text",
-  "row_name": null,
-  "value": "IN-.YYYY.-\nPUR-ORD-.YYYY.-"
- },
- {
-  "default_value": null,
   "doc_type": "Work Order",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -2548,5 +2531,39 @@
   "property_type": "Check",
   "row_name": null,
   "value": "0"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Purchase Order",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "naming_series",
+  "modified": "2021-09-07 01:39:59.121010",
+  "name": "Purchase Order-naming_series-options",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "options",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "IN-.YYYY.-\nPUR-ORD-.YYYY.-\nPO-.YYYY.-\n"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Purchase Order",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "naming_series",
+  "modified": "2021-09-07 01:40:00.120431",
+  "name": "Purchase Order-naming_series-default",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "default",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "PO-.YYYY.-"
  }
 ]

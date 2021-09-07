@@ -1,6 +1,5 @@
 frappe.ui.form.on("Purchase Order", {
 	refresh:function(frm){
-		console.log("----------------------------------**********")
 		//Filter Engineering Revision
 		frm.set_query("engineering_revision", "items", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
