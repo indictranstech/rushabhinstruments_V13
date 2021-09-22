@@ -36,6 +36,10 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
 
 def validate(doc,method):
+	if doc.items:
+		for item in doc.items:
+			engineering_revision = frappe.db.get_value("Item",{'item_code':item.item_code},'engineering_revision')
+			item.default_engineering_revision = engineering_revision
 	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
 		(doc.name),debug=1)
 

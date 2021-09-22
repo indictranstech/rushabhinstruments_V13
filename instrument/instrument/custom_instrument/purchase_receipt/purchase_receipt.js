@@ -4,6 +4,14 @@ frappe.ui.form.on("Purchase Receipt", {
 			frm.set_value("apply_putaway_rule",1)
 
 		}
+		//Filter Engineering Revision
+		frm.set_query("engineering_revision", "items", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.custom_instrument.purchase_order.purchase_order.get_engineering_revisions_for_filter",
+				filters:{ 'item_code': row.item_code }
+			}
+		});	
 		// //Filter Accepted warehouse
 		// frm.set_query("warehouse", "items", function(doc, cdt, cdn) {
 		// 	const row = locals[cdt][cdn];
@@ -31,9 +39,5 @@ frappe.ui.form.on('Purchase Receipt Item', {
 				}
 			})
 		}
-		// var qty = row.no_of_batches * row.batch_size * row.planned_bom_quantity
-		// frappe.model.set_value(row.doctype, row.name, 'qty', qty)
-		// var df = frappe.meta.get_docfield("Material Request Item","qty", cur_frm.doc.name);
-		// df.read_only = 1;
 	}
 });

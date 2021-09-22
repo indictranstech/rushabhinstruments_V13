@@ -9,7 +9,18 @@ frappe.ui.form.on('Request for Quotation', {
 				query: "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.get_engineering_revisions_for_filter",
 				filters:{ 'item_code': row.item_code }
 			}
-		});	
+		});
+		if(frm.doc.items){
+			cur_frm.fields_dict["items"].$wrapper.find('.grid-body .rows').find(".grid-row").each(function(i, item) {
+				let d = locals[cur_frm.fields_dict["items"].grid.doctype][$(item).attr('data-name')];
+				if(d["engineering_revision"] != d["default_engineering_revision"]){
+					$(item).find('.grid-static-col').css({'background-color': '#FF0000'});
+				}
+				else{
+					$(item).find('.grid-static-col').css({'background-color': '#FFFFFF'});
+				}
+			});
+		}
 	}
 });
 
