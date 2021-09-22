@@ -5,6 +5,12 @@ from frappe.utils.background_jobs import enqueue
 from frappe.desk.form.load import get_attachments
 
 
+def validate(doc,method):
+	if doc.items:
+		for item in doc.items:
+			engineering_revision = frappe.db.get_value("Item",{'item_code':item.item_code},'engineering_revision')
+			item.default_engineering_revision = engineering_revision
+
 def on_submit(doc, method = None):
 	file_att = []
 	attachments = frappe.db.sql(""" SELECT file_name  FROM tabFile 

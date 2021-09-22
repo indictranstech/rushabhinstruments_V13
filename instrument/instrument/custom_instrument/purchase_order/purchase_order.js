@@ -8,6 +8,17 @@ frappe.ui.form.on("Purchase Order", {
 				filters:{ 'item_code': row.item_code }
 			}
 		});	
+		if(frm.doc.items){
+			cur_frm.fields_dict["items"].$wrapper.find('.grid-body .rows').find(".grid-row").each(function(i, item) {
+				let d = locals[cur_frm.fields_dict["items"].grid.doctype][$(item).attr('data-name')];
+				if(d["engineering_revision"] != d["default_engineering_revision"]){
+					$(item).find('.grid-static-col').css({'background-color': '#FF0000'});
+				}
+				else{
+					$(item).find('.grid-static-col').css({'background-color': '#FFFFFF'});
+				}
+			});
+		}
 	}
 })
 frappe.ui.form.on('Purchase Order Item', {
@@ -17,7 +28,7 @@ frappe.ui.form.on('Purchase Order Item', {
 			frappe.call({
 				"method" :"instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.get_engineering_revision",
 				"args" : {
-					item_code : row.item_code,
+					item_code : row.item_code
 				},
 				callback:function(r){
 					if(r.message){

@@ -69,13 +69,15 @@ doc_events = {
 		"validate" : "instrument.instrument.custom_instrument.purchase_order.purchase_order.validate"
 	},
 	"Purchase Receipt" :{
-		"on_submit" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.on_submit"
+		"on_submit" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.on_submit",
+		"validate" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.validate"
 	},
 	"Purchase Invoice" :{
 		"on_submit" : "instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.on_submit"
 	},
 	"Request for Quotation" :{
-		"on_submit" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.on_submit"
+		"on_submit" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.on_submit",
+		"validate" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.validate"
 	},
 	"Supplier Quotation" :{
 		"on_submit" : "instrument.instrument.custom_instrument.supplier_quotation.supplier_quotation.on_submit"
@@ -103,7 +105,7 @@ doc_events = {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
 	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
 	"on_update" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
-	"validate" : "instrument.instrument.custom_instrument.work_order.work_order.add_bom_level",
+	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate"],
 	"on_submit" : "instrument.instrument.custom_instrument.work_order.work_order.on_submit"
 	},
 	"Item" : {
@@ -116,7 +118,10 @@ doc_events = {
 	},
 	"Batch" : {
 	"autoname" : "instrument.instrument.custom_instrument.batch.batch.autoname"
-	}
+	},
+	"Stock Entry" : {
+	"validate" : "instrument.instrument.custom_instrument.stock_entry.stock_entry.validate"
+ 	}
 }
 
 # application home page (will override Website Settings)

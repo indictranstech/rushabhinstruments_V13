@@ -2,6 +2,12 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 
+def validate(doc,method):
+	for item in doc.items:
+		if item.engineering_revision:
+			purchasing_package = frappe.db.get_value("Purchasing Package Table",{'parent':item.engineering_revision},'purchasing_package_name')
+			item.purchasing_package = purchasing_package
+
 # class Purchase_Receipt(Document):
 def on_submit(doc, method = None):
 	file_att = []
@@ -37,4 +43,13 @@ def get_warehouse_for_query(doctype, txt, searchfield, start, page_len, filters)
 def get_engineering_revision(item_code,purchase_order_item):
 	if item_code and purchase_order_item:
 		engineering_revision = frappe.db.get_value("Purchase Order Item",{'name':purchase_order_item,item_code:item_code},'engineering_revision')
-		return engineering_revision
+		purchasing_package = frappe.db.get_value("Purchasing Package Table",{'parent':engineering_revision},'purchasing_package_name')
+		final_data = []
+		final_data.append(engineering_revision)
+		final_data.append(purchasing_package)
+		return final_data
+
+@frappe.whitelist()
+def get_purchasing_package(engineering_revision):
+	purchasing_package = frappe.db.get_value("Purchasing Package Table",{'parent':engineering_revision},'purchasing_package_name')
+	return purchasing_package

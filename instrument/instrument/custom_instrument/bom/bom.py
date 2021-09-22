@@ -39,7 +39,8 @@ def validate(doc,method):
 			'include_item_in_manufacturing':row.get("include_item_in_manufacturing"),
 			'original_item':row.get("original_item"),
 			'sourced_by_supplier':row.get("sourced_by_supplier"),
-			'engineering_revision' : row.get('engineering_revision')
+			'engineering_revision' : row.get('engineering_revision'),
+			'use_specific_engineering_revision' : row.get('use_specific_engineering_revision')
 			})
 	final_data = sorted(final_item_list,key = lambda x:x["item_code"])
 	doc.items = ''

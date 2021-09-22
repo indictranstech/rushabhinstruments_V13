@@ -94,9 +94,10 @@ def on_submit(doc,method):
 @frappe.whitelist()
 def get_engineering_revision(item_code,bom_no):
 	if item_code:
-		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
-		er_from_bom = frappe.db.get_value("BOM Item",{'parent':bom_no,'item_code':item_code},'engineering_revision')
-		if er_from_bom:
+		engineering_revision = frappe.db.sql("""SELECT engineering_revision from `tabItem` where item_code = '{0}'""".format(item_code),as_dict=1)
+		engineering_revision[0]['use_specific_engineering_revision'] = 0
+		er_from_bom = frappe.db.sql("""SELECT boi.engineering_revision ,boi.use_specific_engineering_revision from `tabBOM` bo join `tabBOM Item` boi on boi.parent = bo.name where bo.name = '{0}' and boi.item_code = '{1}' and boi.engineering_revision != ''""".format(bom_no,item_code),as_dict=1)
+		if len(er_from_bom) > 0 and er_from_bom[0].get("engineering_revision") != None:
 			return er_from_bom
 		else:
 			return engineering_revision
@@ -105,3 +106,18 @@ def get_engineering_revision(item_code,bom_no):
 @frappe.validate_and_sanitize_search_inputs
 def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
+
+def validate(doc,method):
+	if doc.engineering_revision:
+		manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':doc.engineering_revision},'manufacturing_package_name')
+		doc.manufacturing_package_name = manufacturing_package
+	for item in doc.required_items:
+		if item.engineering_revision:
+			manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':item.engineering_revision},'manufacturing_package_name')
+			item.manufacturing_package = manufacturing_package
+
+@frappe.whitelist()
+def get_engineering_revision(item_code):
+	if item_code:
+		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
+		return engineering_revision
