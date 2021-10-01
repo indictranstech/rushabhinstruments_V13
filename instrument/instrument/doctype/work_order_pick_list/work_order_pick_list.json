@@ -1,18 +1,22 @@
 {
  "actions": [],
+ "autoname": "naming_series:",
  "creation": "2021-07-12 01:58:43.724515",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "company",
+  "section_break_4",
   "purpose",
+  "production_plan",
+  "get_work_orders",
   "section_break_3",
   "work_orders",
-  "column_break_5",
-  "for_qty",
-  "section_break_7",
-  "locations"
+  "get_items",
+  "work_order_pick_list_item",
+  "amended_from"
  ],
  "fields": [
   {
@@ -25,8 +29,10 @@
    "default": "Material Transfer for Manufacture",
    "fieldname": "purpose",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Purpose",
-   "options": "\nMaterial Transfer for Manufacture"
+   "options": "\nMaterial Transfer for Manufacture",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_3",
@@ -35,32 +41,60 @@
   {
    "fieldname": "work_orders",
    "fieldtype": "Table",
-   "label": "Work Orders",
+   "label": "Pick List Work Order Table",
    "options": "Pick Orders"
   },
   {
-   "fieldname": "column_break_5",
-   "fieldtype": "Column Break"
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Work Order Pick List",
+   "print_hide": 1,
+   "read_only": 1
   },
   {
-   "fieldname": "for_qty",
-   "fieldtype": "Float",
-   "label": "Qty of Finished Goods Item"
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Naming Series",
+   "options": "WO-PICK-.YYYY.-",
+   "reqd": 1,
+   "set_only_once": 1
   },
   {
-   "fieldname": "section_break_7",
+   "fieldname": "production_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Production Plan",
+   "options": "Production Plan",
+   "reqd": 1
+  },
+  {
+   "fieldname": "get_work_orders",
+   "fieldtype": "Button",
+   "label": "Get Work Orders"
+  },
+  {
+   "fieldname": "section_break_4",
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "locations",
+   "fieldname": "get_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "work_order_pick_list_item",
    "fieldtype": "Table",
-   "label": "Item Locations",
-   "options": "Pick List Items"
+   "label": "Work Order Pick List Item",
+   "options": "Work Order Pick List Item"
   }
  ],
  "index_web_pages_for_search": 1,
+ "is_submittable": 1,
  "links": [],
- "modified": "2021-07-12 03:39:16.288914",
+ "modified": "2021-09-23 05:37:14.440616",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Work Order Pick List",
@@ -74,7 +108,43 @@
    "print": 1,
    "read": 1,
    "report": 1,
-   "role": "System Manager",
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing User",
    "share": 1,
    "write": 1
   }

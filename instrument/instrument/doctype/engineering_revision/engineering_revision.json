@@ -29,12 +29,14 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "revision",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Revision",
    "reqd": 1
   },
@@ -121,7 +123,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-09-21 00:57:51.230802",
+ "modified": "2021-09-28 00:47:34.503857",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Engineering Revision",
@@ -154,6 +156,7 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
+ "title_field": "item_code",
  "track_changes": 1,
  "track_seen": 1,
  "track_views": 1

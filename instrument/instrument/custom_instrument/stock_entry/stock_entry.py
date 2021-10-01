@@ -17,3 +17,18 @@ def validate(doc,method):
 					item.engineering_revision = engineering_revision
 					item.manufacturing_package = manufacturing_package
 
+@frappe.whitelist()
+def get_items_from_pick_list(pick_list,work_order):
+	if pick_list:
+		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':pick_list,'work_order':work_order},'qty_of_finished_goods')
+		items = frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(pick_list,work_order),as_dict =1)
+		work_order_doc = frappe.get_doc("Work Order",work_order)
+		items.append({'item_code':work_order_doc.production_item,'t_warehouse':work_order_doc.fg_warehouse,'picked_qty':qty_of_finish_good,'stock_uom':work_order_doc.stock_uom,'engineering_revision':work_order_doc.engineering_revision})
+		return items,qty_of_finish_good
+
+# @frappe.whitelist()
+# def before_save(doc):
+# 	if doc.work_order_pick_list:
+# 		if doc.items:
+# 			qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':doc.work_order_pick_list,'work_order':doc.work_order},'qty_of_finished_goods')
+# 			doc.fg_completed_qty = qty_of_finish_good

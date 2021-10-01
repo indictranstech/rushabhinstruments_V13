@@ -26,13 +26,15 @@
   {
    "fieldname": "revision",
    "fieldtype": "Data",
-   "label": "Revision"
+   "label": "Revision",
+   "reqd": 1
   },
   {
    "fieldname": "package_type",
    "fieldtype": "Select",
    "label": "Package Type",
-   "options": "Purchasing_Package\nManufacturing_Package\nEngineering_Package"
+   "options": "\nPurchasing_Package\nManufacturing_Package\nEngineering_Package",
+   "reqd": 1
   },
   {
    "fieldname": "description",
@@ -54,7 +56,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-09-20 05:31:38.940958",
+ "modified": "2021-09-28 00:39:03.627324",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Package Document",
