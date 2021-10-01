@@ -69,10 +69,9 @@ frappe.ui.form.on('Work Order Pick List', {
 			method: "get_work_order_items",
 			doc: frm.doc,
 			callback: function(r, rt) {
-				
+				// frm.save()
 			}
 		})
-		frm.save()
 	}
 });
 frappe.ui.form.on('Pick Orders', {
@@ -88,6 +87,9 @@ frappe.ui.form.on('Pick Orders', {
 frappe.ui.form.on('Work Order Pick List Item', {
 	picked_qty:function(frm,cdt,cdn){
 		var row = locals[cdt][cdn]
+		if(row.stock_qty < row.picked_qty){
+			frappe.throw("You cannot pick qty more than" + row.stock_qty)
+		}
 		if(row.work_order && row.required_qty && row.picked_qty > 0){
 			frappe.call({
 				"method" : "instrument.instrument.doctype.work_order_pick_list.work_order_pick_list.validate_picked_qty",
@@ -106,6 +108,7 @@ frappe.ui.form.on('Work Order Pick List Item', {
 							var difference = flt(total_picked_qty) - flt(row.required_qty)
 							frappe.msgprint('You have Picked' + ' ' + difference +' '+ 'More Qty for Item ' + row.item_code)
 						}
+						
 					}
 
 				}

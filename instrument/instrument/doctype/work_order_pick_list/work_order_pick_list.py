@@ -93,6 +93,7 @@ class WorkOrderPickList(Document):
 									"engineering_revision" : d.get("engineering_revision"),
 									"batch_no" : d.get('batch_no')
 								})
+		self.save()
 							
 def get_item_locations(item_list,company):
 	item_locations_dict = dict()
@@ -128,7 +129,7 @@ def get_raw_material(bom_no, company, qty,work_order):
 @frappe.whitelist()
 def get_work_orders(production_plan):
 	if production_plan:
-		work_order_data = frappe.db.sql("""SELECT name,qty from `tabWork Order` where production_plan = '{0}' and status in ('In process','Not Started') and docstatus = 1 order by name asc""".format(production_plan),as_dict =1)
+		work_order_data = frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where production_plan = '{0}' and (wo.produced_qty < wo.qty)  and wo.status in ('In process','Not Started') and wo.docstatus = 1 order by wo.name asc""".format(production_plan),as_dict =1,debug=1)
 		return work_order_data
 
 @frappe.whitelist()
