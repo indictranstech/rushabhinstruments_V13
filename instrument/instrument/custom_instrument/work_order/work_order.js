@@ -1,6 +1,8 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
-		frm.set_value('skip_transfer',1)
+		// if(frm.doc.__islocal){
+		// 	frm.set_value('skip_transfer',1)
+		// }
 		//Filter Engineering Revision
 		frm.set_query("engineering_revision", "required_items", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];

@@ -108,6 +108,7 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
 
 def validate(doc,method):
+	doc.skip_transfer =1
 	if doc.engineering_revision:
 		manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':doc.engineering_revision},'manufacturing_package_name')
 		doc.manufacturing_package_name = manufacturing_package
