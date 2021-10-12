@@ -9,6 +9,7 @@
   "item_code",
   "revision",
   "package_type",
+  "completed",
   "description",
   "attachment",
   "file_locations"
@@ -26,6 +27,7 @@
   {
    "fieldname": "revision",
    "fieldtype": "Data",
+   "in_standard_filter": 1,
    "label": "Revision",
    "reqd": 1
   },
@@ -52,11 +54,17 @@
    "fieldtype": "Table",
    "label": "File Locations",
    "options": "File Locations Table"
+  },
+  {
+   "default": "0",
+   "fieldname": "completed",
+   "fieldtype": "Check",
+   "label": "Completed"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-09-28 00:39:03.627324",
+ "modified": "2021-10-11 07:43:08.868720",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Package Document",
@@ -87,7 +95,7 @@
    "write": 1
   }
  ],
- "sort_field": "modified",
+ "sort_field": "revision",
  "sort_order": "DESC",
  "title_field": "package_type",
  "track_changes": 1
