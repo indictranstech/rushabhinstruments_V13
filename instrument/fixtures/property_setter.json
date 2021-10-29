@@ -1,6 +1,23 @@
 [
  {
   "default_value": null,
+  "doc_type": "Work Order Pick List",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "naming_series",
+  "modified": "2021-10-28 04:04:27.274655",
+  "name": "Work Order Pick List-naming_series-options",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "options",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "WO-PICK-.YYYY.-"
+ },
+ {
+  "default_value": null,
   "doc_type": "Supplier",
   "docstatus": 0,
   "doctype": "Property Setter",
