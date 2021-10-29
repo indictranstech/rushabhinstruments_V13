@@ -123,7 +123,8 @@ doc_events = {
 	"validate" : "instrument.instrument.custom_instrument.stock_entry.stock_entry.validate"
  	},
  	"Item Attribute" : {
- 	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate"
+ 	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate",
+ 	"after_insert" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.after_insert"
  	}
 }
 
