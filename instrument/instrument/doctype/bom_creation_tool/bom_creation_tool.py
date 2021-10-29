@@ -142,8 +142,8 @@ class BOMCreationTool(Document):
 								std_bom.save(ignore_permissions = True)
 								std_bom.submit()
 
-						else :
-							frappe.throw("Standard Item Code not found for Mapped Item {0}".format(bom_doc.item))			
+					else :
+						frappe.throw("Standard Item Code not found for Mapped Item {0}".format(bom_doc.item))			
 								
 def get_map_item_list(item_code):
 	map_item_list = frappe.db.sql("""SELECT name from `tabMapped Item` where mapped_item = '{0}'""".format(item_code),as_dict=1)
