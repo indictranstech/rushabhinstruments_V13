@@ -125,6 +125,7 @@ class BOMCreationTool(Document):
 											std_bom.append('items',{
 												'item_code':raw_std_item_list[0],
 												'item_name':raw_item_data.get("item_name"),
+												'qty' : line.qty,
 												'description':raw_item_data.get("description"),
 												'stock_uom':raw_item_data.get("stock_uom"),
 												'bom_no':default_bom,
@@ -132,12 +133,15 @@ class BOMCreationTool(Document):
 												'rate':raw_item_data.get("valuation_rate"),
 												'engineering_revision':raw_item_data.get('engineering_revision'),
 												'use_specific_engineering_revision':line.use_specific_engineering_revision,
-												'uom' : raw_item_data.get('uom')
+												'uom' : raw_item_data.get('uom'),
+												'reference_item':line.item_code
+												
 												})
 										else :
 											frappe.throw("Standard Item Code not found for Mapped Item {0}".format(line.item_code))
 
 									else : 
+										line.reference_item = line.item_code
 										std_bom.append('items',line)
 								std_bom.save(ignore_permissions = True)
 								std_bom.submit()

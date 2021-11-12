@@ -10,7 +10,85 @@ frappe.ui.form.on('Mapped BOM', {
 				frappe.route_options = {"mapped_bom": frm.doc.name}	
 
 			})
+
+
+			cur_frm.add_custom_button(__('Update References'),function(){
+				if (frm.doc.name && frm.doc.old_reference_bom) {
+					frappe.call({
+						method: "instrument.instrument.doctype.mapped_bom.mapped_bom.enqueue_replace_bom",
+						freeze: true,
+						args: {
+							args: {
+								"current_bom": frm.doc.old_reference_bom,
+								"new_bom": frm.doc.name
+							}
+						}
+					});
+				}else{
+					frappe.msgprint("Please Enter Old Reference BOM ")
+				}
+				// if(frm.doc.old_reference_bom){
+				// 	frappe.call({
+				// 		method : "instrument.instrument.doctype.mapped_bom.mapped_bom.run_update_utility",
+				// 		args:{
+				// 			old_bom : frm.doc.old_reference_bom,
+				// 			current_bom : frm.doc.name
+				// 		},
+				// 		callback:function(r){
+				// 			if(r.message){
+				// 				frappe.msgprint("BOM Updated Successfully")
+				// 			}
+				// 		}
+				// 	})
+
+				// }else{
+				// 	frappe.msgprint("Please Enter Old BOM Reference")
+				// }
+				
+			})
 		}
+		if(frm.doc.item){
+			frappe.call({
+				method : "instrument.instrument.doctype.mapped_bom.mapped_bom.get_mapped_bom_query",
+					args:{
+						item_code : frm.doc.item
+					},
+					callback:function(r){
+						if(r.message){
+							cur_frm.fields_dict['old_reference_bom'].get_query = function(doc, cdt, cdn) {
+								return {
+									filters: [
+										['Mapped BOM','name', 'in', r.message],
+									]
+								}
+						    }
+												
+						}
+					}
+				})
+		}
+		if(frm.doc.item){
+			if(!frm.doc.old_reference_bom && frm.doc.__islocal){
+				frappe.call({
+					method : "instrument.instrument.doctype.mapped_bom.mapped_bom.get_default_bom",
+					args:{
+						item_code : frm.doc.item
+					},
+					callback:function(r){
+						if(r.message){
+							if(r.message[1] == 'No'){
+								frm.set_value("old_reference_bom",r.message[0]);
+							}else{
+								frm.set_value("old_reference_bom",r.message[0]);
+							}
+							
+						}
+					}
+				})
+			}
+		}
+		
+		
 		cur_frm.fields_dict['item'].get_query = function(doc, cdt, cdn) {
 			return {
 				filters: [
@@ -41,6 +119,46 @@ frappe.ui.form.on('Mapped BOM', {
 			}
 		});
 
+	},
+	item:function(frm){
+		if(frm.doc.item){
+			if(!frm.doc.old_reference_bom && frm.doc.__islocal){
+				frappe.call({
+					method : "instrument.instrument.doctype.mapped_bom.mapped_bom.get_default_bom",
+					args:{
+						item_code : frm.doc.item
+					},
+					callback:function(r){
+						if(r.message){
+							if(r.message[1] == 'No'){
+								frm.set_value("old_reference_bom",r.message[0]);
+							}else{
+								frm.set_value("old_reference_bom",r.message[0]);
+							}
+							
+						}
+					}
+				})
+			}
+			frappe.call({
+				method : "instrument.instrument.doctype.mapped_bom.mapped_bom.get_mapped_bom_query",
+					args:{
+						item_code : frm.doc.item
+					},
+					callback:function(r){
+						if(r.message){
+							cur_frm.fields_dict['old_reference_bom'].get_query = function(doc, cdt, cdn) {
+								return {
+									filters: [
+										['Mapped BOM','name', 'in', r.message],
+									]
+								}
+						    }
+												
+						}
+					}
+				})
+		}
 	}
 });
 frappe.ui.form.on('Mapped BOM Item', {
@@ -55,6 +173,9 @@ frappe.ui.form.on('Mapped BOM Item', {
 					}
 				};
 			frappe.model.set_value(row.doctype, row.name, 'bom_no','')
+		}
+		else{
+			frappe.model.set_value(row.doctype, row.name, 'mapped_bom','')
 		}
 
 		
