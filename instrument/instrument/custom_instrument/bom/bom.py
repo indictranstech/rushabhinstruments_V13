@@ -97,3 +97,14 @@ def get_engineering_revision(item_code):
 	if item_code:
 		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
 		return engineering_revision
+
+@frappe.whitelist()
+def get_bom_query(item_code):
+	bom_query = frappe.db.sql("""SELECT name from `tabBOM` where item = '{0}'""".format(item_code),as_dict=1)
+	bom_list = [item.name for item in bom_query]
+	return bom_list
+
+@frappe.whitelist()
+def get_default_bom(item_code):
+	bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
+	return bom_no

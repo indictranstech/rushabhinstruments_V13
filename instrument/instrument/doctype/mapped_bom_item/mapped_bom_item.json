@@ -85,6 +85,7 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "depends_on": "is_map_item",
    "fieldname": "mapped_bom",
    "fieldtype": "Link",
@@ -328,7 +329,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-10-29 03:02:38.575733",
+ "modified": "2021-11-08 04:52:57.658589",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM Item",
