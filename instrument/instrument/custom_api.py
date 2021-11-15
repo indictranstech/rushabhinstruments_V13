@@ -42,3 +42,10 @@ def customer_api():
 def item_wise_stock_api():
 	return frappe.db.sql(f""" select warehouse,modified as date,item_code,actual_qty,stock_uom,valuation_rate,stock_value from `tabBin` """, as_dict=True)
 
+@frappe.whitelist()
+def item_wise_production_api():
+	return frappe.db.sql(f""" select name as work_order,status,production_item,item_name,qty as qty_for_manufacture,material_transferred_for_manufacturing,produced_qty,sales_order,
+wip_warehouse,fg_warehouse,planned_start_date,planned_end_date,actual_start_date,actual_end_date
+from `tabWork Order` where docstatus=1; """, as_dict=True)
+
+
