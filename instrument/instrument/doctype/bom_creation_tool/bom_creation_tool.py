@@ -90,6 +90,8 @@ class BOMCreationTool(Document):
 				if bom_doc:
 					default_company = frappe.db.get_single_value("Global Defaults",'default_company')
 					std_item = frappe.db.get_value("Review Item Mapping",{'mapped_bom':bom.get("name"),'mapped_item':bom_doc.item,'parent':doc.name},'standard_item_code')
+					if not std_item:
+						frappe.throw("Standard Item Code Not found for {0}".format(bom_doc.item))
 					item_details = frappe.db.get_values("Item",{'name':std_item},['item_name','default_bom'],as_dict=1)
 					override_bom = frappe.db.get_value("Item Mapping",{'item_code':std_item,'mapped_item':bom_doc.item},'do_not_override_existing_bom')
 					if not override_bom and not item_details[0].get("default_bom") or override_bom:
@@ -138,6 +140,8 @@ class BOMCreationTool(Document):
 							for line in bom_doc.items:
 								if line.is_map_item ==1 :
 									raw_std_item = frappe.db.get_value("Review Item Mapping",{'mapped_bom':bom.get("name"),'mapped_item':line.item_code},'standard_item_code')
+									if not raw_std_item:
+										frappe.throw("Standard Item Code Not found for {0}".format(line.item_code))
 									raw_item_data = get_item_defaults(raw_std_item, default_company)
 									default_bom = frappe.db.get_value("BOM",{'item':raw_std_item,'is_active':1,'is_default':1,'docstatus' : 1},'name')
 									std_bom.append('items',{
