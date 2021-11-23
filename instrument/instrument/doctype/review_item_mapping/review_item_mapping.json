@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "creation": "2021-11-22 05:28:35.361546",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "mapped_bom",
+  "mapped_item",
+  "attribute",
+  "value",
+  "standard_item_code",
+  "standard_item_name",
+  "standard_bom"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "mapped_bom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mapped BOM",
+   "options": "Mapped BOM",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "mapped_item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mapped Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "attribute",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Attribute",
+   "options": "Item Attribute",
+   "read_only": 1,
+   "width": "1"
+  },
+  {
+   "columns": 1,
+   "fieldname": "value",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Value",
+   "options": "Custom Item Attribute Value",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "standard_item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Standard Item Code",
+   "options": "Item"
+  },
+  {
+   "columns": 1,
+   "fieldname": "standard_item_name",
+   "fieldtype": "Data",
+   "label": "Standard Item Name",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "description": "If not fetched according to standard item code ,check 'Do not Override Standard BOM' flag on Item Mapping",
+   "fieldname": "standard_bom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Standard BOM",
+   "options": "BOM"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2021-11-23 00:37:13.951786",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Review Item Mapping",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

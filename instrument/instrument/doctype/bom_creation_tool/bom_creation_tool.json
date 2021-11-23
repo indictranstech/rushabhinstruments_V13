@@ -12,6 +12,8 @@
   "override_existing_bom",
   "section_break_5",
   "attribute_table",
+  "review_item_mappings",
+  "review_item_mapping",
   "amended_from"
  ],
  "fields": [
@@ -57,12 +59,23 @@
    "options": "BOM Creation Tool",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "review_item_mapping",
+   "fieldtype": "Table",
+   "label": "Review Item Mapping",
+   "options": "Review Item Mapping"
+  },
+  {
+   "fieldname": "review_item_mappings",
+   "fieldtype": "Button",
+   "label": "Review Item Mappings"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-10-28 08:03:26.607346",
+ "modified": "2021-11-22 05:30:56.057941",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
