@@ -1,7 +1,7 @@
 // Copyright (c) 2021, instrument and contributors
 // For license information, please see license.txt
 
-frappe.ui.form.on('Mapped Item', {
+frappe.ui.form.on('Item Mapping', {
 	refresh: function(frm) {
 
 		//Display list of customers who are not distributors
@@ -28,6 +28,25 @@ frappe.ui.form.on('Mapped Item', {
 			}
 		});
 
+	},
+	mapped_item:function(frm){
+		if(frm.doc.mapped_item){
+			frappe.call({
+				method: "instrument.instrument.doctype.item_mapping.item_mapping.get_attributes",
+				args : {
+					mapped_item : frm.doc.mapped_item
+				},
+				callback:function(r){
+					if(r.message){
+						$.each(r.message,function(idx,item_row){
+							var row = frappe.model.add_child(frm.doc, "Attribute Table", "attribute_table");
+							frappe.model.set_value(row.doctype, row.name, 'attribute', item_row['attribute']);
+						})
+						frm.refresh_field("attribute_table");
+					}
+				}
+			})
+		}
 	}
 });
 frappe.ui.form.on('Attribute Table',{

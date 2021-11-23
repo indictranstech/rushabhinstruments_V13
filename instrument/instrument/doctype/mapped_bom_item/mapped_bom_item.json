@@ -311,6 +311,7 @@
    "default": "0",
    "fieldname": "override_existing_bom",
    "fieldtype": "Check",
+   "hidden": 1,
    "label": "Override Existing BOM"
   },
   {
@@ -329,7 +330,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-11-08 04:52:57.658589",
+ "modified": "2021-11-23 00:41:09.493081",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM Item",

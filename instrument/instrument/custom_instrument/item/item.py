@@ -4,7 +4,12 @@ from frappe.model.document import Document
 
 
 def validate(doc,method):
-	pass
+	if doc.item_attribute_table:
+		attribute_list = [item.attribute for item in doc.item_attribute_table]
+		attribute_set = set(attribute_list)
+		if len(attribute_set) != len(attribute_list):
+			frappe.throw("Duplicate Attribute Not Allowed")
+
 	# warehouse_list  = []
 	# if doc.warehouses:
 	# 	for row in doc.warehouses:
