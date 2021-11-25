@@ -7,6 +7,7 @@
  "field_order": [
   "mapped_bom",
   "mapped_item",
+  "attribute_value",
   "attribute",
   "value",
   "standard_item_code",
@@ -19,7 +20,7 @@
    "fieldname": "mapped_bom",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Mapped BOM",
+   "label": "Map BOM",
    "options": "Mapped BOM",
    "read_only": 1
   },
@@ -28,13 +29,12 @@
    "fieldname": "mapped_item",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "Mapped Item",
+   "label": "Map Item",
    "read_only": 1
   },
   {
    "fieldname": "attribute",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Attribute",
    "options": "Item Attribute",
    "read_only": 1,
@@ -44,24 +44,23 @@
    "columns": 1,
    "fieldname": "value",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Value",
    "options": "Custom Item Attribute Value",
    "read_only": 1
   },
   {
-   "columns": 1,
+   "columns": 2,
    "fieldname": "standard_item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Standard Item Code",
+   "label": "Std Item Code",
    "options": "Item"
   },
   {
    "columns": 1,
    "fieldname": "standard_item_name",
    "fieldtype": "Data",
-   "label": "Standard Item Name",
+   "label": "Std Item Name",
    "read_only": 1
   },
   {
@@ -72,12 +71,19 @@
    "in_list_view": 1,
    "label": "Standard BOM",
    "options": "BOM"
+  },
+  {
+   "columns": 2,
+   "fieldname": "attribute_value",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Attribute Value"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-11-23 00:37:13.951786",
+ "modified": "2021-11-25 02:47:42.600812",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Review Item Mapping",
