@@ -24,6 +24,7 @@ import erpnext
 from erpnext.setup.utils import get_exchange_rate
 from erpnext.stock.doctype.item.item import get_item_details
 from erpnext.stock.get_item_details import get_conversion_factor, get_price_list_rate
+from instrument.instrument.doctype.bom_creation_tool.bom_creation_tool import get_map_item_attributes
 
 
 class MappedBOM(Document):
@@ -81,6 +82,26 @@ class MappedBOM(Document):
 		self.validate_scrap_items()
 		self.update_cost(update_parent=False, from_child_bom=True, update_hour_rate = False, save=False)
 		self.set_bom_level()
+		self.check_deleted_items()
+
+	def check_deleted_items(self):
+		if self.items and self.old_reference_bom:
+			old_bom_data = get_bom_data(self.old_reference_bom)
+			item_dict = {row.get("item_code"):row for row in old_bom_data}
+			new_item_dict = {row.item_code:row for row in self.items}
+			deleted_item_list = list()
+			for item in item_dict:
+				if item not in new_item_dict:
+					deleted_item_list.append(item_dict.get(item))
+			if len(deleted_item_list) > 0:
+				self.deleted_items = ''
+				for row in deleted_item_list:
+					self.append('deleted_items',{
+						'item_code':row.get("item_code"),
+						'item_name':row.get("item_name"),
+						'is_map_item':row.get("is_map_item")
+						})
+
 	def clear_operations(self):
 		if not self.with_operations:
 			self.set('operations', [])
@@ -741,3 +762,193 @@ def replace_bom(args):
 	doc.replace_bom()
 
 	frappe.db.auto_commit_on_many_writes = 0
+
+@frappe.whitelist()
+def propogate_update_to_descendent(current_bom,new_bom):
+	if current_bom and new_bom:
+		old_bom_data = get_bom_data(current_bom)
+		old_item_dict = {row.get("item_code"):row for row in old_bom_data}
+		new_bom_data = get_bom_data(new_bom)
+		new_item_dict = {row.get("item_code") for row in new_bom_data}
+		final_dict = dict()
+		new_item_list = list()
+		flag = 0
+		for line in new_bom_data:
+			if line.is_map_item:
+				if line.item_code in old_item_dict:
+					if line.qty == old_item_dict.get(line.item_code).get("qty"):
+						final_dict.update(line)
+						old_item_dict.pop(line.item_code)
+					else:
+						final_dict.update(line)
+						flag=1
+						old_item_dict.pop(line.item_code)
+				else:
+					final_dict.update(line)
+					flag=1
+			else :
+				if line.item_code in old_item_dict:
+					if line.qty == old_item_dict.get(line.item_code).get('qty'):
+						old_item_dict.pop(line.item_code)
+					else:
+						new_item_list.append(line)
+						old_item_dict.pop(line.item_code)
+				else:
+					new_item_list.append(line)
+		for row in old_item_dict:
+			if old_item_dict.get(row).get("is_map_item"):
+				flag =1
+		if flag ==1 :
+			create_bom_creation_tool(new_bom)
+		else:
+			create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
+
+def create_bom_creation_tool(bom):
+	if bom:
+		bom_creation_data ,check_exists = get_map_item_attributes(bom)
+		bom_creation_tool = frappe.new_doc("BOM Creation Tool")
+		if bom_creation_tool:
+			bom_creation_tool.mapped_bom = bom
+			if check_exists == False:
+				for line in bom_creation_data:
+					for row in line.get("attribute_list"):
+						bom_creation_tool.append('attribute_table',{
+							'mapped_bom':line.get("parent"),
+							'mapped_item':row.get("mapped_item"),
+							'attribute':row.get("attribute")
+							})
+			else:
+				for row in bom_creation_data:
+					for line in bom_creation_data:
+						bom_creation_tool.append('attribute_table',{
+							'mapped_bom':line.get("parent"),
+							'mapped_item':row.get("mapped_item"),
+							'attribute':row.get("attribute"),
+							'value':row.get("value")
+							})
+			bom_creation_tool.save()
+			frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+			frappe.db.commit()
+			frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
+def create_standard_bom(mapped_bom,item_list,old_item_dict,new_bomm):
+	bom_data = get_bom_list(mapped_bom)
+	for bom in bom_data:
+		old_bom = frappe.get_doc("BOM",bom.get("name"))
+		new_bom = frappe.copy_doc(old_bom, ignore_no_copy=False)
+		new_item_dict = {row.item_code :row for row in new_bom.items}
+		if len(item_list) > 0:
+			for row in item_list:
+				if row.item_code in new_item_dict:
+					for line in new_bom.items:
+						if line.item_code == row.item_code:
+							line.qty = row.qty
+				else:
+					new_bom.append('items',row)
+		if old_item_dict:
+			for row in new_bom.items:
+				if row.item_code in old_item_dict:
+					new_bom.items.remove(row)
+		new_bom.save()
+		frappe.db.set_value("Mapped BOM",{'name':new_bomm},'propogate_to_descendent_bom',1)
+		frappe.db.commit()
+		frappe.msgprint("New Version Created For BOM <b>{0}</b>".format(bom.get("name")))
+
+def get_bom_data(bom):
+	old_bom_data = frappe.db.sql("""SELECT * from `tabMapped BOM Item` where parent = '{0}'""".format(bom),as_dict=1)
+	return old_bom_data
+def get_bom_list(bom):
+	if bom:
+		bom_list = frappe.db.sql("""SELECT name from `tabBOM` where mapped_bom = '{0}' and docstatus = 1 """.format(bom),as_dict=1)
+		return bom_list
+
+@frappe.whitelist()
+def check_propogation(current_bom,new_bom):
+	if current_bom and new_bom:
+		old_bom_data = get_bom_data(current_bom)
+		old_item_dict = {row.get("item_code"):row for row in old_bom_data}
+		new_bom_data = get_bom_data(new_bom)
+		new_item_dict = {row.get("item_code") for row in new_bom_data}
+		final_dict = dict()
+		new_item_list = list()
+		flag = 0
+		for line in new_bom_data:
+			if line.is_map_item:
+				if line.item_code in old_item_dict:
+					if line.qty == old_item_dict.get(line.item_code).get("qty"):
+						final_dict.update(line)
+						old_item_dict.pop(line.item_code)
+					else:
+						final_dict.update(line)
+						flag=1
+						old_item_dict.pop(line.item_code)
+				else:
+					final_dict.update(line)
+					flag=1
+			else :
+				if line.item_code in old_item_dict:
+					if line.qty == old_item_dict.get(line.item_code).get('qty'):
+						old_item_dict.pop(line.item_code)
+					else:
+						new_item_list.append(line)
+						old_item_dict.pop(line.item_code)
+				else:
+					new_item_list.append(line)
+		for row in old_item_dict:
+			if old_item_dict.get(row).get("is_map_item"):
+				flag =1
+		if old_item_dict or len(new_item_list):
+			return True
+
+@frappe.whitelist()
+def get_bom_diff(bom1, bom2):
+	from frappe.model import table_fields
+
+	if bom1 == bom2:
+		frappe.throw(_("Mapped BOM 1 {0} and Mapped BOM 2 {1} should not be same")
+			.format(frappe.bold(bom1), frappe.bold(bom2)))
+
+	doc1 = frappe.get_doc('Mapped BOM', bom1)
+	doc2 = frappe.get_doc('Mapped BOM', bom2)
+
+	out = get_diff(doc1, doc2)
+	out.row_changed = []
+	out.added = []
+	out.removed = []
+
+	meta = doc1.meta
+
+	identifiers = {
+		'operations': 'operation',
+		'items': 'item_code',
+		'scrap_items': 'item_code',
+		'exploded_items': 'item_code',
+		'deleted_items' : 'item_code'
+	}
+
+	for df in meta.fields:
+		old_value, new_value = doc1.get(df.fieldname), doc2.get(df.fieldname)
+
+		if df.fieldtype in table_fields:
+			identifier = identifiers[df.fieldname]
+			# make maps
+			old_row_by_identifier, new_row_by_identifier = {}, {}
+			for d in old_value:
+				old_row_by_identifier[d.get(identifier)] = d
+			for d in new_value:
+				new_row_by_identifier[d.get(identifier)] = d
+
+			# check rows for additions, changes
+			for i, d in enumerate(new_value):
+				if d.get(identifier) in old_row_by_identifier:
+					diff = get_diff(old_row_by_identifier[d.get(identifier)], d, for_child=True)
+					if diff and diff.changed:
+						out.row_changed.append((df.fieldname, i, d.get(identifier), diff.changed))
+				else:
+					out.added.append([df.fieldname, d.as_dict()])
+
+			# check for deletions
+			for d in old_value:
+				if not d.get(identifier) in new_row_by_identifier:
+					out.removed.append([df.fieldname, d.as_dict()])
+
+	return out

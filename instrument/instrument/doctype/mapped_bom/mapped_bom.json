@@ -42,6 +42,7 @@
   "bom_level",
   "section_break_33",
   "items",
+  "deleted_items",
   "scrap_section",
   "scrap_items",
   "costing",
@@ -71,6 +72,7 @@
   "show_items",
   "show_operations",
   "web_long_description",
+  "propogate_to_descendent_bom",
   "amended_from"
  ],
  "fields": [
@@ -537,13 +539,27 @@
    "fieldtype": "Link",
    "label": "Old Reference BOM",
    "options": "Mapped BOM"
+  },
+  {
+   "fieldname": "deleted_items",
+   "fieldtype": "Table",
+   "label": "Old Mapped BOM Items Deleted",
+   "options": "Deleted Items",
+   "read_only": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "propogate_to_descendent_bom",
+   "fieldtype": "Check",
+   "label": "Propogate to Descendent BOM"
   }
  ],
  "icon": "fa fa-sitemap",
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2021-11-08 00:11:48.831120",
+ "modified": "2021-11-24 05:56:50.236192",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",
