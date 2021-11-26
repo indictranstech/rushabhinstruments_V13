@@ -73,6 +73,7 @@
   "show_operations",
   "web_long_description",
   "propogate_to_descendent_bom",
+  "check_propogation_to_descendent_bom",
   "amended_from"
  ],
  "fields": [
@@ -553,13 +554,20 @@
    "fieldname": "propogate_to_descendent_bom",
    "fieldtype": "Check",
    "label": "Propogate to Descendent BOM"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fieldname": "check_propogation_to_descendent_bom",
+   "fieldtype": "Check",
+   "label": "Check Propogation To Descendent BOM"
   }
  ],
  "icon": "fa fa-sitemap",
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2021-11-24 05:56:50.236192",
+ "modified": "2021-11-26 01:57:17.578917",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",

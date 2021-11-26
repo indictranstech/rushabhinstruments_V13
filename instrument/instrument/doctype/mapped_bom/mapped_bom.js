@@ -10,31 +10,22 @@ frappe.ui.form.on('Mapped BOM', {
 				frappe.route_options = {"mapped_bom": frm.doc.name}	
 
 			})
-			if(frm.doc.old_reference_bom && frm.doc.name && frm.doc.docstatus == 1 && frm.doc.propogate_update_to_descendent==0){
-				frappe.call({
-					method : "instrument.instrument.doctype.mapped_bom.mapped_bom.check_propogation",
-					args:{
-						current_bom : frm.doc.old_reference_bom,
-						new_bom : frm.doc.name
-					},
-					callback:function(r){
-						if(r.message == true){
-							cur_frm.add_custom_button(__('Propogate Updates to Descendent BOMs'),function(){
-								frappe.call({
-									method: "instrument.instrument.doctype.mapped_bom.mapped_bom.propogate_update_to_descendent",
-									freeze: true,
-									args: {
-									
-										"current_bom": frm.doc.old_reference_bom,
-										"new_bom": frm.doc.name
-									
-									}
-								});
-							})
+			if(frm.doc.docstatus == 1 && frm.doc.check_propogation_to_descendent_bom && frm.doc.propogate_to_descendent_bom==0){
+				cur_frm.add_custom_button(__('Propogate Updates to Descendent BOMs'),function(){
+					frappe.call({
+						method: "instrument.instrument.doctype.mapped_bom.mapped_bom.propogate_update_to_descendent",
+						freeze: true,
+						args: {
+						
+							"current_bom": frm.doc.old_reference_bom,
+							"new_bom": frm.doc.name
+						
 						}
-					}
+					});
 				})
+
 			}
+			
 			cur_frm.add_custom_button(__('Update References'),function(){
 				if (frm.doc.name && frm.doc.old_reference_bom) {
 					frappe.call({
@@ -49,24 +40,7 @@ frappe.ui.form.on('Mapped BOM', {
 					});
 				}else{
 					frappe.msgprint("Please Enter Old Reference BOM ")
-				}
-				// if(frm.doc.old_reference_bom){
-				// 	frappe.call({
-				// 		method : "instrument.instrument.doctype.mapped_bom.mapped_bom.run_update_utility",
-				// 		args:{
-				// 			old_bom : frm.doc.old_reference_bom,
-				// 			current_bom : frm.doc.name
-				// 		},
-				// 		callback:function(r){
-				// 			if(r.message){
-				// 				frappe.msgprint("BOM Updated Successfully")
-				// 			}
-				// 		}
-				// 	})
-
-				// }else{
-				// 	frappe.msgprint("Please Enter Old BOM Reference")
-				// }
+				}	
 				
 			})
 		}

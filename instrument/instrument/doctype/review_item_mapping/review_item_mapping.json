@@ -58,6 +58,7 @@
   },
   {
    "columns": 1,
+   "fetch_from": "standard_item_code.item_name",
    "fieldname": "standard_item_name",
    "fieldtype": "Data",
    "label": "Std Item Name",
@@ -83,7 +84,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-11-25 02:47:42.600812",
+ "modified": "2021-11-26 00:49:58.283191",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Review Item Mapping",

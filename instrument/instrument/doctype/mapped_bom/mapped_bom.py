@@ -61,6 +61,7 @@ class MappedBOM(Document):
 		self.name = name
 	def on_submit(self):
 		self.manage_default_bom()
+		self.check_propogation()
 	def validate(self):
 		self.route = frappe.scrub(self.name).replace('_', '-')
 
@@ -427,6 +428,7 @@ class MappedBOM(Document):
 		self.manage_default_bom()
 	def on_update_after_submit(self):
 		self.manage_default_bom()
+		self.check_propogation()
 	def set_bom_level(self, update=False):
 		levels = []
 
@@ -622,6 +624,48 @@ class MappedBOM(Document):
 			self.get_parent_boms(d[0], bom_list)
 
 		return list(set(bom_list))
+	@frappe.whitelist()
+	def check_propogation(self):
+		if self.old_reference_bom and self.name:
+			old_bom_data = get_bom_data(self.old_reference_bom)
+			old_item_dict = {row.get("item_code"):row for row in old_bom_data}
+			new_bom_data = get_bom_data(self.name)
+			new_item_dict = {row.get("item_code") for row in new_bom_data}
+			final_dict = dict()
+			new_item_list = list()
+			flag = 0
+			for line in new_bom_data:
+				if line.is_map_item:
+					if line.item_code in old_item_dict:
+						if line.qty == old_item_dict.get(line.item_code).get("qty"):
+							final_dict.update(line)
+							old_item_dict.pop(line.item_code)
+						else:
+							final_dict.update(line)
+							flag=1
+							# old_item_dict.pop(line.item_code)
+					else:
+						new_item_list.append(line)
+						final_dict.update(line)
+						flag=1
+				else :
+					if line.item_code in old_item_dict:
+						if line.qty == old_item_dict.get(line.item_code).get('qty'):
+							old_item_dict.pop(line.item_code)
+						else:
+							new_item_list.append(line)
+							# old_item_dict.pop(line.item_code)
+					else:
+						new_item_list.append(line)
+			for row in old_item_dict:
+				if old_item_dict.get(row).get("is_map_item"):
+					flag =1
+			
+			if old_item_dict or len(new_item_list)>0:
+				frappe.db.set_value("Mapped BOM",{'name':self.name},'check_propogation_to_descendent_bom',1)
+				frappe.db.commit()
+				self.reload()
+
 def get_new_bom_unit_cost(bom):
 		new_bom_unitcost = frappe.db.sql("""SELECT `total_cost`/`quantity`
 			FROM `tabMapped BOM` WHERE name = %s""", bom)
@@ -861,43 +905,6 @@ def get_bom_list(bom):
 		bom_list = frappe.db.sql("""SELECT name from `tabBOM` where mapped_bom = '{0}' and docstatus = 1 """.format(bom),as_dict=1)
 		return bom_list
 
-@frappe.whitelist()
-def check_propogation(current_bom,new_bom):
-	if current_bom and new_bom:
-		old_bom_data = get_bom_data(current_bom)
-		old_item_dict = {row.get("item_code"):row for row in old_bom_data}
-		new_bom_data = get_bom_data(new_bom)
-		new_item_dict = {row.get("item_code") for row in new_bom_data}
-		final_dict = dict()
-		new_item_list = list()
-		flag = 0
-		for line in new_bom_data:
-			if line.is_map_item:
-				if line.item_code in old_item_dict:
-					if line.qty == old_item_dict.get(line.item_code).get("qty"):
-						final_dict.update(line)
-						old_item_dict.pop(line.item_code)
-					else:
-						final_dict.update(line)
-						flag=1
-						old_item_dict.pop(line.item_code)
-				else:
-					final_dict.update(line)
-					flag=1
-			else :
-				if line.item_code in old_item_dict:
-					if line.qty == old_item_dict.get(line.item_code).get('qty'):
-						old_item_dict.pop(line.item_code)
-					else:
-						new_item_list.append(line)
-						old_item_dict.pop(line.item_code)
-				else:
-					new_item_list.append(line)
-		for row in old_item_dict:
-			if old_item_dict.get(row).get("is_map_item"):
-				flag =1
-		if old_item_dict or len(new_item_list):
-			return True
 
 @frappe.whitelist()
 def get_bom_diff(bom1, bom2):
