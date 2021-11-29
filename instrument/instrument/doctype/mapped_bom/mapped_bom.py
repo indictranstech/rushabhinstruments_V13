@@ -63,6 +63,9 @@ class MappedBOM(Document):
 		self.manage_default_bom()
 		self.check_propogation()
 	def validate(self):
+		if self.get("__islocal"):
+			self.propogate_to_descendent_bom = 0
+			self.check_propogation_to_descendent_bom = 0
 		self.route = frappe.scrub(self.name).replace('_', '-')
 
 		if not self.company:
