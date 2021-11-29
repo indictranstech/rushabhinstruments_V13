@@ -10,22 +10,28 @@ frappe.ui.form.on("BOM", {
 		});	
 		if(!frm.doc.__islocal){
 			cur_frm.add_custom_button(__('Duplicate to Mapped BOM'),function(){
-				frappe.call({
-					method : "instrument.instrument.custom_instrument.bom.bom.duplicate_bom",
-					args : {
-						doc : frm.doc.name
-					},
-					callback:function(r){
-						if(r.message){
-							var old_link = window.location.href
-							var split_data = old_link.split("/app")
-							var myJSON = JSON.stringify(r.message);
-							var link =  split_data[0]+"/app/mapped-bom/new-mapped-bom-1?data="+myJSON
-							window.open(link);
+				var old_link = window.location.href
+				var split_data = old_link.split("/app")
+				var data = {doc : frm.doc.name}
+				var myJSON = JSON.stringify(data);
+				var link =  split_data[0]+"/app/mapped-bom/new-mapped-bom-1?data="+myJSON
+				window.open(link);
+				// frappe.call({
+				// 	method : "instrument.instrument.custom_instrument.bom.bom.duplicate_bom",
+				// 	args : {
+				// 		doc : frm.doc.name
+				// 	},
+				// 	callback:function(r){
+				// 		if(r.message){
+				// 			var old_link = window.location.href
+				// 			var split_data = old_link.split("/app")
+				// 			var myJSON = JSON.stringify(r.message);
+				// 			var link =  split_data[0]+"/app/mapped-bom/new-mapped-bom-1?data="+myJSON
+				// 			window.open(link);
 										
-						}
-					}
-				})
+				// 		}
+				// 	}
+				// })
 			})
 		}
 		if(frm.doc.item){
