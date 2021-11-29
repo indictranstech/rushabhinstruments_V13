@@ -108,3 +108,14 @@ def get_bom_query(item_code):
 def get_default_bom(item_code):
 	bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
 	return bom_no
+
+@frappe.whitelist()
+def duplicate_bom(doc):
+	bom_items = frappe.db.sql("""SELECT * from `tabBOM` where name = '{0}'""".format(doc),as_dict=1)
+	item_data = frappe.db.sql("""SELECT * from `tabBOM Item` where parent = '{0}'""".format(doc),as_dict=1)
+	operations = frappe.db.sql("""SELECT * from `tabBOM Operation` where parent = '{0}'""".format(doc),as_dict=1)
+	scrap_data = frappe.db.sql("""SELECT * from `tabBOM Scrap Item` where parent = '{0}'""".format(doc),as_dict=1)
+	bom_items[0]['items'] = item_data
+	bom_items[0]['operations'] = operations
+	bom_items[0]['scrap_data'] = scrap_data
+	return bom_items[0]
