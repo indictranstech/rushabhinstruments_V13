@@ -1,0 +1,90 @@
+{
+ "actions": [],
+ "creation": "2021-12-02 05:48:21.135508",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "replace_item_section",
+  "old_item_number",
+  "old_item_name",
+  "column_break_4",
+  "new_item_number",
+  "new_item_name",
+  "new_bom",
+  "replace"
+ ],
+ "fields": [
+  {
+   "fieldname": "replace_item_section",
+   "fieldtype": "Section Break",
+   "label": "Replace Item"
+  },
+  {
+   "description": "Item which will be replaced",
+   "fieldname": "old_item_number",
+   "fieldtype": "Link",
+   "label": "Old Item Number",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "old_item_number.item_name",
+   "fieldname": "old_item_name",
+   "fieldtype": "Data",
+   "label": "Old Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "New Item After Replacement",
+   "fieldname": "new_item_number",
+   "fieldtype": "Link",
+   "label": "New Item Number",
+   "options": "Item"
+  },
+  {
+   "fetch_from": "new_item_number.item_name",
+   "fieldname": "new_item_name",
+   "fieldtype": "Data",
+   "label": "New Item Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "new_bom",
+   "fieldtype": "Link",
+   "label": "New BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "replace",
+   "fieldtype": "Button",
+   "label": "Replace"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2021-12-02 05:53:52.069357",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "BOM Item Replacement Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
