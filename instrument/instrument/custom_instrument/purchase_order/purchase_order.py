@@ -2,8 +2,11 @@ from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
 from frappe.desk.form.load import get_attachments
+from zipfile import ZipFile
+import os
 
 def on_submit(doc, method = None):
+	attach_purchasing_docs(doc,method)
 	file_att = []
 	file_att = [frappe.attach_print(doc.doctype, doc.name, file_name=doc.name)]
 	attachments = frappe.db.sql(""" SELECT file_name  FROM tabFile 
@@ -28,7 +31,7 @@ def on_submit(doc, method = None):
 			message = "Purchase Order : " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-order/{0}".format(doc.name),
 			attachments = file_att,
 			)
-	attach_purchasing_docs(doc,method)
+	
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
@@ -48,20 +51,61 @@ def attach_purchasing_docs(doc, method):
 		if row.item_code and row.engineering_revision:
 			purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(row.engineering_revision),as_dict=1,debug=1)
 			purchasing_package_list = [item.purchasing_package_name for item in purchasing_package]
-			for row in purchasing_package_list:
-				package_doc = frappe.get_doc("Package Document",row)
-				"""Copy attachments from `package doc`"""
+			for col in purchasing_package_list:
+				package_doc = frappe.get_doc("Package Document",col)
+				"""Copy attachments from `package document`"""
 				from frappe.desk.form.load import get_attachments
+				attachments = get_attachments(package_doc.doctype, package_doc.name)
 
 				#loop through attachments
-				for attach_item in get_attachments(package_doc.doctype, package_doc.name):
+				# for attach_item in get_attachments(package_doc.doctype, package_doc.name):
+					# save attachments to new doc
+					# _file = frappe.get_doc({
+					# 	"doctype": "File",
+					# 	"file_url": attach_item.file_url,
+					# 	"file_name": attach_item.file_name,
+					# 	"attached_to_name": doc.name,
+					# 	"attached_to_doctype": doc.doctype,
+					# 	"folder": "Home"})
+					# _file.save()
+				path = os.getcwd()
+				file = open("currentsite.txt","r")
+				sitename = file.read()
+				full_path = path+"/"+sitename+"private/files/"+row.engineering_revision+"_"+doc.name+".zip"
+				file_name = row.engineering_revision+"_"+doc.name+".zip"
+				file_url = '/private/files/'+file_name
+				if len(attachments) > 0 :
+					with ZipFile(full_path,'w') as zip:
+						for i in attachments:
+							new_file_path = path+"/"+sitename+"private/files/"+i.file_name
+							zip.write(new_file_path)
+					file_doc = frappe.new_doc("File")
+					file_doc.file_name =file_name
+					file_doc.folder = "Home/Attachments"
+					file_doc.attached_to_doctype = doc.doctype
+					file_doc.attached_to_name = doc.name
+					file_doc.file_url = file_url
+					file_doc.insert(ignore_permissions=True)
+					frappe.db.commit()
+					doc.reload()
+	# for row in doc.items:
+	# 	if row.item_code and row.engineering_revision:
+	# 		purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(row.engineering_revision),as_dict=1,debug=1)
+	# 		purchasing_package_list = [item.purchasing_package_name for item in purchasing_package]
+	# 		for row in purchasing_package_list:
+	# 			package_doc = frappe.get_doc("Package Document",row)
+	# 			"""Copy attachments from `package doc`"""
+	# 			from frappe.desk.form.load import get_attachments
 
-					#save attachments to new doc
-					_file = frappe.get_doc({
-						"doctype": "File",
-						"file_url": attach_item.file_url,
-						"file_name": attach_item.file_name,
-						"attached_to_name": doc.name,
-						"attached_to_doctype": doc.doctype,
-						"folder": "Home/Attachments"})
-					_file.save()
+	# 			#loop through attachments
+	# 			for attach_item in get_attachments(package_doc.doctype, package_doc.name):
+
+	# 				#save attachments to new doc
+	# 				_file = frappe.get_doc({
+	# 					"doctype": "File",
+	# 					"file_url": attach_item.file_url,
+	# 					"file_name": attach_item.file_name,
+	# 					"attached_to_name": doc.name,
+	# 					"attached_to_doctype": doc.doctype,
+	# 					"folder": "Home/Attachments"})
+	# 				_file.save()
