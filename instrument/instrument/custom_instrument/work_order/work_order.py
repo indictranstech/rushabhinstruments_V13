@@ -92,7 +92,7 @@ def on_submit(doc,method):
 					er_rev.save(ignore_permissions = True)
 
 @frappe.whitelist()
-def get_engineering_revision(item_code,bom_no):
+def get_prod_engineering_revision(item_code,bom_no):
 	if item_code:
 		engineering_revision = frappe.db.sql("""SELECT engineering_revision from `tabItem` where item_code = '{0}'""".format(item_code),as_dict=1)
 		engineering_revision[0]['use_specific_engineering_revision'] = 0
@@ -109,10 +109,15 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 
 def validate(doc,method):
 	doc.skip_transfer =1
+	prod_item_engineering_revision = get_engineering_revision(doc.production_item)
+	doc.engineering_revision = prod_item_engineering_revision
 	if doc.engineering_revision:
 		manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':doc.engineering_revision},'manufacturing_package_name')
 		doc.manufacturing_package_name = manufacturing_package
 	for item in doc.required_items:
+		engineering_revision = get_prod_engineering_revision(item.item_code,doc.bom_no)
+		item.engineering_revision = engineering_revision[0].get("engineering_revision")
+		item.use_specific_engineering_revision = engineering_revision[0].get("use_specific_engineering_revision")
 		if item.engineering_revision:
 			manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':item.engineering_revision},'manufacturing_package_name')
 			item.manufacturing_package = manufacturing_package

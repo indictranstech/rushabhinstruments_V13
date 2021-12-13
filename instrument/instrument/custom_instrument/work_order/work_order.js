@@ -1,6 +1,8 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
-		// if(frm.doc.__islocal){
+		
+    
+				// if(frm.doc.__islocal){
 		// 	frm.set_value('skip_transfer',1)
 		// }
 		//Filter Engineering Revision
@@ -38,7 +40,7 @@ frappe.ui.form.on('Work Order', {
 				frm.doc.required_items.forEach(function(row){
 					if(row['item_code']){
 						frappe.call({
-							"method" :"instrument.instrument.custom_instrument.work_order.work_order.get_engineering_revision",
+							"method" :"instrument.instrument.custom_instrument.work_order.work_order.get_prod_engineering_revision",
 							"args" : {
 								item_code : row['item_code'],
 								bom_no : frm.doc.bom_no

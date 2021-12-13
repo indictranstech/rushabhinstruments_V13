@@ -1,6 +1,23 @@
 [
  {
   "default_value": null,
+  "doc_type": "BOM Creation Tool",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "naming_series",
+  "modified": "2021-11-26 05:26:25.589413",
+  "name": "BOM Creation Tool-naming_series-options",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "options",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "BOM-.YYYY.-"
+ },
+ {
+  "default_value": null,
   "doc_type": "Pick List",
   "docstatus": 0,
   "doctype": "Property Setter",
