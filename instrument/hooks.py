@@ -28,7 +28,8 @@ doctype_js = {
 	"Stock Entry": "instrument/custom_instrument/stock_entry/stock_entry.js",
 	"Item": "instrument/custom_instrument/item/item.js",
 	"BOM":"instrument/custom_instrument/bom/bom.js",
-	"Job Card" : "instrument/custom_instrument/job_card/job_card.js"
+	"Job Card" : "instrument/custom_instrument/job_card/job_card.js",
+	"Material Request" : "instrument/custom_instrument/material_request/material_request.js"
  
 }
 
@@ -52,7 +53,7 @@ doctype_js = {
 
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"Work Order" : "instrument/custom_instrument/work_order/work_order_list.js"}
+doctype_list_js = {"Work Order" : "instrument/custom_instrument/work_order/work_order_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
@@ -125,6 +126,9 @@ doc_events = {
  	"Item Attribute" : {
  	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate",
  	"after_insert" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.after_insert"
+ 	},
+ 	"Material Request":{
+ 	"validate":"instrument.instrument.custom_instrument.material_request.material_request.validate"
  	}
 }
 
