@@ -193,6 +193,9 @@ frappe.ui.form.on('Mapped BOM', {
 		}
 	},
 	onload:function(frm){
+		if(frm.doc.__islocal){
+			frm.set_value("conversion_rate",1)
+		}
 		var query = window.location.href
 		var index = query.indexOf("=")
 		var string_data= query.substring(index+1)
@@ -296,10 +299,14 @@ frappe.ui.form.on('Mapped BOM Item', {
 							frappe.model.set_value(cdt, cdn, 'bom_no', r.message[0]);
 							frappe.model.set_value(cdt, cdn, 'is_map_item', 0);
 							frappe.model.set_value(row.doctype, row.name, 'mapped_bom','')
+							frappe.model.set_value(row.doctype, row.name, 'rate',1)
+							frappe.model.set_value(row.doctype, row.name, 'uom',r.message[2])
 						}else{
 							frappe.model.set_value(cdt, cdn, 'mapped_bom', r.message[0]);
 							frappe.model.set_value(cdt, cdn, 'is_map_item', 1);
 							frappe.model.set_value(row.doctype, row.name, 'bom_no','')
+							frappe.model.set_value(row.doctype, row.name, 'rate',1)
+							frappe.model.set_value(row.doctype, row.name, 'uom',r.message[2])
 						}
 						
 					}

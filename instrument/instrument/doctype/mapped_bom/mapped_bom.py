@@ -777,10 +777,10 @@ def get_default_bom(item_code):
 	item_doc = frappe.get_doc("Item",item_code)
 	if item_doc.is_map_item:
 		bom_no = frappe.db.get_value("Mapped BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
-		return bom_no,'Yes'
+		return bom_no,'Yes',item_doc.stock_uom
 	else:
 		bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
-		return bom_no,'No'
+		return bom_no,'No',item_doc.stock_uom
 
 @frappe.whitelist()
 def get_mapped_bom_query(item_code):
