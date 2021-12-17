@@ -59,6 +59,7 @@ class MappedBOM(Document):
 					.format(msg, "<br>"))
 
 		self.name = name
+	
 	def on_submit(self):
 		self.manage_default_bom()
 		self.check_propogation()
@@ -67,7 +68,7 @@ class MappedBOM(Document):
 			self.propogate_to_descendent_bom = 0
 			self.check_propogation_to_descendent_bom = 0
 		self.route = frappe.scrub(self.name).replace('_', '-')
-
+		
 		if not self.company:
 			frappe.throw(_("Please select a Company first."), title=_("Mandatory"))
 		self.clear_operations()
@@ -285,7 +286,7 @@ class MappedBOM(Document):
 			rate = self.get_rm_rate({
 				"company": self.company,
 				"item_code": d.item_code,
-				"mapped_bom": d.mapped_bom,
+				"mapped_bom": d.mapped_bom if d.mapped_bom else '',
 				"qty": d.qty,
 				"uom": d.uom,
 				"stock_uom": d.stock_uom,
@@ -374,7 +375,8 @@ class MappedBOM(Document):
 
 		item = self.get_item_det(args['item_code'])
 
-		args['mapped_bom'] = args['mapped_bom'] or item and cstr(item['default_bom']) or ''
+		# args['mapped_bom'] = args['mapped_bom'] or item and cstr(item['default_bom']) or ''
+		args['mapped_bom'] = args['mapped_bom']
 		args['transfer_for_manufacture'] = (cstr(args.get('include_item_in_manufacturing', '')) or
 			item and item.include_item_in_manufacturing or 0)
 		args.update(item)
@@ -494,7 +496,7 @@ class MappedBOM(Document):
 		else:
 			self.cur_exploded_items[args.item_code] = args
 
-	def get_child_exploded_items(self, bom_no, stock_qty):
+	def get_child_exploded_items(self, mapped_bom, stock_qty):
 		""" Add all items from Flat BOM of child BOM"""
 		# Did not use qty_consumed_per_unit in the query, as it leads to rounding loss
 		child_fb_items = frappe.db.sql("""
@@ -515,7 +517,7 @@ class MappedBOM(Document):
 				bom_item.parent = bom.name
 				AND bom.name = %s
 				AND bom.docstatus = 1
-		""", bom_no, as_dict = 1)
+		""", mapped_bom, as_dict = 1)
 
 		for d in child_fb_items:
 			self.add_to_cur_exploded_items(frappe._dict({
