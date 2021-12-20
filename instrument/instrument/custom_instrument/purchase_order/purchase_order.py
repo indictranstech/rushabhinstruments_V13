@@ -4,6 +4,7 @@ from frappe.model.document import Document
 from frappe.desk.form.load import get_attachments
 from zipfile import ZipFile
 import os
+from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
 
 def on_submit(doc, method = None):
 	attach_purchasing_docs(doc,method)
@@ -68,17 +69,20 @@ def attach_purchasing_docs(doc, method):
 					# 	"attached_to_doctype": doc.doctype,
 					# 	"folder": "Home"})
 					# _file.save()
-				path = os.getcwd()
-				file = open("currentsite.txt","r")
-				sitename = file.read()
-				full_path = path+"/"+sitename+"private/files/"+row.engineering_revision+"_"+doc.name+".zip"
+				# path = os.getcwd()
+				# file = open("currentsite.txt","r")
+				# sitename = file.read()
+				file_path = os.path.realpath(get_files_path(is_private=1))
+				full_path = file_path+ "/"+row.engineering_revision+"_"+doc.name+".zip"
+				# full_path = path+"/"+sitename+"private/files/"+row.engineering_revision+"_"+doc.name+".zip"
 				file_name = row.engineering_revision+"_"+doc.name+".zip"
 				file_url = '/private/files/'+file_name
 				if len(attachments) > 0 :
 					with ZipFile(full_path,'w') as zip:
 						for i in attachments:
-							new_file_path = path+"/"+sitename+"private/files/"+i.file_name
-							zip.write(new_file_path)
+							file_doc = frappe.get_doc("File",{'file_url':i.file_url})
+							full_file_path = file_doc.get_full_path()
+							zip.write(full_file_path)
 					file_doc = frappe.new_doc("File")
 					file_doc.file_name =file_name
 					file_doc.folder = "Home/Attachments"
