@@ -11,6 +11,12 @@ frappe.ui.form.on('Mapped BOM', {
 				frappe.route_options = {"mapped_bom": frm.doc.name}
 				
 			}, __("Menu"));
+			frm.add_custom_button(__("Browse Mapped BOM"), function() {
+				frappe.route_options = {
+					"mapped_bom": frm.doc.name
+				};
+				frappe.set_route("Tree", "Mapped BOM");
+			}, __("Menu"));
 			// cur_frm.add_custom_button(__('Create BOM Tree'),function(){
 			// 	frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
 			// 	frappe.route_options = {"mapped_bom": frm.doc.name}	

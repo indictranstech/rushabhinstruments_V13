@@ -26,8 +26,84 @@ from erpnext.stock.doctype.item.item import get_item_details
 from erpnext.stock.get_item_details import get_conversion_factor, get_price_list_rate
 from instrument.instrument.doctype.bom_creation_tool.bom_creation_tool import get_map_item_attributes
 
+class MappedBOMTree:
+	"""Full tree representation of a BOM"""
 
-class MappedBOM(Document):
+	# specifying the attributes to save resources
+	# ref: https://docs.python.org/3/reference/datamodel.html#slots
+	__slots__ = ["name", "child_items", "is_bom", "item_code", "exploded_qty", "qty"]
+
+	def __init__(self, name: str, is_bom: bool = True, exploded_qty: float = 1.0, qty: float = 1) -> None:
+		self.name = name  # name of node, BOM number if is_bom else item_code
+		self.child_items: List["MappedBOMTree"] = []  # list of child items
+		self.is_bom = is_bom   # true if the node is a BOM and not a leaf item
+		self.item_code: str = None  # item_code associated with node
+		self.qty = qty  # required unit quantity to make one unit of parent item.
+		self.exploded_qty = exploded_qty  # total exploded qty required for making root of tree.
+		if not self.is_bom:
+			self.item_code = self.name
+		else:
+			self.__create_tree()
+
+	def __create_tree(self):
+		bom = frappe.get_cached_doc("Mapped BOM", self.name)
+		self.item_code = bom.item
+
+		for item in bom.get("items", []):
+			qty = item.qty / bom.quantity  # quantity per unit
+			exploded_qty = self.exploded_qty * qty
+			if item.bom_no:
+				child = MappedBOMTree(item.bom_no, exploded_qty=exploded_qty, qty=qty)
+				self.child_items.append(child)
+			else:
+				self.child_items.append(
+					MappedBOMTree(item.item_code, is_bom=False, exploded_qty=exploded_qty, qty=qty)
+				)
+
+	def level_order_traversal(self) -> List["MappedBOMTree"]:
+		"""Get level order traversal of tree.
+		E.g. for following tree the traversal will return list of nodes in order from top to bottom.
+		BOM:
+			- SubAssy1
+				- item1
+				- item2
+			- SubAssy2
+				- item3
+			- item4
+
+		returns = [SubAssy1, item1, item2, SubAssy2, item3, item4]
+		"""
+		traversal = []
+		q = deque()
+		q.append(self)
+
+		while q:
+			node = q.popleft()
+
+			for child in node.child_items:
+				traversal.append(child)
+				q.append(child)
+
+		return traversal
+
+	def __str__(self) -> str:
+		return (
+			f"{self.item_code}{' - ' + self.name if self.is_bom else ''} qty(per unit): {self.qty}"
+			f" exploded_qty: {self.exploded_qty}"
+		)
+
+	def __repr__(self, level: int = 0) -> str:
+		rep = "┃  " * (level - 1) + "┣━ " * (level > 0) + str(self) + "\n"
+		for child in self.child_items:
+			rep += child.__repr__(level=level + 1)
+		return rep
+
+class MappedBOM(WebsiteGenerator):
+	website = frappe._dict(
+		# page_title_field = "item_name",
+		condition_field = "show_in_website",
+		template = "mapped_bom.html"
+	)
 	def autoname(self):
 		names = frappe.db.sql_list("""SELECT name from `tabMapped BOM` where item=%s""", self.item)
 
@@ -64,6 +140,7 @@ class MappedBOM(Document):
 		self.manage_default_bom()
 		self.check_propogation()
 	def validate(self):
+		self.route = frappe.scrub(self.name).replace('_', '-')
 		if self.get("__islocal"):
 			self.propogate_to_descendent_bom = 0
 			self.check_propogation_to_descendent_bom = 0
@@ -448,10 +525,30 @@ class MappedBOM(Document):
 		if update:
 			self.db_set("bom_level", self.bom_level)
 	def manage_default_bom(self):
-		""" Uncheck others if current one is selected as default or
-			check the current one as default if it the only doc for the selected item
-		"""
+		# """ Uncheck others if current one is selected as default or
+		# 	check the current one as default if it the only bom for the selected item,
+		# 	update default bom in item master
+		# """
+		# if self.is_default and self.is_active:
+		# 	from frappe.model.utils import set_default
+		# 	set_default(self, "item")
+		# 	item = frappe.get_doc("Item", self.item)
+		# 	if item.default_bom != self.name:
+		# 		frappe.db.set_value('Item', self.item, 'default_bom', self.name)
+		# elif not frappe.db.exists(dict(doctype='BOM', docstatus=1, item=self.item, is_default=1)) \
+		# 	and self.is_active:
+		# 	frappe.db.set(self, "is_default", 1)
+		# else:
+		# 	frappe.db.set(self, "is_default", 0)
+		# 	item = frappe.get_doc("Item", self.item)
+		# 	if item.default_bom == self.name:
+		# 		frappe.db.set_value('Item', self.item, 'default_bom', None)
+		# """ Uncheck others if current one is selected as default or
+		# 	check the current one as default if it the only doc for the selected item
+		# """
 		if self.is_default and self.is_active:
+			from frappe.model.utils import set_default
+			set_default(self, "item")
 			frappe.db.sql("""UPDATE `tabMapped BOM`
 				set is_default=0
 				where item = %s and name !=%s""",
@@ -964,3 +1061,41 @@ def get_bom_diff(bom1, bom2):
 					out.removed.append([df.fieldname, d.as_dict()])
 
 	return out
+
+@frappe.whitelist()
+def get_children(doctype, parent=None, is_root=False, **filters):
+	if not parent or parent=="Mapped BOM":
+		frappe.msgprint(_('Please select a Mapped BOM'))
+		return
+
+	if parent:
+		frappe.form_dict.parent = parent
+
+	if frappe.form_dict.parent:
+		bom_doc = frappe.get_cached_doc("Mapped BOM", frappe.form_dict.parent)
+		frappe.has_permission("Mapped BOM", doc=bom_doc, throw=True)
+
+		bom_items = frappe.get_all('Mapped BOM Item',
+			fields=['item_code', 'mapped_bom as value', 'stock_qty'],
+			filters=[['parent', '=', frappe.form_dict.parent]],
+			order_by='idx')
+
+		item_names = tuple(d.get('item_code') for d in bom_items)
+
+		items = frappe.get_list('Item',
+			fields=['image', 'description', 'name', 'stock_uom', 'item_name', 'is_sub_contracted_item'],
+			filters=[['name', 'in', item_names]]) # to get only required item dicts
+
+		for bom_item in bom_items:
+			# extend bom_item dict with respective item dict
+			bom_item.update(
+				# returns an item dict from items list which matches with item_code
+				next(item for item in items if item.get('name')
+					== bom_item.get('item_code'))
+			)
+
+			bom_item.parent_bom_qty = bom_doc.quantity
+			bom_item.expandable = 0 if bom_item.value in ('', None)  else 1
+			bom_item.image = frappe.db.escape(bom_item.image)
+
+		return bom_items
