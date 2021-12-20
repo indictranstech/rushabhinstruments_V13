@@ -32,7 +32,7 @@ frappe.ui.form.on("BOM", {
 				// 		}
 				// 	}
 				// })
-			})
+			},__("Menu"))
 		}
 		if(frm.doc.item){
 			frappe.call({
@@ -84,7 +84,7 @@ frappe.ui.form.on("BOM", {
 				}else{
 					frappe.msgprint("Please Enter Old Reference BOM")
 				}
-			})
+			},__("Menu"))
 
 		}
 		
