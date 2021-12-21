@@ -54,12 +54,15 @@ class BOMCreationTool(Document):
 						item_name = frappe.db.get_value("Item",{'name':parent_std_item_list[0]},'item_name')
 						item_details = frappe.db.get_values("Item",{'name':parent_std_item_list[0]},['item_name','default_bom'],as_dict=1)
 						override_bom = frappe.db.get_value("Item Mapping",{'item_code':parent_std_item_list[0],'mapped_item':bom_doc.item},'do_not_override_existing_bom')
+						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1},'name')
+						if not bom_for_item:
+							bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1},'name')
 						doc.append('review_item_mapping',{
 							'mapped_bom':bom.get("name"),
 							'mapped_item':bom_doc.item,
 							'standard_item_code': parent_std_item_list[0],
 							'standard_item_name':item_name,
-							'standard_bom': item_details[0].get('default_bom') if not override_bom else '',
+							'standard_bom': bom_for_item if override_bom else '',
 							'attribute_value':str(attribute_value_dict)
 							})
 						for line in bom_doc.items:
@@ -88,12 +91,15 @@ class BOMCreationTool(Document):
 									raw_item_name = frappe.db.get_value("Item",{'name':raw_std_item_list[0]},'item_name')
 									raw_item_details = frappe.db.get_values("Item",{'name':raw_std_item_list[0]},['item_name','default_bom'],as_dict=1)
 									raw_override_bom = frappe.db.get_value("Item Mapping",{'item_code':raw_std_item_list[0],'mapped_item':line.item_code},'do_not_override_existing_bom')
+									bom_for_raw_item = frappe.db.get_value("BOM",{'item':raw_std_item_list[0],'is_active':1,'is_default':1},'name')
+									if not bom_for_raw_item:
+										bom_for_raw_item = frappe.db.get_value("BOM",{'item':raw_std_item_list[0],'is_active':1},'name')
 									doc.append('review_item_mapping',{
 										'mapped_bom':bom.get("name"),
 										'mapped_item':line.item_code,
 										'standard_item_code': raw_std_item_list[0],
 										'standard_item_name':raw_item_name,
-										'standard_bom': raw_item_details[0].get('default_bom') if not raw_override_bom else '',
+										'standard_bom': bom_for_raw_item if raw_override_bom else '',
 										'attribute_value':str(raw_attribute_value_dict)
 										})
 									
@@ -144,7 +150,8 @@ class BOMCreationTool(Document):
 						frappe.throw("Standard Item Code Not found for {0}".format(bom_doc.item))
 					item_details = frappe.db.get_values("Item",{'name':std_item},['item_name','default_bom'],as_dict=1)
 					override_bom = frappe.db.get_value("Item Mapping",{'item_code':std_item,'mapped_item':bom_doc.item},'do_not_override_existing_bom')
-					if not override_bom and not item_details[0].get("default_bom") or override_bom:
+					bom_for_item = frappe.db.get_value("BOM",{'item':std_item,'is_active':1},'name')
+					if not bom_for_item or not override_bom:
 						std_bom = frappe.new_doc("BOM")
 						if std_bom:
 							item_data = get_item_defaults(std_item, default_company)
