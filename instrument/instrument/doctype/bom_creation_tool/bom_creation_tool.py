@@ -50,6 +50,14 @@ class BOMCreationTool(Document):
 						frappe.msgprint("There are more than one standard item {1} mapped with selected attribute value {2} for item {0}".format(bom_doc.item,parent_std_item_list,value_list))
 					if len(parent_std_item_list) == 0:
 						frappe.msgprint("Standard Item Code not found for Mapped Item {0}".format(bom_doc.item))
+						doc.append('review_item_mapping',{
+							'mapped_bom':bom.get("name"),
+							'mapped_item':bom_doc.item,
+							'standard_item_code': '',
+							'standard_item_name':'',
+							'standard_bom': '',
+							'attribute_value':str(attribute_value_dict)
+							})
 					else:
 						item_name = frappe.db.get_value("Item",{'name':parent_std_item_list[0]},'item_name')
 						item_details = frappe.db.get_values("Item",{'name':parent_std_item_list[0]},['item_name','default_bom'],as_dict=1)
@@ -87,6 +95,14 @@ class BOMCreationTool(Document):
 									frappe.throw("There are more than one standard item {1} mapped with selected attribute value {2} for item {0}".format(line.item_code,raw_std_item_list,raw_value_list))
 								if len(raw_std_item_list) == 0:
 									frappe.msgprint("Standard Item Code not found for Mapped Item {0}".format(line.item_code))
+									doc.append('review_item_mapping',{
+										'mapped_bom':bom.get("name"),
+										'mapped_item':line.item_code,
+										'standard_item_code': '',
+										'standard_item_name':'',
+										'standard_bom': '',
+										'attribute_value':str(raw_attribute_value_dict)
+										})
 								else:
 									raw_item_name = frappe.db.get_value("Item",{'name':raw_std_item_list[0]},'item_name')
 									raw_item_details = frappe.db.get_values("Item",{'name':raw_std_item_list[0]},['item_name','default_bom'],as_dict=1)

@@ -44,8 +44,7 @@
    "fieldname": "mapped_bom",
    "fieldtype": "Link",
    "label": "Mapped BOM",
-   "options": "Mapped BOM",
-   "read_only": 1
+   "options": "Mapped BOM"
   },
   {
    "fieldname": "section_break_5",
@@ -75,7 +74,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-11-22 05:30:56.057941",
+ "modified": "2021-12-21 01:26:01.228971",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",

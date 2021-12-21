@@ -44,9 +44,57 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 	},
 	onload:function(frm){
-		if(frm.doc.__islocal){
+		// if(frm.doc.__islocal){
+		// 	// Fetch all the attributes for mapped item
+		// 	if(frm.doc.mapped_bom){
+		// 		frappe.call({
+		// 			"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes",
+		// 			"args":{
+		// 				mapped_bom : frm.doc.mapped_bom
+		// 			},
+		// 			callback:function(r){
+		// 				if(r.message){
+		// 					if(r.message[1]==true){
+		// 						$.each(r.message[0], function(idx, item_row){
+		// 							var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
+		// 							frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['mapped_bom']);
+		// 							frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
+		// 							frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
+		// 							frappe.model.set_value(row.doctype,row.name,'value',item_row['value']);
+		// 						})
+
+		// 					}else{
+		// 						$.each(r.message[0], function(idx, item_row){
+		// 							if(item_row['attribute_list'].length == 1){
+		// 								var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
+		// 								frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+		// 								frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
+		// 								frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute_list'][0]["attribute"]);
+		// 							}else{
+		// 								$.each(item_row['attribute_list'], function(idx, col){
+		// 									var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
+		// 									frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+		// 									frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
+		// 									frappe.model.set_value(row.doctype,row.name,'attribute',col["attribute"]);
+
+		// 								})
+		// 							}
+		// 						});
+		// 					}
+							
+		// 					refresh_field('attribute_table')
+		// 				}
+		// 			}
+		// 		})
+		// }
+		// }
+	},
+	mapped_bom:function(frm){
+		// if(frm.doc.__islocal){
+			if(frm.doc.docstatus == 0){
 			// Fetch all the attributes for mapped item
-			if(frm.doc.mapped_bom){
+			if(frm.doc.mapped_bom ){
+				frm.doc.attribute_table = ''
 				frappe.call({
 					"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes",
 					"args":{
@@ -88,6 +136,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 				})
 		}
 		}
+
 	},
 	validate:function(frm){
 		// if(frm.doc.__islocal){
