@@ -13,7 +13,7 @@ frappe.treeview_settings["Mapped BOM"] = {
 	disable_add_node: true,
 	root_label: "Mapped BOM", //fieldname from filters
 	get_tree_root: false,
-	show_expand_all: false,
+	show_expand_all: true,
 	get_label: function(node) {
 		if(node.data.qty) {
 			return node.data.qty + " x " + node.data.item_code;
