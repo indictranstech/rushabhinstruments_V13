@@ -54,7 +54,7 @@ doctype_js = {
 # include js in doctype views
 # doctype_js = {"doctype" : "public/js/doctype.js"}
 doctype_list_js = {"Work Order" : "instrument/custom_instrument/work_order/work_order_list.js"}
-# doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
+doctype_tree_js = {"BOM" : "instrument/custom_instrument/bom/bom_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
 # Home Pages

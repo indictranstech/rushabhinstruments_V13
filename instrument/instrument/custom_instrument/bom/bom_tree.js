@@ -1,17 +1,17 @@
-frappe.treeview_settings["Mapped BOM"] = {
-	get_tree_nodes: 'instrument.instrument.doctype.mapped_bom.mapped_bom.get_children',
+frappe.treeview_settings["BOM"] = {
+	get_tree_nodes: 'erpnext.manufacturing.doctype.bom.bom.get_children',
 	filters: [
 		{
-			fieldname: "mapped_bom",
+			fieldname: "bom",
 			fieldtype:"Link",
-			options: "Mapped BOM",
-			label: __("Mapped BOM")
+			options: "BOM",
+			label: __("BOM")
 		}
 	],
-	title: "Mapped BOM",
-	breadcrumb: "instrument",
+	title: "BOM",
+	breadcrumb: "Manufacturing",
 	disable_add_node: true,
-	root_label: "Mapped BOM", //fieldname from filters
+	root_label: "BOM", //fieldname from filters
 	get_tree_root: false,
 	show_expand_all: true,
 	get_label: function(node) {
@@ -26,6 +26,7 @@ frappe.treeview_settings["Mapped BOM"] = {
 		if(frappe.pages[label]) {
 			delete frappe.pages[label];
 		}
+
 		var filter = me.opts.filters[0];
 		if(frappe.route_options && frappe.route_options[filter.fieldname]) {
 			var val = frappe.route_options[filter.fieldname];
@@ -46,28 +47,28 @@ frappe.treeview_settings["Mapped BOM"] = {
 			},
 			click: function(node) {
 
-				frappe.set_route("Form", "Mapped BOM", node.data.value);
+				frappe.set_route("Form", "BOM", node.data.value);
 			}
 		}
 	],
 	menu_items: [
 		{
-			label: __("New Mapped BOM"),
+			label: __("New BOM"),
 			action: function() {
-				frappe.new_doc("Mapped BOM", true)
+				frappe.new_doc("BOM", true)
 			},
 			condition: 'frappe.boot.user.can_create.indexOf("BOM") !== -1'
 		}
 	],
 	onrender: function(node) {
-		if(node.is_root && node.data.value!="Mapped BOM") {
-			frappe.model.with_doc("Mapped BOM", node.data.value, function() {
-				var bom = frappe.model.get_doc("Mapped BOM", node.data.value);
+		if(node.is_root && node.data.value!="BOM") {
+			frappe.model.with_doc("BOM", node.data.value, function() {
+				var bom = frappe.model.get_doc("BOM", node.data.value);
 				node.data.image = escape(bom.image) || "";
 				node.data.description = bom.description || "";
 				node.data.item_code = bom.item || "";
 			});
 		}
 	},
-	view_template: 'mapped_bom_item_preview'
+	view_template: 'bom_item_preview'
 }
