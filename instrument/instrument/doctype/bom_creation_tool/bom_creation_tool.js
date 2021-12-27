@@ -9,6 +9,9 @@ frappe.ui.form.on('BOM Creation Tool', {
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row').hide();
 	},
 	refresh: function(frm) {
+		if(frm.doc.docstatus==1){
+			frm.set_df_property('review_item_mappings','hidden',1)
+		}
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row').hide();
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-add-row').hide();
