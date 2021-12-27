@@ -12,12 +12,14 @@ def get_data(data):
 			'Work Order': 'production_item',
 			'Product Bundle': 'new_item_code',
 			'BOM': 'item',
-			'Batch': 'item'
+			'Batch': 'item',
+			"Mapped BOM":'item',
+			"Item Mapping":'mapped_item' 
 		},
 		'transactions': [
 			{
 				'label': _('Groups'),
-				'items': ['BOM', 'Product Bundle', 'Item Alternative','Mapped BOM']
+				'items': ['BOM', 'Product Bundle', 'Item Alternative','Mapped BOM','Item Mapping']
 			},
 			{
 				'label': _('Pricing'),
