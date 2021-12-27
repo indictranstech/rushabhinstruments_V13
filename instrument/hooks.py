@@ -29,7 +29,8 @@ doctype_js = {
 	"Item": "instrument/custom_instrument/item/item.js",
 	"BOM":"instrument/custom_instrument/bom/bom.js",
 	"Job Card" : "instrument/custom_instrument/job_card/job_card.js",
-	"Material Request" : "instrument/custom_instrument/material_request/material_request.js"
+	"Material Request" : "instrument/custom_instrument/material_request/material_request.js",
+	"Production Plan" : "instrument/custom_instrument/production_plan/production_plan.js"
  
 }
 
