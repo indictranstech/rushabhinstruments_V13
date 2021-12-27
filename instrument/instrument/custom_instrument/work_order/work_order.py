@@ -108,7 +108,7 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
 
 def validate(doc,method):
-	doc.skip_transfer =1
+	# doc.skip_transfer =1
 	prod_item_engineering_revision = get_engineering_revision(doc.production_item)
 	doc.engineering_revision = prod_item_engineering_revision
 	if doc.engineering_revision:
