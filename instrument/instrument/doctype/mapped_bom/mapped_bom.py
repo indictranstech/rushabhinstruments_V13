@@ -1072,30 +1072,67 @@ def get_children(doctype, parent=None, is_root=False, **filters):
 		frappe.form_dict.parent = parent
 
 	if frappe.form_dict.parent:
-		bom_doc = frappe.get_cached_doc("Mapped BOM", frappe.form_dict.parent)
-		frappe.has_permission("Mapped BOM", doc=bom_doc, throw=True)
+		name_string = frappe.form_dict.parent
+		result = name_string.startswith('Map')
+		if result == True:
+			bom_doc = frappe.get_cached_doc("Mapped BOM", frappe.form_dict.parent)
+			frappe.has_permission("Mapped BOM", doc=bom_doc, throw=True)
 
-		bom_items = frappe.get_all('Mapped BOM Item',
-			fields=['item_code', 'mapped_bom as value', 'stock_qty'],
-			filters=[['parent', '=', frappe.form_dict.parent]],
-			order_by='idx')
+			bom_items = frappe.get_all('Mapped BOM Item',
+				fields=['item_code', 'mapped_bom as value','stock_qty'],
+				filters=[['parent', '=', frappe.form_dict.parent]],
+				order_by='idx')
+			# print("///////////////////////bom_items",bom_items)
+			bom_items_for_std_bom = frappe.get_all('Mapped BOM Item',
+				fields=['item_code', 'bom_no as value','stock_qty'],
+				filters=[['parent', '=', frappe.form_dict.parent]],
+				order_by='idx')
+			for row in bom_items:
+				for col in bom_items_for_std_bom:
+					if row.item_code == col.item_code:
+						if col.value:
+							row['value'] = col.value
+			item_names = tuple(d.get('item_code') for d in bom_items)
 
-		item_names = tuple(d.get('item_code') for d in bom_items)
+			items = frappe.get_list('Item',
+				fields=['image', 'description', 'name', 'stock_uom', 'item_name', 'is_sub_contracted_item'],
+				filters=[['name', 'in', item_names]]) # to get only required item dicts
 
-		items = frappe.get_list('Item',
-			fields=['image', 'description', 'name', 'stock_uom', 'item_name', 'is_sub_contracted_item'],
-			filters=[['name', 'in', item_names]]) # to get only required item dicts
+			for bom_item in bom_items:
+				# extend bom_item dict with respective item dict
+				bom_item.update(
+					# returns an item dict from items list which matches with item_code
+					next(item for item in items if item.get('name')
+						== bom_item.get('item_code'))
+				)
 
-		for bom_item in bom_items:
-			# extend bom_item dict with respective item dict
-			bom_item.update(
-				# returns an item dict from items list which matches with item_code
-				next(item for item in items if item.get('name')
-					== bom_item.get('item_code'))
-			)
+				bom_item.parent_bom_qty = bom_doc.quantity
+				bom_item.expandable = 0 if bom_item.value in ('', None)  else 1
+				bom_item.image = frappe.db.escape(bom_item.image)
+		else:
+			bom_doc = frappe.get_cached_doc("BOM", frappe.form_dict.parent)
+			frappe.has_permission("BOM", doc=bom_doc, throw=True)
 
-			bom_item.parent_bom_qty = bom_doc.quantity
-			bom_item.expandable = 0 if bom_item.value in ('', None)  else 1
-			bom_item.image = frappe.db.escape(bom_item.image)
+			bom_items = frappe.get_all('BOM Item',
+				fields=['item_code', 'bom_no as value','stock_qty'],
+				filters=[['parent', '=', frappe.form_dict.parent]],
+				order_by='idx')
+			
+			item_names = tuple(d.get('item_code') for d in bom_items)
 
+			items = frappe.get_list('Item',
+				fields=['image', 'description', 'name', 'stock_uom', 'item_name', 'is_sub_contracted_item'],
+				filters=[['name', 'in', item_names]]) # to get only required item dicts
+
+			for bom_item in bom_items:
+				# extend bom_item dict with respective item dict
+				bom_item.update(
+					# returns an item dict from items list which matches with item_code
+					next(item for item in items if item.get('name')
+						== bom_item.get('item_code'))
+				)
+
+				bom_item.parent_bom_qty = bom_doc.quantity
+				bom_item.expandable = 0 if bom_item.value in ('', None)  else 1
+				bom_item.image = frappe.db.escape(bom_item.image)
 		return bom_items

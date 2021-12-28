@@ -12,7 +12,7 @@ frappe.treeview_settings["Mapped BOM"] = {
 	breadcrumb: "instrument",
 	disable_add_node: true,
 	root_label: "Mapped BOM", //fieldname from filters
-	get_tree_root: false,
+	get_tree_root: true,
 	show_expand_all: true,
 	get_label: function(node) {
 		if(node.data.qty) {
@@ -45,8 +45,14 @@ frappe.treeview_settings["Mapped BOM"] = {
 				return node.expandable;
 			},
 			click: function(node) {
-
-				frappe.set_route("Form", "Mapped BOM", node.data.value);
+				var name_string = node.data.value
+				if(name_string.startsWith('Map')){
+					frappe.set_route("Form", "Mapped BOM", node.data.value);
+				}
+				else{
+					frappe.set_route("Form", "BOM", node.data.value);
+				}
+				
 			}
 		}
 	],
@@ -56,13 +62,20 @@ frappe.treeview_settings["Mapped BOM"] = {
 			action: function() {
 				frappe.new_doc("Mapped BOM", true)
 			},
-			condition: 'frappe.boot.user.can_create.indexOf("BOM") !== -1'
+			condition: 'frappe.boot.user.can_create.indexOf("Mapped BOM") !== -1'
 		}
 	],
 	onrender: function(node) {
 		if(node.is_root && node.data.value!="Mapped BOM") {
 			frappe.model.with_doc("Mapped BOM", node.data.value, function() {
 				var bom = frappe.model.get_doc("Mapped BOM", node.data.value);
+				node.data.image = escape(bom.image) || "";
+				node.data.description = bom.description || "";
+				node.data.item_code = bom.item || "";
+			});
+		}else if(node.is_root && node.data.value!="BOM"){
+			frappe.model.with_doc("BOM", node.data.value, function() {
+				var bom = frappe.model.get_doc("BOM", node.data.value);
 				node.data.image = escape(bom.image) || "";
 				node.data.description = bom.description || "";
 				node.data.item_code = bom.item || "";
