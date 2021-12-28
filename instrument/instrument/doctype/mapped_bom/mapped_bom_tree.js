@@ -35,6 +35,7 @@ frappe.treeview_settings["Mapped BOM"] = {
 			me.root_label = val;
 			me.page.set_title(val);
 		}
+
 		me.make_tree();
 	},
 	toolbar: [
@@ -53,6 +54,18 @@ frappe.treeview_settings["Mapped BOM"] = {
 					frappe.set_route("Form", "BOM", node.data.value);
 				}
 				
+			}
+		},
+		{ toggle_btn: false },
+		{
+			label:__("Check"),
+			click:function(node){
+				if(node.data.is_map_item){
+					frappe.msgprint("Mapped Item")
+				}
+				else{
+					frappe.msgprint("Standard Item")
+				}
 			}
 		}
 	],
@@ -82,5 +95,6 @@ frappe.treeview_settings["Mapped BOM"] = {
 			});
 		}
 	},
+
 	view_template: 'mapped_bom_item_preview'
 }

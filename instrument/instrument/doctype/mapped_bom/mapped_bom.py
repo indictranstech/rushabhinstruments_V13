@@ -1079,12 +1079,12 @@ def get_children(doctype, parent=None, is_root=False, **filters):
 			frappe.has_permission("Mapped BOM", doc=bom_doc, throw=True)
 
 			bom_items = frappe.get_all('Mapped BOM Item',
-				fields=['item_code', 'mapped_bom as value','stock_qty'],
+				fields=['item_code', 'mapped_bom as value','stock_qty','is_map_item'],
 				filters=[['parent', '=', frappe.form_dict.parent]],
 				order_by='idx')
 			# print("///////////////////////bom_items",bom_items)
 			bom_items_for_std_bom = frappe.get_all('Mapped BOM Item',
-				fields=['item_code', 'bom_no as value','stock_qty'],
+				fields=['item_code', 'bom_no as value','stock_qty','is_map_item'],
 				filters=[['parent', '=', frappe.form_dict.parent]],
 				order_by='idx')
 			for row in bom_items:
