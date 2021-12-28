@@ -16,7 +16,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-add-row').hide();
 
-		//Filter Items
+		// Filter Items
 		frm.set_query("value", "attribute_table", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
 			return {
@@ -228,4 +228,10 @@ frappe.ui.form.on('Review Item Mapping', {
 				})
 		}
 	},
+})
+frappe.ui.form.on('BOM Creation Attribute Table', {
+	value:function(frm,cdt,cdn){
+		frm.doc.review_item_mapping = ''
+		frm.refresh_field("review_item_mapping")
+	}
 })

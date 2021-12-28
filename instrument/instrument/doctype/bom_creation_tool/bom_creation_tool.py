@@ -308,7 +308,23 @@ def get_all_boms_in_order(bom_childs):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_attribute_value(doctype, txt, searchfield, start, page_len, filters):
-	return frappe.db.sql("""SELECT name from `tabCustom Item Attribute Value` where item_attribute = '{0}'""".format(filters.get("attribute")))
+	# return frappe.db.sql("""SELECT name from `tabCustom Item Attribute Value` where item_attribute = '{0}' and name like %(txt)s """.format(filters.get("attribute")),as_list=1,debug=1)
+	return frappe.db.sql("""
+		SELECT name
+		FROM `tabCustom Item Attribute Value` 
+		WHERE item_attribute = %(attribute)s
+			
+			AND name LIKE %(txt)s
+		ORDER BY name DESC
+		LIMIT %(offset)s, %(limit)s
+		""".format(searchfield), dict(
+				attribute=filters.get("attribute"),
+				txt="%{0}%".format(txt),
+				offset=start,
+				limit=page_len
+			)
+		)
+
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
