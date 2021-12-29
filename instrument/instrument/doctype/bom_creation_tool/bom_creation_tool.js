@@ -49,6 +49,20 @@ frappe.ui.form.on('BOM Creation Tool', {
 				filters:{ 'standard_item_code': row.standard_item_code }
 			}
 		});
+		cur_frm.fields_dict['mapped_item'].get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['Item','is_map_item', '=', 1],
+				]
+			}
+	    }
+	    cur_frm.fields_dict['standard_bom'].get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['BOM','item', '=', frm.doc.standard_item_code],
+				]
+			}
+	    }
 		if(frm.doc.docstatus==0 &&  !frm.doc.__islocal){
 			cur_frm.add_custom_button(__('Copy Attribute Value'),function(){
 				return frm.call({

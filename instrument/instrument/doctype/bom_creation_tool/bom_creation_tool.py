@@ -289,6 +289,7 @@ def get_map_item_attributes(mapped_bom):
 		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1},'name')
 		if check_bom_creation_doc:
 			b_doc = frappe.get_doc("BOM Creation Tool",check_bom_creation_doc)
+			print("====================b_doc",b_doc)
 			return b_doc.attribute_table,True
 		else :
 			mapped_bom_doc = frappe.get_doc("Mapped BOM",mapped_bom)
@@ -298,7 +299,7 @@ def get_map_item_attributes(mapped_bom):
 			final_bom_list = [row.get("mapped_bom") for row in bom_child_list if row.get("mapped_bom")]
 			final_bom_list.append(mapped_bom)
 			# final_bom_list.remove(mapped_bom)
-			print("================final_bom_list",final_bom_list)
+			
 			if len(final_bom_list) == 1 :
 				 item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent = '{0}' and is_map_item = 1""".format(final_bom_list[0]),as_dict=1)
 			else:
@@ -308,12 +309,14 @@ def get_map_item_attributes(mapped_bom):
 					attributes = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(row.get('item_code')),as_dict=1)
 					row['attribute_list'] = attributes
 			# main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
-			print("=====================",final_bom_list)
+			
 			final_bom_list.remove(mapped_bom)
 			for bom in final_bom_list:
 				mapped_bom_doc = frappe.get_doc("Mapped BOM",bom)
 				main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
 				item_list.append({'item_code':mapped_bom_doc.item,'parent':bom,'attribute_list':main_item})
+		
+			
 			return item_list,False
 
 # Get all child mapped_bom
@@ -387,7 +390,6 @@ def get_map_item_attributes_for_mapped_item(mapped_bom):
 		item_list = []
 		mapped_item = frappe.db.get_value("Mapped BOM",{'name':mapped_bom},'item')
 		mapped_item_data = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_item),as_dict=1)
-		print("==============mapped_item_data",mapped_item_data)
 		if len(mapped_item_data) == 0:
 			frappe.throw("Please Create Item Mapping for item {0}".format(mapped_item))
 		item_list.append(mapped_item_data)
