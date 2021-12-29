@@ -8,9 +8,13 @@
  "field_order": [
   "naming_series",
   "mapped_bom",
+  "mapped_item",
   "column_break_3",
   "override_existing_bom",
+  "standard_item_code",
+  "standard_bom",
   "section_break_5",
+  "item_assignment_table_for_mapped_item",
   "attribute_table",
   "review_item_mappings",
   "review_item_mapping",
@@ -69,12 +73,36 @@
    "fieldname": "review_item_mappings",
    "fieldtype": "Button",
    "label": "Review Item Assignments"
+  },
+  {
+   "fieldname": "mapped_item",
+   "fieldtype": "Link",
+   "label": "Mapped Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "standard_item_code",
+   "fieldtype": "Link",
+   "label": "Standard Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "item_assignment_table_for_mapped_item",
+   "fieldtype": "Table",
+   "label": "Item Assignment Table For Mapped Item",
+   "options": "Item Assignment Table For Mapped Item"
+  },
+  {
+   "fieldname": "standard_bom",
+   "fieldtype": "Link",
+   "label": "Standard BOM",
+   "options": "BOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-27 03:16:51.473806",
+ "modified": "2021-12-29 02:33:03.853621",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
