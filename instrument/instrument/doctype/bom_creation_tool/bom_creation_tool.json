@@ -96,13 +96,14 @@
    "fieldname": "standard_bom",
    "fieldtype": "Link",
    "label": "Standard BOM",
-   "options": "BOM"
+   "options": "BOM",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-29 02:33:03.853621",
+ "modified": "2021-12-29 06:07:04.620369",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",

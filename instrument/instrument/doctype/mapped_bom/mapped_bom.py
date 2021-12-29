@@ -945,37 +945,52 @@ def propogate_update_to_descendent(current_bom,new_bom):
 			if old_item_dict.get(row).get("is_map_item"):
 				flag =1
 		if flag ==1 :
-			create_bom_creation_tool(new_bom)
+			create_bom_creation_tool(current_bom,new_bom)
 		else:
 			create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
 
-def create_bom_creation_tool(bom):
-	if bom:
-		bom_creation_data ,check_exists = get_map_item_attributes(bom)
-		bom_creation_tool = frappe.new_doc("BOM Creation Tool")
-		if bom_creation_tool:
-			bom_creation_tool.mapped_bom = bom
-			if check_exists == False:
-				for line in bom_creation_data:
-					for row in line.get("attribute_list"):
-						bom_creation_tool.append('attribute_table',{
-							'mapped_bom':line.get("parent"),
-							'mapped_item':row.get("mapped_item"),
-							'attribute':row.get("attribute")
-							})
-			else:
-				for row in bom_creation_data:
-					for line in bom_creation_data:
-						bom_creation_tool.append('attribute_table',{
-							'mapped_bom':line.get("parent"),
-							'mapped_item':row.get("mapped_item"),
-							'attribute':row.get("attribute"),
-							'value':row.get("value")
-							})
-			bom_creation_tool.save()
+def create_bom_creation_tool(current_bom,bom):
+	if current_bom:
+		bom_creation_docs = frappe.get_all("BOM Creation Tool",{'mapped_bom':current_bom})
+		
+		if len(bom_creation_docs) == 0 :
+			frappe.throw("BOM Creation Tool is not Found for Mapped BOM {0}".format(current_bom))
+		else:
+			for d in bom_creation_docs:
+				old_doc = frappe.get_doc("BOM Creation Tool",d.get("name"))
+				new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
+				new_doc.mapped_bom = bom
+				new_doc.review_item_mapping = ''
+				new_doc.save()
 			frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
 			frappe.db.commit()
 			frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
+
+		# bom_creation_data ,check_exists = get_map_item_attributes(bom)
+		# bom_creation_tool = frappe.new_doc("BOM Creation Tool")
+		# if bom_creation_tool:
+		# 	bom_creation_tool.mapped_bom = bom
+		# 	if check_exists == False:
+		# 		for line in bom_creation_data:
+		# 			for row in line.get("attribute_list"):
+		# 				bom_creation_tool.append('attribute_table',{
+		# 					'mapped_bom':line.get("parent"),
+		# 					'mapped_item':row.get("mapped_item"),
+		# 					'attribute':row.get("attribute")
+		# 					})
+		# 	else:
+		# 		for row in bom_creation_data:
+		# 			for line in bom_creation_data:
+		# 				bom_creation_tool.append('attribute_table',{
+		# 					'mapped_bom':line.get("parent"),
+		# 					'mapped_item':row.get("mapped_item"),
+		# 					'attribute':row.get("attribute"),
+		# 					'value':row.get("value")
+		# 					})
+		# 	bom_creation_tool.save()
+		# 	frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+		# 	frappe.db.commit()
+		# 	frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
 def create_standard_bom(mapped_bom,item_list,old_item_dict,new_bomm):
 	bom_data = get_bom_list(mapped_bom)
 	for bom in bom_data:
