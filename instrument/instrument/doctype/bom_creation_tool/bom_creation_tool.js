@@ -56,6 +56,13 @@ frappe.ui.form.on('BOM Creation Tool', {
 				]
 			}
 	    }
+	    cur_frm.fields_dict['standard_item_code'].get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['Item','is_map_item', '=', 0],
+				]
+			}
+	    }
 	    cur_frm.fields_dict['standard_bom'].get_query = function(doc, cdt, cdn) {
 			return {
 				filters: [

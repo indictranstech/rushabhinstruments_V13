@@ -289,7 +289,6 @@ def get_map_item_attributes(mapped_bom):
 		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1},'name')
 		if check_bom_creation_doc:
 			b_doc = frappe.get_doc("BOM Creation Tool",check_bom_creation_doc)
-			print("====================b_doc",b_doc)
 			return b_doc.attribute_table,True
 		else :
 			mapped_bom_doc = frappe.get_doc("Mapped BOM",mapped_bom)
