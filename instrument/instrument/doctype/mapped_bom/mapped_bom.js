@@ -8,7 +8,7 @@ frappe.ui.form.on('Mapped BOM', {
 		if(frm.doc.docstatus == 1){
 			frm.add_custom_button(__('Create BOM Tree'), function() {
 				frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
-				frappe.route_options = {"mapped_bom": frm.doc.name}
+				frappe.route_options = {"mapped_bom": frm.doc.name,"mapped_item":frm.doc.item}
 				
 			}, __("Menu"));
 			frm.add_custom_button(__("Browse Mapped BOM"), function() {

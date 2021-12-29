@@ -8,6 +8,12 @@ frappe.ui.form.on('BOM Creation Tool', {
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row').hide();
 	},
+	item_assignment_table_for_mapped_item_on_form_rendered:function(frm, cdt, cdn){
+		// hide delete, insert above and insert below fields inside Attribute  child table
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-delete-row').hide();
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-insert-row-below').hide();
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-insert-row').hide();
+	},
 	refresh: function(frm) {
 		if(frm.doc.docstatus==1){
 			frm.set_df_property('review_item_mappings','hidden',1)
@@ -16,8 +22,20 @@ frappe.ui.form.on('BOM Creation Tool', {
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['attribute_table'].grid.wrapper.find('.grid-add-row').hide();
 
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-insert-row').hide();
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-insert-row-below').hide();
+		frm.fields_dict['item_assignment_table_for_mapped_item'].grid.wrapper.find('.grid-add-row').hide();
+
 		// Filter Items
 		frm.set_query("value", "attribute_table", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_attribute_value",
+				filters:{ 'attribute': row.attribute }
+			}
+		});
+		// Filter Items
+		frm.set_query("value", "item_assignment_table_for_mapped_item", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
 			return {
 				query: "instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_attribute_value",
@@ -97,7 +115,29 @@ frappe.ui.form.on('BOM Creation Tool', {
 			if(frm.doc.docstatus == 0){
 			// Fetch all the attributes for mapped item
 			if(frm.doc.mapped_bom ){
+				frm.doc.item_assignment_table_for_mapped_item = ''
 				frm.doc.attribute_table = ''
+				frm.set_df_property('item_assignment_table_for_mapped_item','reqd',1)
+				frappe.call({
+					"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes_for_mapped_item",
+					"args":{
+						mapped_bom : frm.doc.mapped_bom
+					},
+					callback:function(r){
+						if(r.message){
+							$.each(r.message[0], function(idx, item_row){
+							
+								frm.set_value('mapped_item',item_row['mapped_item'])
+								var row = frappe.model.add_child(frm.doc, "Item Assignment Table For Mapped Item", "item_assignment_table_for_mapped_item");
+								frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
+								frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
+							})
+							refresh_field('item_assignment_table_for_mapped_item')
+						}
+
+					}
+				})
+				
 				frappe.call({
 					"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes",
 					"args":{
@@ -105,6 +145,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 					},
 					callback:function(r){
 						if(r.message){
+							
 							if(r.message[1]==true){
 								$.each(r.message[0], function(idx, item_row){
 									var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
@@ -138,6 +179,23 @@ frappe.ui.form.on('BOM Creation Tool', {
 					}
 				})
 		}
+		}
+
+	},
+	mapped_item:function(frm){
+		if(frm.doc.mapped_item){
+			frappe.call({
+				"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_mapped_bom",
+				"args" : {
+					mapped_item : frm.doc.mapped_item
+				},
+				callback:function(r){
+					if(r.message){
+						frm.set_value("mapped_bom",r.message)
+					}
+
+				}
+			})
 		}
 
 	},

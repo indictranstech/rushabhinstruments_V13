@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "creation": "2021-12-29 00:23:05.887345",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "mapped_item",
+  "attribute",
+  "value"
+ ],
+ "fields": [
+  {
+   "fieldname": "mapped_item",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Mapped Item"
+  },
+  {
+   "fieldname": "attribute",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Attribute",
+   "options": "Item Attribute"
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Value",
+   "mandatory_depends_on": "attribute",
+   "options": "Custom Item Attribute Value",
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2021-12-29 00:58:55.392476",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Item Assignment Table For Mapped Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
