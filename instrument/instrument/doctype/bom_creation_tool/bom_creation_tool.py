@@ -18,6 +18,7 @@ from frappe.model.naming import make_autoname
 # 7) Standard bom tree will be generated according to standard item code for mapped items
 
 class BOMCreationTool(Document):
+
 	@frappe.whitelist()
 	def review_item_mappings(doc,method):
 		if doc.attribute_table:
@@ -33,8 +34,10 @@ class BOMCreationTool(Document):
 			for bom in final_bom_list:
 				bom_doc = frappe.get_doc("Mapped BOM",bom.get('name'))
 				if bom_doc:
-					attribute_list = [row.attribute for row in doc.attribute_table if row.mapped_item == bom_doc.item and row.mapped_bom == bom.get("name")]
-					value_list = [row.value for row in doc.attribute_table if row.mapped_item == bom_doc.item and row.value and row.mapped_bom == bom.get("name")]
+					# attribute_list = [row.attribute for row in doc.attribute_table if row.mapped_item == bom_doc.item and row.mapped_bom == bom.get("name")]
+					# value_list = [row.value for row in doc.attribute_table if row.mapped_item == bom_doc.item and row.value and row.mapped_bom == bom.get("name")]
+					attribute_list = [row.attribute for row in doc.attribute_table if row.mapped_item == bom_doc.item]
+					value_list = [row.value for row in doc.attribute_table if row.mapped_item == bom_doc.item and row.value ]
 					attribute_value_dict = {row.attribute:row.value for row in doc.attribute_table if row.mapped_item == bom_doc.item}
 
 					if len(attribute_list) == 0 and len(value_list) == 0:
@@ -87,6 +90,7 @@ class BOMCreationTool(Document):
 							if line.is_map_item ==1 :
 								raw_attribute_list = [row.attribute for row in doc.attribute_table if row.mapped_item == line.item_code]
 								raw_value_list = [row.value for row in doc.attribute_table if row.mapped_item == line.item_code and row.value]
+
 								raw_attribute_value_dict = {row.attribute:row.value for row in doc.attribute_table if row.mapped_item == line.item_code}
 								map_item_list = get_map_item_list(line.item_code)
 								raw_std_item_set  = []
@@ -308,15 +312,21 @@ def get_map_item_attributes(mapped_bom):
 					attributes = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(row.get('item_code')),as_dict=1)
 					row['attribute_list'] = attributes
 			# main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
-			
+			final_item_list = []
+			check_items = []
 			final_bom_list.remove(mapped_bom)
 			for bom in final_bom_list:
 				mapped_bom_doc = frappe.get_doc("Mapped BOM",bom)
 				main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
 				item_list.append({'item_code':mapped_bom_doc.item,'parent':bom,'attribute_list':main_item})
 		
-			
-			return item_list,False
+			for row in item_list:
+				mapped_bom_list = [item.get("parent") for item in item_list if item.get("item_code") == row.get("item_code")]
+				if row.get("item_code") not in check_items:
+					row['mapped_boms'] = str(mapped_bom_list)
+					final_item_list.append(row)
+					check_items.append(row.get("item_code"))
+			return final_item_list,False
 
 # Get all child mapped_bom
 def get_child_boms(mapped_bom,bom_childs):
@@ -345,7 +355,7 @@ def override_bom_list(mapped_bom,override_bom_child):
 def get_all_boms_in_order(bom_childs):
 	if len(bom_childs)>1:
 		final_list = [row.get('mapped_bom') for row in bom_childs if row.get("mapped_bom")]
-		childs = frappe.db.sql("""SELECT mb.name,mb.bom_level from `tabMapped BOM` mb where mb.name in {0} order by mb.bom_level asc""".format(tuple(final_list)),as_dict=1,debug=1)
+		childs = frappe.db.sql("""SELECT mb.name,mb.bom_level from `tabMapped BOM` mb where mb.name in {0} order by mb.bom_level asc""".format(tuple(final_list)),as_dict=1)
 		return childs
 
 # Filter attribute values

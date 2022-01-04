@@ -19,6 +19,7 @@
   "project",
   "quantity",
   "old_reference_bom",
+  "update_status",
   "image",
   "currency_detail",
   "currency",
@@ -562,13 +563,19 @@
    "fieldname": "check_propogation_to_descendent_bom",
    "fieldtype": "Check",
    "label": "Check Propogation To Descendent BOM"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "update_status",
+   "fieldtype": "Data",
+   "label": "Update Status"
   }
  ],
  "icon": "fa fa-sitemap",
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-27 03:48:03.841986",
+ "modified": "2022-01-04 00:48:19.433773",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",

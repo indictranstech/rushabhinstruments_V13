@@ -171,6 +171,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 								$.each(r.message[0], function(idx, item_row){
 									var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
 									frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['mapped_bom']);
+									frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
 									frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
 									frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
 									frappe.model.set_value(row.doctype,row.name,'value',item_row['value']);
@@ -181,12 +182,14 @@ frappe.ui.form.on('BOM Creation Tool', {
 									if(item_row['attribute_list'].length == 1){
 										var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
 										frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+										frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
 										frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
 										frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute_list'][0]["attribute"]);
 									}else{
 										$.each(item_row['attribute_list'], function(idx, col){
 											var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
 											frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+											frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
 											frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
 											frappe.model.set_value(row.doctype,row.name,'attribute',col["attribute"]);
 

@@ -696,6 +696,8 @@ class MappedBOM(WebsiteGenerator):
 				bom_obj.save_version()
 			except Exception:
 				frappe.log_error(frappe.get_traceback())
+		frappe.db.set_value("Mapped BOM",{'name':self.name},'update_status','Completed')
+		frappe.db.commit()
 		frappe.msgprint("Mapped BOM Updated Successfully")
 
 	def validate_bom(self):
@@ -893,16 +895,21 @@ def get_items(doctype, txt, searchfield, start, page_len, filters):
 def enqueue_replace_bom(args):
 	if isinstance(args, string_types):
 		args = json.loads(args)
+		frappe.db.set_value("Mapped BOM",{'name':args.get("new_bom")},'update_status','In Process')
+		frappe.db.commit()
+
 
 	# replace_bom(args)
 	frappe.enqueue("instrument.instrument.doctype.mapped_bom.mapped_bom.replace_bom", args=args, timeout=40000)
 	frappe.msgprint(_("Queued for replacing the BOM. It may take a few minutes."))
+
 @frappe.whitelist()
 def replace_bom(args):
 	frappe.db.auto_commit_on_many_writes = 1
 	args = frappe._dict(args)
 
 	doc = frappe.get_doc("Mapped BOM",args.new_bom)
+	doc.update_status = 'In Process'
 	doc.old_reference_bom = args.current_bom
 	doc.name = args.new_bom
 	doc.replace_bom()
