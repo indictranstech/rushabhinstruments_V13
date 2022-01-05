@@ -148,9 +148,10 @@ class BOMCreationTool(Document):
 			if len(value_list) == 0:
 				frappe.throw("Please Select Atleast One Value")
 			else:
-				attribute_value_list = frappe.db.sql("""SELECT distinct attribute,value from `tabBOM Creation Attribute Table` where parent = '{0}' and value != ''""".format(doc.name),as_dict=1)
-				for row in attribute_value_list:
-					final_dict[row.get("attribute")] = row.get("value")
+				final_dict = {row.attribute:row.value for row in doc.attribute_table if row.parent == doc.name and row.value != ''}
+				# attribute_value_list = frappe.db.sql("""SELECT distinct attribute,value from `tabBOM Creation Attribute Table` where parent = '{0}' and value != ''""".format(doc.name),as_dict=1)
+				# for row in attribute_value_list:
+				# 	final_dict[row.get("attribute")] = row.get("value")
 			for item in doc.attribute_table:
 				if item.attribute in final_dict:
 					item.value = final_dict.get(item.attribute)
