@@ -315,5 +315,18 @@ frappe.ui.form.on('BOM Creation Attribute Table', {
 	value:function(frm,cdt,cdn){
 		frm.doc.review_item_mapping = ''
 		frm.refresh_field("review_item_mapping")
+		var row = locals[cdt][cdn]
+		if(row.value){
+			if(!frm.doc.__islocal){
+				$.each(frm.doc.attribute_table, function(idx, item_row){
+					if(row.name != item_row['name']){
+						if(row.attribute == item_row['attribute']){
+							frappe.model.set_value(item_row['doctype'], item_row['name'], 'value', '');
+						}
+					}
+				})
+			}
+		}
+
 	}
 })
