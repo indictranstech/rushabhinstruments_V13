@@ -9,7 +9,9 @@
   "mapped_item",
   "item_code",
   "do_not_override_existing_bom",
-  "attribute_table"
+  "attribute_table",
+  "override_mapped_bom_operation_table",
+  "bom_operations"
  ],
  "fields": [
   {
@@ -41,11 +43,24 @@
    "fieldname": "do_not_override_existing_bom",
    "fieldtype": "Check",
    "label": "Do Not Override Existing BOM"
+  },
+  {
+   "default": "0",
+   "fieldname": "override_mapped_bom_operation_table",
+   "fieldtype": "Check",
+   "label": "Override Mapped BOM Operation Table"
+  },
+  {
+   "depends_on": "override_mapped_bom_operation_table",
+   "fieldname": "bom_operations",
+   "fieldtype": "Table",
+   "label": "BOM Operations",
+   "options": "Item Operation"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-12-27 01:11:44.730124",
+ "modified": "2022-01-05 06:54:40.590593",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Item Mapping",
