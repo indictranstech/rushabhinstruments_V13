@@ -223,25 +223,42 @@ class BOMCreationTool(Document):
 							std_bom.set_rate_of_sub_assembly_item_based_on_bom = bom_doc.get("set_rate_of_sub_assembly_item_based_on_bom")
 							std_bom.currency = bom_doc.get("currency")
 							std_bom.rm_cost_as_per = bom_doc.get("rm_cost_as_per")
-							std_bom.operations = bom_doc.get("operations")
+							std_bom.with_operations = bom_doc.get("with_operations")
 							std_bom.inspection_required = bom_doc.get("inspection_required")
 							std_bom.bom_level = bom_doc.get("bom_level")
 							std_bom.mapped_bom = bom.get('name')
-							if bom_doc.get("operations"):
+							item_mapping = frappe.db.get_value("Item Mapping",{'item_code':std_item,'mapped_item':bom_doc.item},'name')
+							if bom_doc.get("with_operations"):
 								std_bom.transfer_material_against =  bom_doc.get('transfer_material_against')
 								std_bom.routing = bom_doc.get('routing')
-								for op in bom_doc.operations:
-									std_bom.append('operations',{
-										'operation' : op.operation,
-										'workstation' : op.workstation,
-										'time_in_mins' : op.time_in_mins,
-										'hour_rate' : op.hour_rate,
-										'base_operating_cost' : op.base_operating_cost,
-										'batch_size' : op.batch_size,
-										'set_cost_based_on_bom_quantity' : op.set_cost_based_on_bom_quantity,
-										'description' : op.description
-
-										})
+								
+							if item_mapping:
+								item_mapping_doc = frappe.get_doc("Item Mapping",item_mapping)
+								if item_mapping_doc.override_mapped_bom_operation_table:
+									if item_mapping_doc.bom_operations:
+										for op in item_mapping_doc.bom_operations:
+											std_bom.append('operations',{
+												'operation' : op.operation,
+												'workstation' : op.workstation,
+												'time_in_mins' : op.time_in_mins,
+												'hour_rate' : op.hour_rate,
+												'base_operating_cost' : op.base_operating_cost,
+												'batch_size' : op.batch_size,
+												'set_cost_based_on_bom_qty' : op.set_cost_based_on_bom_qty,
+												'description' : op.description
+												})
+								else:
+									for op in bom_doc.operations:
+										std_bom.append('operations',{
+											'operation' : op.operation,
+											'workstation' : op.workstation,
+											'time_in_mins' : op.time_in_mins,
+											'hour_rate' : op.hour_rate,
+											'base_operating_cost' : op.base_operating_cost,
+											'batch_size' : op.batch_size,
+											'set_cost_based_on_bom_qty' : op.set_cost_based_on_bom_qty,
+											'description' : op.description
+											})
 							if bom_doc.scrap_items :
 								for scrap in bom_doc.scrap_items :
 									std_bom.append('scrap_items',{

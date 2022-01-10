@@ -18,5 +18,8 @@ def validate(doc,method):
 	if doc.item_defaults:
 		for row in doc.item_defaults:
 			if row.default_warehouse not in warehouse_list:
-				frappe.throw("Please Add Default Warehouse {0} in Item Locations".format(row.default_warehouse))
+				doc.append('warehouses',{
+					'warehouse':row.default_warehouse
+					})
+				# frappe.throw("Please Add Default Warehouse {0} in Item Locations".format(row.default_warehouse))
 			
