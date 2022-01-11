@@ -155,7 +155,8 @@ class BOMCreationTool(Document):
 			for item in doc.attribute_table:
 				if item.attribute in final_dict:
 					item.value = final_dict.get(item.attribute)
-			doc.save()
+			# doc.save()
+			# doc.reload()
 			return True
 
 
