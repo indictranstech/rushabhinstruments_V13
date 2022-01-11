@@ -17,6 +17,7 @@ def autoname(doc, method):
 				for item in pr_doc.items:
 					if item.item_code == doc.item:
 						doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+						doc.batch_id = doc.name
 						return doc.name
 		elif doc.reference_doctype == 'Stock Entry':
 			if doc.reference_name:
@@ -24,10 +25,13 @@ def autoname(doc, method):
 				for item in se_doc.items:
 					if item.item_code == doc.item:
 						doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+						doc.batch_id = doc.name
 						return doc.name
 		elif engineering_revision:
 			doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+			doc.batch_id = doc.name
 			return doc.name
 		else:
 			doc.name = make_autoname('BN-' + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+			doc.batch_id = doc.name
 			return doc.name

@@ -45,7 +45,7 @@ def validate(doc,method):
 			engineering_revision = frappe.db.get_value("Item",{'item_code':item.item_code},'engineering_revision')
 			item.default_engineering_revision = engineering_revision
 	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
-		(doc.name),debug=1)
+		(doc.name))
 
 def attach_purchasing_docs(doc, method):
 	for row in doc.items:

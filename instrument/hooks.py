@@ -228,7 +228,8 @@ scheduler_events = {
 # generated from the base implementation of the doctype dashboard,
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
-	"Item":  "instrument.instrument.custom_instrument.item.item_dashboard.get_data"
+	"Item":  "instrument.instrument.custom_instrument.item.item_dashboard.get_data",
+	"Sales Order" : "instrument.instrument.custom_instrument.sales_order.sales_order_dashboard.get_data"
 }
 
 # exempt linked doctypes from being automatically cancelled
