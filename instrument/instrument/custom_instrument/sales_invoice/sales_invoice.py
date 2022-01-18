@@ -15,7 +15,7 @@ def on_submit(doc, method = None):
 				return
 			attachment_list = {'fname':row.file_name,'fcontent':content}
 			file_att.append(attachment_list)
-	sender = frappe.db.get_value("Email Setting",{"email_name": "Sales Order Email"},"email_id")
+	sender = frappe.db.get_value("Email Setting",{"email_name": "Sales Invoice Email"},"email_id")
 	recipient = doc.contact_email
 	if recipient:
 		frappe.sendmail(

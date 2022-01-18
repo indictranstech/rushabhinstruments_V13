@@ -613,23 +613,6 @@
  },
  {
   "default_value": null,
-  "doc_type": "Item",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "barcodes",
-  "modified": "2021-05-25 02:59:54.223414",
-  "name": "Item-barcodes-hidden",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
-  "property": "hidden",
-  "property_type": "Check",
-  "row_name": null,
-  "value": "1"
- },
- {
-  "default_value": null,
   "doc_type": "Delivery Note",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -2888,5 +2871,22 @@
   "property_type": "Check",
   "row_name": null,
   "value": "1"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Item",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "is_sales_item",
+  "modified": "2022-01-12 06:47:05.937017",
+  "name": "Item-is_sales_item-default",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "default",
+  "property_type": "Text",
+  "row_name": null,
+  "value": "0"
  }
 ]
