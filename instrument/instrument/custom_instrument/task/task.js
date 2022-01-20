@@ -76,5 +76,28 @@ frappe.ui.form.on("Task", {
 			filters: filters
 		}
 		
+	},
+	onload:function(frm){
+		if(!frm.doc.__islocal){
+			if(frm.doc.depends_on){
+				frappe.call({
+					method : "instrument.instrument.custom_instrument.task.task.get_count",
+					args : {
+						"doc" : frm.doc.name 
+					},
+					callback:function(r){
+						if(r.message){
+							if(r.message[0]['count'] != frm.doc.count){
+								frm.set_value('count',r.message[0]['count'])
+								frm.refresh_field("count");
+								frm.save()
+							}
+							
+						}
+
+					}
+				})
+			}
+		}
 	}
 })
