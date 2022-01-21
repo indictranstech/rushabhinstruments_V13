@@ -2,7 +2,7 @@ frappe.provide("frappe.treeview_settings");
 frappe.provide("instrument.task")
 
 frappe.treeview_settings['Task'] = {
-	get_tree_nodes: "erpnext.projects.doctype.task.task.get_children",
+	get_tree_nodes: "instrument.instrument.custom_instrument.task.task.get_children",
 	add_tree_node: "erpnext.projects.doctype.task.task.add_node",
 	filters: [
 		{
@@ -19,15 +19,24 @@ frappe.treeview_settings['Task'] = {
 			get_query: function() {
 				var me = frappe.treeview_settings['Task'];
 				var project = me.page.fields_dict.project.get_value();
+				var subject = me.page.fields_dict.project.get_value();
 				var args = [["Task", 'is_group', '=', 1]];
 				if(project){
 					args.push(["Task", 'project', "=", project]);
+				}
+				if(subject){
+					args.push(["Task", 'subject', "=", subject]);
 				}
 				return {
 					filters: args
 				};
 			}
-		}
+		},
+		{
+			fieldname: "subject",
+			fieldtype:"Data",
+			label: __("Subject")	
+		}	
 	],
 	breadcrumb: "Projects",
 	get_tree_root: false,
