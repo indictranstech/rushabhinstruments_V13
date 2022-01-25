@@ -56,13 +56,22 @@ frappe.ui.form.on('BOM Creation Tool', {
 				]
 			}
 	    }
-	    cur_frm.fields_dict['standard_item_code'].get_query = function(doc, cdt, cdn) {
+	    frm.set_query("standard_item_code", function() {
 			return {
-				filters: [
-					['Item','is_map_item', '=', 0],
-				]
-			}
-	    }
+				query: "instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_standard_item_code",
+				filters : {
+					'mapped_item':frm.doc.mapped_item
+				}
+			};
+		});
+	  //   cur_frm.fields_dict['standard_item_code'].get_query = function(doc, cdt, cdn) {
+			// return {
+			// 	filters: [
+			// 		['Item','is_map_item', '=', 0],
+			// 	]
+			// }
+	  //   }
+
 	    cur_frm.fields_dict['standard_bom'].get_query = function(doc, cdt, cdn) {
 			return {
 				filters: [
@@ -71,7 +80,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 			}
 	    }
 		if(frm.doc.docstatus==0 &&  !frm.doc.__islocal){
-			cur_frm.add_custom_button(__('Copy Attribute Value'),function(){
+			cur_frm.add_custom_button(__('Copy Attribute Values'),function(){
 				return frm.call({
 					doc: frm.doc,
 					method: "copy_to_all_rows",
@@ -131,78 +140,86 @@ frappe.ui.form.on('BOM Creation Tool', {
 		// }
 		// }
 	},
+	standard_item_code:function(frm){
+		frm.trigger('mapped_bom')
+
+	},
 	mapped_bom:function(frm){
 		// if(frm.doc.__islocal){
 			if(frm.doc.docstatus == 0){
-			// Fetch all the attributes for mapped item
-			if(frm.doc.mapped_bom ){
-				frm.doc.item_assignment_table_for_mapped_item = ''
-				frm.doc.attribute_table = ''
-				frm.set_df_property('item_assignment_table_for_mapped_item','reqd',1)
-				frappe.call({
-					"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes_for_mapped_item",
-					"args":{
-						mapped_bom : frm.doc.mapped_bom
-					},
-					callback:function(r){
-						if(r.message){
-							$.each(r.message[0], function(idx, item_row){
-							
-								frm.set_value('mapped_item',item_row['mapped_item'])
-								var row = frappe.model.add_child(frm.doc, "Item Assignment Table For Mapped Item", "item_assignment_table_for_mapped_item");
-								frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
-								frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
-							})
-							refresh_field('item_assignment_table_for_mapped_item')
-						}
+				// Fetch all the attributes for mapped item
+				if(frm.doc.mapped_bom && frm.doc.mapped_item && frm.doc.standard_item_code){
+					// frm.doc.item_assignment_table_for_mapped_item = ''
+					frm.doc.attribute_table = ''
+					// frm.set_df_property('item_assignment_table_for_mapped_item','reqd',1)
+					// frappe.call({
+					// 	"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes_for_mapped_item",
+					// 	"args":{
+					// 		mapped_bom : frm.doc.mapped_bom
+					// 	},
+					// 	callback:function(r){
+					// 		if(r.message){
+					// 			$.each(r.message[0], function(idx, item_row){
+								
+					// 				frm.set_value('mapped_item',item_row['mapped_item'])
+					// 				var row = frappe.model.add_child(frm.doc, "Item Assignment Table For Mapped Item", "item_assignment_table_for_mapped_item");
+					// 				frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
+					// 				frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
+					// 			})
+					// 			refresh_field('item_assignment_table_for_mapped_item')
+					// 		}
 
-					}
-				})
-				
-				frappe.call({
-					"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes",
-					"args":{
-						mapped_bom : frm.doc.mapped_bom
-					},
-					callback:function(r){
-						if(r.message){
-							
-							if(r.message[1]==true){
-								$.each(r.message[0], function(idx, item_row){
-									var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
-									frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['mapped_bom']);
-									frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
-									frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
-									frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
-									frappe.model.set_value(row.doctype,row.name,'value',item_row['value']);
-								})
-
-							}else{
-								$.each(r.message[0], function(idx, item_row){
-									if(item_row['attribute_list'].length == 1){
+					// 	}
+					// })
+					
+					frappe.call({
+						"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_map_item_attributes",
+						"args":{
+							mapped_bom : frm.doc.mapped_bom,
+							mapped_item : frm.doc.mapped_item,
+							standard_item_code : frm.doc.standard_item_code
+						},
+						callback:function(r){
+							if(r.message){
+								
+								if(r.message[1]==true){
+									$.each(r.message[0], function(idx, item_row){
 										var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
-										frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+										frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['mapped_bom']);
 										frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
-										frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
-										frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute_list'][0]["attribute"]);
-									}else{
-										$.each(item_row['attribute_list'], function(idx, col){
+										frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['mapped_item']);
+										frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute']);
+										frappe.model.set_value(row.doctype,row.name,'value',item_row['value']);
+									})
+
+								}else{
+									$.each(r.message[0], function(idx, item_row){
+										if(item_row['attribute_list'].length == 1){
 											var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
 											frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
 											frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
 											frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
-											frappe.model.set_value(row.doctype,row.name,'attribute',col["attribute"]);
+											frappe.model.set_value(row.doctype,row.name,'attribute',item_row['attribute_list'][0]["attribute"]);
+											frappe.model.set_value(row.doctype,row.name,'value',item_row['attribute_list'][0]["value"]);
+										}else{
+											$.each(item_row['attribute_list'], function(idx, col){
+												var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
+												frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['parent']);
+												frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
+												frappe.model.set_value(row.doctype, row.name, 'mapped_item', item_row['item_code']);
+												frappe.model.set_value(row.doctype,row.name,'attribute',col["attribute"]);
+												frappe.model.set_value(row.doctype,row.name,'value',col["value"]);
 
-										})
-									}
-								});
+											})
+										}
+									});
+								}
+								
+								refresh_field('attribute_table')
 							}
-							
-							refresh_field('attribute_table')
 						}
-					}
-				})
-		}
+					})
+			}
 		}
 
 	},
@@ -224,7 +241,11 @@ frappe.ui.form.on('BOM Creation Tool', {
 
 	},
 	validate:function(frm){
-		// if(frm.doc.__islocal){
+		if(frm.doc.__islocal){
+			frm.set_df_property('mapped_item','read_only',1)
+			frm.set_df_property('mapped_bom','read_only',1)
+			frm.set_df_property('standard_item_code','read_only',1)
+			frm.set_df_property('standard_bom','read_only',1)
 		// 	// Fetch all the attributes for mapped item
 		// 	if(frm.doc.mapped_bom){
 		// 		frappe.call({
@@ -267,7 +288,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 		// 			}
 		// 		})
 		// }
-		// }
+		}
 		// refresh_field('review_item_mapping')
 
 	},
@@ -279,6 +300,8 @@ frappe.ui.form.on('BOM Creation Tool', {
 					callback: function(r) {
 						if(r.message){
 							refresh_field('review_item_mapping')
+							refresh_field('difference_between_previous_and_current_review_item_mappings')
+
 						}
 					}
 				});
@@ -315,6 +338,8 @@ frappe.ui.form.on('BOM Creation Attribute Table', {
 	value:function(frm,cdt,cdn){
 		frm.doc.review_item_mapping = ''
 		frm.refresh_field("review_item_mapping")
+		frm.doc.difference_between_previous_and_current_review_item_mappings = ''
+		frm.refresh_field("difference_between_previous_and_current_review_item_mappings")
 		var row = locals[cdt][cdn]
 		if(row.value){
 			if(!frm.doc.__islocal){

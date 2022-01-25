@@ -6,11 +6,26 @@ frappe.ui.form.on('Mapped BOM', {
 		
 		// Add button Create BOM Tree on Mapped BOM
 		if(frm.doc.docstatus == 1){
-			frm.add_custom_button(__('Create BOM Tree'), function() {
+			frm.add_custom_button(__('Create BOM Tree For Item Mappings'), function() {
 				frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
 				frappe.route_options = {"mapped_bom": frm.doc.name,"mapped_item":frm.doc.item}
 				
 			}, __("Menu"));
+			frappe.call({
+				method: "instrument.instrument.doctype.mapped_bom.mapped_bom.check_bc_doc",
+				// freeze: true,
+				args: {
+					"mapped_bom": frm.doc.name
+				},
+				callback:function(r){
+					if(r.message == true){
+						//Hide Create BOM Tree For Item Mappings from Menu Button when bom creation tool doc is created for mapped bom
+						setTimeout(() => {
+						 	frm.remove_custom_button('Create BOM Tree For Item Mappings', 'Menu');
+					 	}, 10);
+					}
+				}
+			});
 			frm.add_custom_button(__("Browse Mapped BOM"), function() {
 				frappe.route_options = {
 					"mapped_bom": frm.doc.name

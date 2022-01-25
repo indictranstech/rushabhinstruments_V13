@@ -7,8 +7,9 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "mapped_bom",
+  "section_break_2",
   "mapped_item",
+  "mapped_bom",
   "column_break_3",
   "override_existing_bom",
   "standard_item_code",
@@ -18,6 +19,7 @@
   "attribute_table",
   "review_item_mappings",
   "review_item_mapping",
+  "difference_between_previous_and_current_review_item_mappings",
   "amended_from"
  ],
  "fields": [
@@ -48,7 +50,8 @@
    "fieldname": "mapped_bom",
    "fieldtype": "Link",
    "label": "Mapped BOM",
-   "options": "Mapped BOM"
+   "options": "Mapped BOM",
+   "reqd": 1
   },
   {
    "fieldname": "section_break_5",
@@ -78,32 +81,48 @@
    "fieldname": "mapped_item",
    "fieldtype": "Link",
    "label": "Mapped Item",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "standard_item_code",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Standard Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "fieldname": "item_assignment_table_for_mapped_item",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Item Assignment Table For Mapped Item",
    "options": "Item Assignment Table For Mapped Item"
   },
   {
+   "fetch_from": "standard_item_code.default_bom",
    "fieldname": "standard_bom",
    "fieldtype": "Link",
    "label": "Standard BOM",
    "options": "BOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "difference_between_previous_and_current_review_item_mappings",
+   "fieldtype": "Table",
+   "label": "Difference Between Previous and Current Review Item Mappings",
+   "options": "Difference In Review Item Mappings Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-29 06:07:04.620369",
+ "modified": "2022-01-25 02:27:28.725147",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
