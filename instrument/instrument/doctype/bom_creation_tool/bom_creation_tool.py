@@ -24,6 +24,7 @@ class BOMCreationTool(Document):
 		if doc.attribute_table:
 			final_items_review = []
 			doc.review_item_mapping = ''
+			doc.difference_between_previous_and_current_review_item_mappings = ''
 			attributes_values = doc.attribute_table
 			bom_childs = []
 			bom_child_list = get_child_boms(doc.mapped_bom,bom_childs)
@@ -41,9 +42,12 @@ class BOMCreationTool(Document):
 					attribute_value_dict = {row.attribute:row.value for row in doc.attribute_table if row.mapped_item == bom_doc.item}
 
 					if len(attribute_list) == 0 and len(value_list) == 0:
-						attribute_list = [row.attribute for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item]
-						value_list = [row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item and row.value]
-						attribute_value_dict = {row.attribute:row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item}
+						attribute_list = get_attribute_for_main_item(bom_doc.item,doc.standard_item_code)
+						value_list = get_value_for_main_item(bom_doc.item,doc.standard_item_code)
+						attribute_value_dict = {attribute_list[i]: value_list[i] for i in range(len(attribute_list))}
+						# attribute_list = [row.attribute for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item]
+						# value_list = [row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item and row.value]
+						# attribute_value_dict = {row.attribute:row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == bom_doc.item}
 
 					map_item_list_for_parent = get_map_item_list(bom_doc.item)
 					parent_std_item_set  = []
@@ -136,10 +140,44 @@ class BOMCreationTool(Document):
 											'attribute_value':str(raw_attribute_value_dict)
 											})
 										final_items_review.append(line.item_code)
-									
+			doc.difference_table_data()
 			doc.save()
 			return True
-		
+	def difference_table_data(doc):
+		if doc.mapped_item and doc.mapped_bom and doc.standard_item_code:
+			bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_item':doc.mapped_item,'mapped_bom':doc.mapped_bom,'standard_item_code':doc.standard_item_code,'docstatus':1},'name')
+			if bom_creation_doc:
+				previous_mapping = frappe.db.sql("""SELECT * from `tabReview Item Mapping` where parent = '{0}'""".format(bom_creation_doc),as_dict=1)
+				previous_mapping_dict = dict()
+				for row in previous_mapping:
+					previous_mapping_dict[row.mapped_item]=row
+
+				for row in doc.review_item_mapping:
+					if row.mapped_item not in previous_mapping_dict:
+						doc.append('difference_between_previous_and_current_review_item_mappings',{
+								'mapped_bom':row.mapped_bom,
+								'mapped_item':row.mapped_item,
+								'standard_item_code': row.standard_item_code,
+								'standard_item_name':row.standard_item_name,
+								'standard_bom': row.standard_bom,
+								'attribute_value':row.attribute_value
+							})
+					else:
+						previous_mapping_dict.pop(row.mapped_item)
+				if previous_mapping_dict:
+					dict_values = previous_mapping_dict.values()
+					dict_values_list = list(dict_values)
+					for row in dict_values_list:
+						doc.append('difference_between_previous_and_current_review_item_mappings',{
+								'mapped_bom':row.get("mapped_bom"),
+								'mapped_item':row.get("mapped_item"),
+								'standard_item_code': row.get("standard_item_code"),
+								'standard_item_name':row.get("standard_item_name"),
+								'standard_bom': row.get("standard_bom"),
+								'attribute_value':row.get("attribute_value")
+							})
+		doc.save()
+		return True
 	@frappe.whitelist()
 	def copy_to_all_rows(doc,method):
 		if doc.attribute_table:
@@ -162,29 +200,32 @@ class BOMCreationTool(Document):
 
 	def autoname(doc):
 		# doc.name = make_autoname('BOM-' + '.YYYY.' + '-' + doc.mapped_bom + '-' + '.#####')
-		if doc.mapped_item and doc.item_assignment_table_for_mapped_item and not doc.standard_item_code:
-			attribute_list = [row.attribute for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == doc.mapped_item]
-			value_list = [row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == doc.mapped_item and row.value]
-			map_item_list_for_parent = get_map_item_list(doc.mapped_item)
-			parent_std_item_set  = []
-			for parent_map_item in map_item_list_for_parent:
-				parent_map_item_doc = frappe.get_doc("Item Mapping",parent_map_item)
-				parent_map_attribute_list = [row.attribute for row in parent_map_item_doc.attribute_table]
-				parent_map_value_list = [row.value for row in parent_map_item_doc.attribute_table]
-				if set(parent_map_value_list) == set(value_list):
-					parent_std_item_set.append(parent_map_item_doc.item_code)
-			parent_std_item_list =list(set(parent_std_item_set))
-			if len(parent_std_item_list) > 1 :
-				frappe.msgprint("There are more than one standard item {1} mapped with selected attribute value {2} for item {0}".format(doc.mapped_item,parent_std_item_list,value_list))
-			if len(parent_std_item_list) == 0 and not doc.standard_item_code:
-				frappe.throw("Standard Item Code not found for Mapped Item {0}".format(doc.mapped_item))
-			doc.standard_item_code = parent_std_item_list[0]
-			default_bom = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_default':1,'is_active':1,'docstatus':1},'name')
-			if not default_bom :
-				default_bom = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'docstatus':1},'name')
-			doc.standard_bom = default_bom
+		# if doc.mapped_item and doc.item_assignment_table_for_mapped_item and not doc.standard_item_code:
+		# 	attribute_list = [row.attribute for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == doc.mapped_item]
+		# 	value_list = [row.value for row in doc.item_assignment_table_for_mapped_item if row.mapped_item == doc.mapped_item and row.value]
+		# 	map_item_list_for_parent = get_map_item_list(doc.mapped_item)
+		# 	parent_std_item_set  = []
+		# 	for parent_map_item in map_item_list_for_parent:
+		# 		parent_map_item_doc = frappe.get_doc("Item Mapping",parent_map_item)
+		# 		parent_map_attribute_list = [row.attribute for row in parent_map_item_doc.attribute_table]
+		# 		parent_map_value_list = [row.value for row in parent_map_item_doc.attribute_table]
+		# 		if set(parent_map_value_list) == set(value_list):
+		# 			parent_std_item_set.append(parent_map_item_doc.item_code)
+		# 	parent_std_item_list =list(set(parent_std_item_set))
+		# 	if len(parent_std_item_list) > 1 :
+		# 		frappe.msgprint("There are more than one standard item {1} mapped with selected attribute value {2} for item {0}".format(doc.mapped_item,parent_std_item_list,value_list))
+		# 	if len(parent_std_item_list) == 0 and not doc.standard_item_code:
+		# 		frappe.throw("Standard Item Code not found for Mapped Item {0}".format(doc.mapped_item))
+		# 	doc.standard_item_code = parent_std_item_list[0]
+		# 	default_bom = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_default':1,'is_active':1,'docstatus':1},'name')
+		# 	if not default_bom :
+		# 		default_bom = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'docstatus':1},'name')
+		# 	doc.standard_bom = default_bom
 
-		doc.name = make_autoname('BOM-CREATE-' + doc.mapped_item + '-' +  doc.standard_item_code + '-'+'.###')
+		if doc.mapped_item and doc.standard_item_code:
+			doc.name = make_autoname('BOM-CREATE-' + doc.mapped_item + '-' +  doc.standard_item_code + '-'+'.###')
+		else:
+			frappe.throw("Please Enter The Value For Mapped Item And Standard Item Code")
 		return doc.name
 
 	def before_submit(doc,method=None):
@@ -301,51 +342,66 @@ class BOMCreationTool(Document):
 							std_bom.submit()
 		else:
 			frappe.throw("Please Check Review Item Mapping")
-								
+
+def get_attribute_for_main_item(map_item,std_item):
+	attributes = frappe.db.sql("""SELECT distinct a.attribute from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}' and m.item_code = '{1}'""".format(map_item,std_item),as_dict=1)
+	attribute_list = [item.attribute for item in attributes]
+	return attribute_list
+def get_value_for_main_item(map_item,std_item):
+	values = frappe.db.sql("""SELECT distinct a.value from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}' and m.item_code = '{1}'""".format(map_item,std_item),as_dict=1)
+	value_list = [item.value for item in values]
+	return value_list				
 def get_map_item_list(item_code):
 	map_item_list = frappe.db.sql("""SELECT name from `tabItem Mapping` where mapped_item = '{0}'""".format(item_code),as_dict=1)
 	return map_item_list
 # get all the attributes for all mapped items
 @frappe.whitelist()
-def get_map_item_attributes(mapped_bom):
+def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
 	if mapped_bom:
-		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1},'name')
+		# check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1,'mapped_item':mapped_item,'standard_item_code':standard_item_code},'name')
+		# if check_bom_creation_doc:
+		# 	b_doc = frappe.get_doc("BOM Creation Tool",check_bom_creation_doc)
+		# 	return b_doc.attribute_table,True
+		# else :
+		mapped_bom_doc = frappe.get_doc("Mapped BOM",mapped_bom)
+		map_item_attributes_list = [] 
+		bom_childs = []
+		bom_child_list = get_child_boms(mapped_bom,bom_childs)
+		final_bom_list = [row.get("mapped_bom") for row in bom_child_list if row.get("mapped_bom")]
+		final_bom_list.append(mapped_bom)
+		# final_bom_list.remove(mapped_bom)
+		
+		if len(final_bom_list) == 1 :
+			 item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent = '{0}' and is_map_item = 1""".format(final_bom_list[0]),as_dict=1)
+		else:
+			item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent in {0} and is_map_item = 1""".format(tuple(final_bom_list)),as_dict=1)
+		for row in item_list:	
+			if item_list:
+				attributes = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(row.get('item_code')),as_dict=1)
+				row['attribute_list'] = attributes
+		# main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
+		final_item_list = []
+		check_items = []
+		final_bom_list.remove(mapped_bom)
+		for bom in final_bom_list:
+			mapped_bom_doc = frappe.get_doc("Mapped BOM",bom)
+			main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
+			item_list.append({'item_code':mapped_bom_doc.item,'parent':bom,'attribute_list':main_item})
+		for row in item_list:
+			mapped_bom_list = [item.get("parent") for item in item_list if item.get("item_code") == row.get("item_code")]
+			if row.get("item_code") not in check_items:
+				row['mapped_boms'] = str(mapped_bom_list)
+				final_item_list.append(row)
+				check_items.append(row.get("item_code"))
+		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1,'mapped_item':mapped_item,'standard_item_code':standard_item_code},'name')
 		if check_bom_creation_doc:
 			b_doc = frappe.get_doc("BOM Creation Tool",check_bom_creation_doc)
-			return b_doc.attribute_table,True
-		else :
-			mapped_bom_doc = frappe.get_doc("Mapped BOM",mapped_bom)
-			map_item_attributes_list = [] 
-			bom_childs = []
-			bom_child_list = get_child_boms(mapped_bom,bom_childs)
-			final_bom_list = [row.get("mapped_bom") for row in bom_child_list if row.get("mapped_bom")]
-			final_bom_list.append(mapped_bom)
-			# final_bom_list.remove(mapped_bom)
-			
-			if len(final_bom_list) == 1 :
-				 item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent = '{0}' and is_map_item = 1""".format(final_bom_list[0]),as_dict=1)
-			else:
-				item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent in {0} and is_map_item = 1""".format(tuple(final_bom_list)),as_dict=1)
-			for row in item_list:	
-				if item_list:
-					attributes = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(row.get('item_code')),as_dict=1)
-					row['attribute_list'] = attributes
-			# main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
-			final_item_list = []
-			check_items = []
-			final_bom_list.remove(mapped_bom)
-			for bom in final_bom_list:
-				mapped_bom_doc = frappe.get_doc("Mapped BOM",bom)
-				main_item = frappe.db.sql("""SELECT distinct a.attribute,m.mapped_item from `tabItem Mapping` m join `tabAttribute Table` a on a.parent = m.name where m.mapped_item = '{0}'""".format(mapped_bom_doc.item),as_dict=1)
-				item_list.append({'item_code':mapped_bom_doc.item,'parent':bom,'attribute_list':main_item})
-		
-			for row in item_list:
-				mapped_bom_list = [item.get("parent") for item in item_list if item.get("item_code") == row.get("item_code")]
-				if row.get("item_code") not in check_items:
-					row['mapped_boms'] = str(mapped_bom_list)
-					final_item_list.append(row)
-					check_items.append(row.get("item_code"))
-			return final_item_list,False
+			data_dict = {(row.mapped_item,row.attribute):row for row in b_doc.attribute_table}
+			for row in final_item_list:
+				if (row.attribute_list[0].get('mapped_item'),row.attribute_list[0].get('attribute')) in data_dict:
+					for item in row.attribute_list:
+						item['value'] = data_dict.get((item.get('mapped_item'),item.get('attribute'))).get("value")
+		return final_item_list,False
 
 # Get all child mapped_bom
 def get_child_boms(mapped_bom,bom_childs):
@@ -429,3 +485,19 @@ def get_mapped_bom(mapped_item):
 	if not mapped_bom:
 		mapped_bom = frappe.db.get_value("Mapped BOM",{'item':mapped_item,'is_active':1,'docstatus':1},'name')
 	return mapped_bom
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_standard_item_code(doctype, txt, searchfield, start, page_len, filters):
+	cond = ''
+	if filters and filters.get('mapped_item'):
+		# mapped_item = frappe.db.get_value('Item Mappings', filters.get('mapped_item'), 'mapped_item')
+		cond = "and mapped_item = '%s'" % filters.get('mapped_item')
+
+	return frappe.db.sql("""SELECT item_code from `tabItem Mapping`
+			where `{key}` LIKE %(txt)s {cond}
+			order by name limit %(start)s, %(page_len)s"""
+			.format(key=searchfield, cond=cond), {
+				'txt': '%' + txt + '%',
+				'start': start, 'page_len': page_len
+			})

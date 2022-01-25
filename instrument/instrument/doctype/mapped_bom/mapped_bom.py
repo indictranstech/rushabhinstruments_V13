@@ -965,13 +965,20 @@ def create_bom_creation_tool(current_bom,bom):
 		else:
 			for d in bom_creation_docs:
 				old_doc = frappe.get_doc("BOM Creation Tool",d.get("name"))
-				new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
-				new_doc.mapped_bom = bom
-				new_doc.review_item_mapping = ''
-				new_doc.save()
-			frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
-			frappe.db.commit()
-			frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
+				if old_doc.docstatus == 1 :
+					new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
+					new_doc.mapped_bom = bom
+					new_doc.review_item_mapping = ''
+					new_doc.save()
+					frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+					frappe.db.commit()
+					frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
+				else:
+					old_doc.mapped_bom = bom
+					old_doc.save()
+					frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+					frappe.db.commit()
+					frappe.msgprint("BOM Creation Tool Updated For Mapped BOM <b>{0}</b>".format(bom))
 
 		# bom_creation_data ,check_exists = get_map_item_attributes(bom)
 		# bom_creation_tool = frappe.new_doc("BOM Creation Tool")
@@ -1158,3 +1165,8 @@ def get_children(doctype, parent=None, is_root=False, **filters):
 				bom_item.expandable = 0 if bom_item.value in ('', None)  else 1
 				bom_item.image = frappe.db.escape(bom_item.image)
 		return bom_items
+@frappe.whitelist()
+def check_bc_doc(mapped_bom):
+	check_bc_doc = frappe.db.get_all("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':0})
+	if len(check_bc_doc) > 0 :
+		return True
