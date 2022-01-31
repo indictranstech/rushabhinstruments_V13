@@ -27,6 +27,9 @@ frappe.treeview_settings['Task'] = {
 				if(subject){
 					args.push(["Task", 'subject', "=", subject]);
 				}
+				if(status){
+					args.push(["Task", 'status', "=", status]);
+				}
 				return {
 					filters: args
 				};
@@ -36,6 +39,12 @@ frappe.treeview_settings['Task'] = {
 			fieldname: "subject",
 			fieldtype:"Data",
 			label: __("Subject")	
+		},
+		{
+			fieldname: "status",
+			fieldtype:"Select",
+			label: __("Status"),
+			options : ['Open','Working','Pending Review','Overdue','Template','Completed','Cancelled']	
 		}	
 	],
 	breadcrumb: "Projects",

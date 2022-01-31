@@ -30,7 +30,7 @@ def move_task(task_to_be_moved,parent_task):
 			task_doc.save()
 			return task_doc
 @frappe.whitelist()
-def get_children(doctype, parent, task=None, project=None,subject=None, is_root=False):
+def get_children(doctype, parent, task=None, project=None,subject=None,status = None,is_root=False):
 
 	filters = [['docstatus', '<', '2']]
 
@@ -46,6 +46,8 @@ def get_children(doctype, parent, task=None, project=None,subject=None, is_root=
 		filters.append(['project', '=', project])
 	if subject:
 		filters.append(['subject' , 'LIKE',"%%%s%%" % subject])
+	if status:
+		filters.append(['status','=',status])
 
 	tasks = frappe.get_list(doctype, fields=[
 		'name as value',
@@ -60,5 +62,4 @@ def get_children(doctype, parent, task=None, project=None,subject=None, is_root=
 def get_count(doc):
 	if doc:
 		count = frappe.db.sql("""SELECT count(d.task) as count from `tabTask Depends On` d join `tabTask` t on t.name = d.task where d.parent = '{0}' and t.status in ('Open','Pending Review','Overdue','Working')""".format(doc),as_dict=1)
-		print("===========================count",count)
 		return count

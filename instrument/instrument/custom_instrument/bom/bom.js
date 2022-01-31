@@ -71,8 +71,9 @@ frappe.ui.form.on("BOM", {
 		if(frm.doc.docstatus==1){
 			cur_frm.add_custom_button(__('Update References'),function(){
 				if (frm.doc.name && frm.doc.old_reference_bom) {
+					frm.set_value("update_status",'In Process')
 					frappe.call({
-						method: "erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.enqueue_replace_bom",
+						method: "instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.enqueue_replace_bom",
 						freeze: true,
 						args: {
 							args: {
