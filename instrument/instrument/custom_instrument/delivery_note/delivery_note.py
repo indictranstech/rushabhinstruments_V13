@@ -40,7 +40,7 @@ def custom_api(doc, event=None):
 	                    'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no})
 	    data.update({'items': items})
 	url = 'http://projects.theglobalwebdev.com/qualityhistology/?action=delivery_note'
-	#    frappe.msgprint(str(data))
+	frappe.msgprint(str(data))
 
 	response = requests.post(url, data= json.dumps(data))
     
