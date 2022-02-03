@@ -6,6 +6,7 @@ from frappe.desk.form.load import get_attachments
 from zipfile import ZipFile
 import os
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
+from frappe.model.mapper import get_mapped_doc
 
 def validate(doc,method):
 	if doc.items:

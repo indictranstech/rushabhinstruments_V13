@@ -21,6 +21,64 @@ frappe.ui.form.on('Request for Quotation', {
 				}
 			});
 		}
+		//Hide Pick List,Work Order from Create Button
+		setTimeout(() => {
+			 	frm.remove_custom_button('Possible Supplier', 'Get Items From');
+			 	}, 10);
+		// Get items from open Material Requests based on supplier
+		frm.add_custom_button(__('Possible Suppliers'), function() {
+			// Create a dialog window for the user to pick their supplier
+			var dialog = new frappe.ui.Dialog({
+				title: __('Select Possible Supplier'),
+				fields: [
+					{
+						fieldname: 'supplier',
+						fieldtype:'Link',
+						options:'Supplier',
+						label:'Supplier',
+						reqd:1,
+						description: __("Get Items from Material Requests against this Supplier")
+					}
+				],
+				primary_action_label: __("Get Items"),
+				primary_action: (args) => {
+					if(!args) return;
+					dialog.hide();
+					if(frm.doc.suppliers.length == 1 && !frm.doc.suppliers[0].supplier){
+						$.each(frm.doc.suppliers, function(idx, item_row){
+							if(!item_row.supplier)
+							{
+								frappe.model.set_value(item_row.doctype, item_row.name, 'supplier', args.supplier);
+							}
+
+						})
+					}
+					else{
+						var row = frappe.model.add_child(frm.doc, "Request for Quotation Supplier", "suppliers");
+						frappe.model.set_value(row.doctype, row.name, 'supplier', args.supplier);
+					}
+					refresh_field('suppliers')
+					erpnext.utils.map_current_doc({
+						method: "erpnext.buying.doctype.request_for_quotation.request_for_quotation.get_item_from_material_requests_based_on_supplier",
+						source_name: args.supplier,
+						target: me.frm,
+						setters: {
+							company: me.frm.doc.company
+						},
+						get_query_filters: {
+							material_request_type: "Purchase",
+							docstatus: 1,
+							status: ["!=", "Stopped"],
+							per_ordered: ["<", 100]
+						}
+					});
+					dialog.hide();
+				}
+			});
+
+			dialog.show();
+		}, __("Get Items From"));
+
 	}
 });
 
