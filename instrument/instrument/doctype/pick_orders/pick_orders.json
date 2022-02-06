@@ -6,6 +6,9 @@
  "engine": "InnoDB",
  "field_order": [
   "work_order",
+  "total_qty_to_of_finished_goods_on_work_order",
+  "qty_of_finished_goods_already_completed",
+  "qty_of_finished_goods_to_pull",
   "qty_of_finished_goods",
   "create_stock_entry"
  ],
@@ -15,13 +18,11 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Work Order",
-   "options": "Work Order",
-   "read_only": 1
+   "options": "Work Order"
   },
   {
    "fieldname": "qty_of_finished_goods",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Qty of Finished Goods"
   },
   {
@@ -29,12 +30,30 @@
    "fieldtype": "Button",
    "in_list_view": 1,
    "label": "Create Stock Entry"
+  },
+  {
+   "fieldname": "total_qty_to_of_finished_goods_on_work_order",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Qty to of Finished Goods on Work Order"
+  },
+  {
+   "fieldname": "qty_of_finished_goods_already_completed",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty of Finished Goods Already completed"
+  },
+  {
+   "fieldname": "qty_of_finished_goods_to_pull",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty of Finished Goods to Pull"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-09-27 04:31:25.386943",
+ "modified": "2021-11-17 00:14:43.440330",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Pick Orders",

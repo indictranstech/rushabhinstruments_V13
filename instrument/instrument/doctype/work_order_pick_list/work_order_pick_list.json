@@ -67,8 +67,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Production Plan",
-   "options": "Production Plan",
-   "reqd": 1
+   "options": "Production Plan"
   },
   {
    "fieldname": "get_work_orders",
@@ -94,7 +93,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-09-23 05:37:14.440616",
+ "modified": "2021-12-22 02:48:42.256300",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Work Order Pick List",
@@ -110,6 +109,7 @@
    "report": 1,
    "role": "Stock Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -122,6 +122,7 @@
    "report": 1,
    "role": "Stock User",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -134,6 +135,7 @@
    "report": 1,
    "role": "Manufacturing Manager",
    "share": 1,
+   "submit": 1,
    "write": 1
   },
   {
@@ -146,6 +148,7 @@
    "report": 1,
    "role": "Manufacturing User",
    "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

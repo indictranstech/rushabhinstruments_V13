@@ -26,6 +26,25 @@ from openpyxl.styles import Alignment
 from openpyxl.utils.cell import get_column_letter
 
 class WorkOrderPickList(Document):
+	def validate(self):
+		if self.get("__islocal"):
+			final_item_list = []
+			for row in self.work_orders:
+				final_item_list.append({
+				'work_order' :row.get("work_order"),
+				'total_qty_to_of_finished_goods_on_work_order':row.get("total_qty_to_of_finished_goods_on_work_order"),
+				'qty_of_finished_goods_to_pull':row.get("qty_of_finished_goods_to_pull"),
+				'qty_of_finished_goods_already_completed':row.get("qty_of_finished_goods_already_completed"),
+				'qty_of_finished_goods':row.get("qty_of_finished_goods")
+				})
+			final_data = sorted(final_item_list,key = lambda x:x["work_order"])
+			self.work_orders = ''
+			count = 1
+			for col in final_data:
+				col.update({'idx' : count})
+				self.append("work_orders",col)
+				count = count + 1
+
 	@frappe.whitelist()
 	def get_work_order_items(self):
 		final_raw_item_list = []
@@ -37,7 +56,7 @@ class WorkOrderPickList(Document):
 				bom_no = frappe.db.get_value("Work Order",{'name':item.work_order},'bom_no')
 				if bom_no:
 					# Get all the required raw materials with required qty according to qty of qty_of_finished_goods
-					raw_materials = get_raw_material(bom_no,self.company,item.qty_of_finished_goods,item.work_order)
+					raw_materials = get_raw_material(bom_no,self.company,item.qty_of_finished_goods_to_pull,item.work_order)
 					final_raw_item_list.append(raw_materials)
 					i_list = [item for item in raw_materials]
 					for i in i_list:
@@ -54,19 +73,20 @@ class WorkOrderPickList(Document):
 							col = item_locations_dict.get(row)
 							for i in col:
 								# Fetch batch  FIFO basis
-								batch_no = get_batch_no(row, i.get("warehouse"),raw_materials.get(row).get("qty"), throw=False)
-								i['required_qty'] = raw_materials.get(row).get("qty")
+								# batch_no = get_batch_no(row, i.get("warehouse"),raw_materials.get(row).get("qty"), throw=False)
+								transferred_qty = frappe.db.get_value("Work Order Item",{'parent':item.work_order,'item_code':row},'transferred_qty')
+								i['required_qty'] = (flt(raw_materials.get(row).get("qty"))-flt(transferred_qty)) 
 								i['picked_qty'] = 0
 								i['stock_uom'] = raw_materials.get(row).get('stock_uom')
 								i['engineering_revision'] = engineering_revision
-								i['batch_no'] = batch_no
+								# i['batch_no'] = batch_no
 								# Prefill the picked qty
-								if batch_no:
-									batch_qty = frappe.db.get_value("Batch",{'name':batch_no},'batch_qty')
-									if batch_qty >= raw_materials.get(row).get("qty"):
-										i['picked_qty'] = raw_materials.get(row).get("qty")
-									else:
-										i['picked_qty'] = batch_qty	
+								# if batch_no:
+								# 	batch_qty = frappe.db.get_value("Batch",{'name':batch_no},'batch_qty')
+								# 	if batch_qty >= (flt(raw_materials.get(row).get("qty"))-flt(transferred_qty)) :
+								# 		i['picked_qty'] = (flt(raw_materials.get(row).get("qty"))-flt(transferred_qty)) 
+								# 	else:
+								# 		i['picked_qty'] = batch_qty	
 					final_data[item.work_order] = item_locations_dict
 			# add items in item_locations
 			work_order_list = [item.work_order for item in self.work_orders]
@@ -78,23 +98,69 @@ class WorkOrderPickList(Document):
 							item_data = get_item_defaults(i, self.company)
 							j = final_row.get(i)
 							for d in j:
-								self.append("work_order_pick_list_item",{
-									"item_code": i,
-									"item_name": item_data.get("item_name"),
-									"warehouse":d.get("warehouse"),
-									"required_qty":d.get("required_qty"),
-									"stock_qty": d.get("qty"),
-									"work_order" : row,
-									"picked_qty" : d.get('picked_qty'),
-									"uom" : d.get('stock_uom'),
-									"stock_uom":d.get('stock_uom'),
-									"description" :item_data.get('description'),
-									"item_group" : item_data.get("item_group"),
-									"engineering_revision" : d.get("engineering_revision"),
-									"batch_no" : d.get('batch_no')
-								})
+								if (d.get("required_qty")) > 0:
+									self.append("work_order_pick_list_item",{
+										"item_code": i,
+										"item_name": item_data.get("item_name"),
+										"warehouse":d.get("warehouse"),
+										"required_qty":d.get("required_qty"),
+										"stock_qty": d.get("qty"),
+										"work_order" : row,
+										"picked_qty" : d.get('picked_qty'),
+										"uom" : d.get('stock_uom'),
+										"stock_uom":d.get('stock_uom'),
+										"description" :item_data.get('description'),
+										"item_group" : item_data.get("item_group"),
+										"engineering_revision" : d.get("engineering_revision"),
+										# "batch_no" : d.get('batch_no')
+									})
+			self.batch_assignment_fifo()
 		self.save()
-							
+	def batch_assignment_fifo(self):
+		item_list = [item.item_code for item in self.work_order_pick_list_item]
+		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+		batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
+		
+		allocated_item_list = []
+		allocated_item_dict = dict()
+		for row in self.work_order_pick_list_item:
+			if row.item_code not in allocated_item_dict:
+				for col in batch_data:	
+					if row.item_code == col.item and row.warehouse == col.warehouse :
+						if col.qty >= row.required_qty:
+							row.batch_no = col.name
+							row.picked_qty = row.required_qty
+							allocated_item_list.append(row.item_code)
+							allocated_item_dict.update({row.item_code:row.work_order})
+							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
+								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
+								row.serial_no = serial_nos 
+							break
+						elif col.qty < row.required_qty:
+							row.batch_no = col.name
+							row.picked_qty = col.qty
+							allocated_item_list.append(row.item_code)
+							# allocated_item_dict.update({row.item_code:row.work_order})
+							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
+								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
+								row.serial_no = serial_nos
+							break
+def get_serial_nos(item_code,batch_id):
+	serial_nos = frappe.db.sql("""SELECT name from `tabSerial No` where batch_no = '{0}' and item_code = '{1}'""".format(batch_id,item_code),as_dict=1)
+	serial_nos = [item.name for item in serial_nos]
+	return serial_nos
+def get_serial_no_batchwise(item_code,batch_no,warehouse,qty):
+	if frappe.db.get_single_value("Stock Settings", "automatically_set_serial_nos_based_on_fifo"):
+		return "\n".join(frappe.db.sql_list("""SELECT name from `tabSerial No`
+			where item_code=%(item_code)s and warehouse=%(warehouse)s 
+			and batch_no=IF(%(batch_no)s IS NULL, batch_no, %(batch_no)s) order
+			by timestamp(purchase_date, purchase_time) asc limit %(qty)s""", {
+				"item_code": item_code,
+				"warehouse": warehouse,
+				"batch_no": batch_no,
+				"qty": abs(cint(qty))
+			}))
+
 def get_item_locations(item_list,company):
 	item_locations_dict = dict()
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
@@ -129,19 +195,91 @@ def get_raw_material(bom_no, company, qty,work_order):
 @frappe.whitelist()
 def get_work_orders(production_plan):
 	if production_plan:
-		work_order_data = frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where production_plan = '{0}' and (wo.produced_qty < wo.qty)  and wo.status in ('In process','Not Started') and wo.docstatus = 1 order by wo.name asc""".format(production_plan),as_dict =1,debug=1)
+		work_order_data = frappe.db.sql("""SELECT wo.name,wo.qty,wo.produced_qty,(wo.qty-wo.produced_qty) as pending_qty from `tabWork Order` wo where production_plan = '{0}' and (wo.produced_qty < wo.qty)  and wo.status in ('In process','Not Started') and wo.docstatus = 1 order by wo.bom_level asc""".format(production_plan),as_dict =1,debug=1)
 		return work_order_data
 
+@frappe.whitelist()
+def get_work_order_data(work_order):
+	if work_order:
+		work_order_data = frappe.db.sql("""SELECT wo.name,wo.qty,wo.produced_qty,(wo.qty-wo.produced_qty) as pending_qty from `tabWork Order` wo where wo.name = '{0}' and (wo.produced_qty < wo.qty)  and wo.status in ('In process','Not Started') and wo.docstatus = 1 order by wo.name asc""".format(work_order),as_dict =1,debug=1)
+		doc = frappe.get_doc("Work Order",work_order)
+		ohs = get_current_stock()
+		qty_will_be_produced_list = []
+		for item in doc.required_items:
+			if item.item_code in ohs:
+				if item.required_qty <= ohs.get(item.item_code):
+					percent_stock = 100
+					qty_will_be_produced = item.required_qty
+					qty_will_be_produced_list.append(qty_will_be_produced)
+				elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
+					percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+					qty_will_be_produced = (percent_stock/100*item.required_qty)
+					qty_will_be_produced_list.append(qty_will_be_produced)
+				else : 
+					percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+					qty_will_be_produced = 0
+					qty_will_be_produced_list.append(qty_will_be_produced)
+		
+		work_order_data[0]['qty_will_be_produced'] =min(qty_will_be_produced_list)
+		return work_order_data
+def get_current_stock():
+	# 1.get wip warehouse
+	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", 'default_wip_warehouse')
+	current_stock = frappe.db.sql("""SELECT item_code,sum(actual_qty) as qty from `tabBin` where warehouse != '{0}' group by item_code """.format(wip_warehouse),as_dict=1)
+	ohs_dict = {item.item_code : item.qty for item in current_stock}
+	return ohs_dict
+	
 @frappe.whitelist()
 def validate_picked_qty(work_order,required_qty,picked_qty,doc_name,row_name,item_code):
 	picked_qty = frappe.db.sql("""SELECT sum(picked_qty) as picked_qty from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and item_code = '{2}' and name != '{3}'""".format(doc_name,work_order,item_code,row_name),as_dict=1)
 	return picked_qty[0].get('picked_qty')
 
 @frappe.whitelist()
+def check_stock_entries(work_order,work_order_pick_list):
+	if work_order and work_order_pick_list:
+		stock_entry_list = frappe.db.sql("""SELECT name from `tabStock Entry` where work_order = '{0}' and work_order_pick_list = '{1}'""".format(work_order,work_order_pick_list),as_dict=1)
+		if len(stock_entry_list)==0:
+			return True
+		else:
+			frappe.msgprint("Stock Entries already created for work order {0}".format(work_order))
+@frappe.whitelist()
+def create_stock_entry(work_order,work_order_pick_list):
+	if work_order and work_order_pick_list:
+		work_order_doc = frappe.get_doc("Work Order",work_order)
+		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':work_order_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
+		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(work_order_pick_list,work_order),as_dict =1)
+		if len(data) > 0:
+			stock_entry = frappe.new_doc("Stock Entry")
+			if stock_entry:
+				stock_entry.stock_entry_type = 'Material Transfer for Manufacture'
+				stock_entry.company = work_order_doc.company
+				stock_entry.work_order = work_order
+				stock_entry.work_order_pick_list = work_order_pick_list
+				stock_entry.from_bom = 1
+				stock_entry.bom_no = work_order_doc.bom_no
+				stock_entry.fg_completed_qty = qty_of_finish_good
+				# stock_entry.fg_completed_qty = data.get("fg_completed_qty")
+				# stock_entry.from_warehouse = data.get("selected_warehouse")
+				stock_entry.to_warehouse = work_order_doc.wip_warehouse
+				for row in data:
+					stock_entry.append("items",{
+							"item_code": row.get("item_code"),
+								"qty": row.get("picked_qty"),
+								"s_warehouse": row.get("s_warehouse"),
+								"t_warehouse": work_order_doc.wip_warehouse,
+								'batch_no' : row.get("batch_no"),
+								'serial_no' : row.get("serial_no")
+
+						})
+				stock_entry.save()
+				return stock_entry.name
+		else:
+			frappe.throw("Please Pick Quantity For Atleast One Item")
+@frappe.whitelist()
 def get_pick_list_details(doc):
 	data = json.loads(doc)
-	header = ['Sr.No','Work Order','Qty of Finished Good']
-	header_2 = ['Sr.No','Item','Warehouse','Work Order','Required Qty','Stock Qty','Picked Qty','Item Name','Description','Item Group','Engineering Revision','UOM','Stock UOM','Conversion Factor']
+	header = ['Sr.No','Work Order','Total Qty of Finished Goods on Work Order','Qty of Finished Goods Already Completed','Qty of Finished Goods To Pull']
+	header_2 = ['Sr.No','Item','Warehouse','Work Order','Required Qty','Stock Qty','Picked Qty','Item Name','Description','Item Group','Batch','Engineering Revision','UOM','Stock UOM','Conversion Factor']
 	
 	book = Workbook()
 	sheet = book.active
@@ -214,7 +352,17 @@ def get_pick_list_details(doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+2)
-		cell.value = item.get('qty_of_finished_goods')
+		cell.value = item.get('total_qty_to_of_finished_goods_on_work_order')
+		cell.font = cell.font.copy(bold=False)
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = item.get('qty_of_finished_goods_already_completed')
+		cell.font = cell.font.copy(bold=False)
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = item.get('qty_of_finished_goods_to_pull')
 		cell.font = cell.font.copy(bold=False)
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 		
@@ -291,21 +439,27 @@ def get_pick_list_details(doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+10)
+		cell.value = item.get('batch_no')
+		cell.font = cell.font.copy(bold=False)
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = sheet.cell(row=row,column=col+11)
 		cell.value = item.get('engineering_revision')
 		cell.font = cell.font.copy(bold=False)
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
-		cell = sheet.cell(row=row,column=col+11)
+		cell = sheet.cell(row=row,column=col+12)
 		cell.value = item.get('uom')
 		cell.font = cell.font.copy(bold=False)
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
-		cell = sheet.cell(row=row,column=col+12)
+		cell = sheet.cell(row=row,column=col+13)
 		cell.value = item.get('stock_uom')
 		cell.font = cell.font.copy(bold=False)
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
-		cell = sheet.cell(row=row,column=col+13)
+		cell = sheet.cell(row=row,column=col+14)
 		cell.value = item.get('conversion_factor')
 		cell.font = cell.font.copy(bold=False)
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
@@ -335,6 +489,7 @@ def download_xlsx():
 	frappe.local.response.type = "download"
 	
 	frappe.local.response.filename = fname
+
 
 
 @frappe.whitelist()
@@ -383,7 +538,7 @@ def get_batches(item_code, warehouse, qty=1, throw=False):
 		cond = " and b.name = %s" %(frappe.db.escape(batch[0].batch_no))
 
 	return frappe.db.sql("""
-		select b.name, sum(`tabStock Ledger Entry`.actual_qty) as qty
+		SELECT b.name, sum(`tabStock Ledger Entry`.actual_qty) as qty
 		from `tabBatch` b
 			join `tabStock Ledger Entry` ignore index (item_code, warehouse)
 				on (b.name = `tabStock Ledger Entry`.batch_no )
