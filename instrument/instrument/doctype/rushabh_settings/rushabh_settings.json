@@ -6,7 +6,8 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "url_data"
+  "url_data",
+  "delivery_note_web_hook_url"
  ],
  "fields": [
   {
@@ -14,12 +15,17 @@
    "fieldtype": "Table",
    "label": "URL Data",
    "options": "URL Data"
+  },
+  {
+   "fieldname": "delivery_note_web_hook_url",
+   "fieldtype": "Data",
+   "label": "Delivery Note Web Hook URL"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-01-18 00:44:51.671224",
+ "modified": "2022-02-17 23:20:40.581591",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Rushabh Settings",
