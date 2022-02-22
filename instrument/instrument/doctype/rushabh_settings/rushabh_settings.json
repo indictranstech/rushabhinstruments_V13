@@ -7,7 +7,8 @@
  "engine": "InnoDB",
  "field_order": [
   "url_data",
-  "delivery_note_web_hook_url"
+  "delivery_note_web_hook_url",
+  "warehouse_table"
  ],
  "fields": [
   {
@@ -20,12 +21,19 @@
    "fieldname": "delivery_note_web_hook_url",
    "fieldtype": "Data",
    "label": "Delivery Note Web Hook URL"
+  },
+  {
+   "description": "Warehouses from this table are considered to find available stock.",
+   "fieldname": "warehouse_table",
+   "fieldtype": "Table",
+   "label": "Warehouse Table",
+   "options": "Warehouse Table"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-02-17 23:20:40.581591",
+ "modified": "2022-02-22 00:57:12.583331",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Rushabh Settings",
