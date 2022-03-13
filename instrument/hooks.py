@@ -102,17 +102,22 @@ doc_events = {
 	},
 	"BOM" : {
 	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate",
-	"on_update" : "instrument.instrument.custom_instrument.bom.bom.validate"
+	"on_update" : "instrument.instrument.custom_instrument.bom.bom.validate",
+	"on_submit" : "instrument.instrument.custom_instrument.bom.bom.disable_old_boms",
+	"on_update_after_submit": "instrument.instrument.custom_instrument.bom.bom.disable_old_boms"
 	},
 	"Work Order" : {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
-	"on_update_after_submit" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
-	"on_update" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
+	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
+	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate"],
-	"on_submit" : "instrument.instrument.custom_instrument.work_order.work_order.on_submit"
+	"on_submit" :"instrument.instrument.custom_instrument.work_order.work_order.on_submit",
+	"on_cancel":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
+	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom"
 	},
 	"Item" : {
-	"validate" :"instrument.instrument.custom_instrument.item.item.validate"
+	"validate" :"instrument.instrument.custom_instrument.item.item.validate",
+	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms"
 	},
 	"Production Plan":{
 	"on_update" : "instrument.instrument.custom_instrument.production_plan.production_plan.on_update",

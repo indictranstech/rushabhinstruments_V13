@@ -127,3 +127,14 @@ def get_engineering_revision(item_code):
 	if item_code:
 		engineering_revision = frappe.db.get_value("Item",{'name':item_code},'engineering_revision')
 		return engineering_revision
+
+def disable_bom(doc,method):
+	bom = frappe.get_doc('BOM',doc.bom_no)
+	wos_for_bom = frappe.db.sql("""SELECT COUNT(name) as wo_num FROM `tabWork Order` WHERE bom_no='{}' AND status IN ('Submitted','Not Started','In Process','Draft') GROUP BY bom_no""".format(doc.bom_no), as_dict=True)
+	if not wos_for_bom:
+		if bom.to_be_disabled and frappe.db.get_value("Item",{'name':bom.item},'auto_disable_old_active_boms'):
+			any_mboms = frappe.db.sql("""SELECT name FROM `tabMapped BOM Item` WHERE bom_no='{0}'""".format(bom.name))
+			if not any_mboms:
+				bom.is_active = 0
+				bom.save()
+				bom.submit()
