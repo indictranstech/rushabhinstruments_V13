@@ -103,7 +103,7 @@
    "fetch_from": "standard_item_code.default_bom",
    "fieldname": "standard_bom",
    "fieldtype": "Link",
-   "label": "Standard BOM",
+   "label": "Previous Version of Standard BOM",
    "options": "BOM",
    "read_only": 1
   },
@@ -122,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-01-25 02:27:28.725147",
+ "modified": "2022-02-24 03:41:39.138289",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
