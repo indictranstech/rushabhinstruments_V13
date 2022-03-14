@@ -47,9 +47,9 @@ frappe.ui.form.on('BOM Item Replacement Tool', {
 	},
 	replace :function(frm){
 		if(frm.doc.old_item_number && frm.doc.new_item_number){
-			if(frm.doc.old_item_number == frm.doc.new_item_number){
+			/*if(frm.doc.old_item_number == frm.doc.new_item_number){
 				frappe.throw("Old Item Number and New Item Number Cannot Be Same")
-			}
+			}*/
 			return frm.call({
 				doc: frm.doc,
 				method: "replace",

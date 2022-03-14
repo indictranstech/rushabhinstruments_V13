@@ -37,6 +37,8 @@ class BOMItemReplacementTool(Document):
 			new_bom.items = ''
 			for item in item_list:
 				new_bom.append('items',item)
+			if not old_bom.is_active:
+				new_bom.is_active = 0
 			new_bom.save()
 			new_bom.submit()
 			args ={
@@ -70,6 +72,8 @@ class BOMItemReplacementTool(Document):
 			new_bom.items = ''
 			for item in item_list:
 				new_bom.append('items',item)
+			if not old_bom.is_active:
+				new_bom.is_active = 0
 			new_bom.save()
 			new_bom.submit()
 			args ={
