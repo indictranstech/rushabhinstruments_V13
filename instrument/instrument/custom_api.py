@@ -49,7 +49,7 @@ def generate_keys(user):
 
 @frappe.whitelist(allow_guest=True)
 def item_details_api():
-    return frappe.db.sql(f"""select a.item_code,a.item_name,a.item_group,a.weight_uom,a.description,a.stock_uom,a.end_of_life,a.lead_time_days,b.default_warehouse  from `tabItem` a left join `tabItem Default` b ON a.item_code = b.parent""", as_dict=True)
+    return frappe.db.sql(f"""select a.item_code,a.item_name,a.item_group,a.is_sales_item,a.weight_uom,a.description,a.stock_uom,a.end_of_life,a.lead_time_days,b.default_warehouse  from `tabItem` a left join `tabItem Default` b ON a.item_code = b.parent""", as_dict=True)
 
 
 @frappe.whitelist(allow_guest=True)
@@ -117,3 +117,12 @@ def item_wise_production_api():
 @frappe.whitelist()
 def customer_list():
     return frappe.db.sql(f""" Select name as customer_code, customer_name,customer_group,territory,mobile_no from `tabCustomer` """, as_dict=True)
+
+#Get all delivery notes by a particular date, date arguement format is yyyy-mm-dd
+@frappe.whitelist(allow_guest=True)
+def delivery_note_on_date(posting_date=None):
+    if posting_date:
+        data = frappe.db.sql(f""" select a.name,a.company,a.customer,a.posting_date,a.woocommerce_order_id,a.posting_time,a.currency,a.selling_price_list,a.base_net_total,a.base_grand_total,a.grand_total,
+        b.item_code,b.item_name,b.uom,b.qty,b.rate,b.amount,b.description,b.conversion_factor,b.base_rate,b.base_amount,b.batch_no,b.serial_no,b.against_sales_order,b.against_sales_invoice,a.total_taxes_and_charges
+        from `tabDelivery Note` a left join `tabDelivery Note Item` b ON a.name = b.parent where a.posting_date='{posting_date}' """,  as_dict=True)
+        return(data)

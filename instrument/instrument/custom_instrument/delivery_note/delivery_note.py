@@ -39,7 +39,8 @@ def custom_api(doc, event=None):
 	                    'stock_uom': item.stock_uom, 'conversion_factor': 1.0, 'rate': item.rate, 
 	                    'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no})
 	    data.update({'items': items})
-	url = 'https://projects.theglobalwebdev.com/qualityhistology/?action=delivery_note'
+	path = frappe.db.get_single_value("Rushabh Settings", 'delivery_note_web_hook_url')
+	url = path
 	frappe.msgprint(str(data))
 
 	response = requests.post(url, data= json.dumps(data))
