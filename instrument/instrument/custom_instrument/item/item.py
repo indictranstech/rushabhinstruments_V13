@@ -25,7 +25,7 @@ def validate(doc,method):
 
 def disable_old_boms(doc,method):
 	if doc.auto_disable_old_active_boms:
-		old_boms = frappe.db.sql("""SELECT name from `tabBOM` WHERE name<(SELECT name FROM `tabBOM` WHERE item='{0}' AND is_default=1) """.format(doc.name), as_dict=1)
+		old_boms = frappe.db.sql("""SELECT name from `tabBOM` WHERE item='{0}' and name<(SELECT name FROM `tabBOM` WHERE item='{0}' AND is_default=1) """.format(doc.name), as_dict=1)
 		for bom in old_boms:
 			bom_doc = frappe.get_doc('BOM', bom)
 			if bom_doc.is_active:
