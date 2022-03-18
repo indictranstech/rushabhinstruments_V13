@@ -125,7 +125,8 @@ doc_events = {
 
 	},
 	"Batch" : {
-	"autoname" : "instrument.instrument.custom_instrument.batch.batch.autoname"
+	"autoname" : "instrument.instrument.custom_instrument.batch.batch.autoname",
+	"validate" : "instrument.instrument.custom_instrument.batch.batch.label_img"
 	},
 	"Stock Entry" : {
 	"validate" : "instrument.instrument.custom_instrument.stock_entry.stock_entry.validate"
