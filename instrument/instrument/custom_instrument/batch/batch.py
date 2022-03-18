@@ -2,11 +2,11 @@ import frappe
 from frappe.model.naming import make_autoname
 from frappe.utils import nowdate, cstr, flt, cint, now, getdate,get_datetime,time_diff_in_seconds,add_to_date,time_diff_in_seconds,add_days,today
 from datetime import datetime
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import io
 import base64
-import qrcode
-from pubcode import Code128
+import pyqrcode
+import requests
 
 def autoname(doc, method):
 	if doc.item:
@@ -48,15 +48,21 @@ def label_img(doc, method):
 		warehouse = ""
 	final_string = url + doc.name
 	img = Image.new('RGB', (384,192), color='white')
-	qrc = qrcode.make(final_string)
-	qrc.thumbnail((72,72))
-	img.paste(qrc,(26,30))
+	qrc = pyqrcode.create(final_string)
+	inmf = io.BytesIO()
+	qrc.png(inmf,scale=6)
+	qrcimg = Image.open(inmf)
+	qrcimg.thumbnail((72,72))
+	img.paste(qrcimg,(26,30))
 	d = ImageDraw.Draw(img)
 	d.text((150,50), str(doc.item), fill=(0,0,0))
 	d.text((150,70), str(doc.item_name), fill=(0,0,0))
 	d.multiline_text((150,90), "Total Qty: {0} \nBatch: {1}\nBatch Name: {2}\nLocation: {3}".format(doc.batch_qty,doc.batch_id,doc.name,warehouse) , fill=(0,0,0), spacing=2)
 	d.text((40,160), "Batch Traveler", fill=(0,0,0))
-	barc = Code128('itemname', charset='B').image().resize((220,15))
+	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item))
+	#barc = Code128('itemname', charset='B').image().resize((220,15))
+	barc = Image.open(io.BytesIO(barcode.content))
+	barc = barc.resize((220,15))
 	img.paste(barc,(140,160))
 	imgbuffer = io.BytesIO()
 	img.save(imgbuffer, format='PNG')
