@@ -1,6 +1,12 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
+from PIL import Image, ImageDraw
+import pyqrcode
+import io
+import base64
+import requests
+import textwrap
 
 
 def validate(doc,method):
@@ -37,3 +43,35 @@ def disable_old_boms(doc,method):
 					bom_doc.to_be_disabled = 1
 				bom_doc.save()
 				bom_doc.submit()
+
+def label_img(doc,method):
+	url = frappe.db.get_doc('URL Data',{'sourcedoctype_name':'Item'},'url')
+	final_string = url + doc.name
+	img = Image.new('RGB', (192,192), color='white')
+	qrc = pyqrcode.create(final_string)
+	inmf = io.BytesIO()
+	qrc.png(inmf,scale=6)
+	qrcimg = Image.open(inmf)
+	qrcimg.thumbnail((72,72))
+	img.paste(qrcimg,(12,12))
+	d = ImageDraw.Draw(img)
+	itemname = textwrap.fill(text = doc.item_name,width=15)
+	d.text((96,12), itemname, fill=(0,0,0))
+	d.text((12,96), doc.name, fill=(0,0,0))
+	item_locations = frappe.db.get_list('Item Locations',{'parent':doc.name},pluck='warehouse')
+	locs_str = ""
+	for loc in item_locations:
+		locs_str += loc
+	d.text((12,110), "Item Locations: {0}".format(locs_str), fill=(0,0,0))
+	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item_code))
+	barc = Image.open(io.BytesIO(barcode.content))
+	barc = barc.resize((180,20))
+	img.paste(barc,(6,160))
+	imgbuffer = io.BytesIO()
+	img.save(imgbuffer, format='PNG')
+	b64str = base64.b64encode(imgbuffer.getvalue())
+	fname = frappe.db.get_value('File',{'file_name':doc.name+"-label.png"},'name')
+	if fname:
+		frappe.delete_doc('File',fname)
+	imgfile = frappe.get_doc({'doctype':'File','file_name':doc.name+"-label.png",'attached_to_doctype':"Item",'attached_to_name':doc.name,"content":b64str,"decode":1})
+	imgfile.insert()

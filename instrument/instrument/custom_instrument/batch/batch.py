@@ -42,11 +42,11 @@ def autoname(doc, method):
 			return doc.name
 
 def label_img(doc, method):
-	url = "https://uatrushabhinstruments.indictranstech.com/app/batch/"
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Batch'},'url')
+	final_string = url +  doc.name
 	warehouse = frappe.db.get_value('Stock Ledger Entry',{'batch_no':doc.name,'item_code':doc.item,'posting_date':doc.manufacturing_date},'warehouse')
 	if not warehouse:
 		warehouse = ""
-	final_string = url + doc.name
 	img = Image.new('RGB', (384,192), color='white')
 	qrc = pyqrcode.create(final_string)
 	inmf = io.BytesIO()
@@ -57,15 +57,17 @@ def label_img(doc, method):
 	d = ImageDraw.Draw(img)
 	d.text((150,50), str(doc.item), fill=(0,0,0))
 	d.text((150,70), str(doc.item_name), fill=(0,0,0))
-	d.multiline_text((150,90), "Total Qty: {0} \nBatch: {1}\nBatch Name: {2}\nLocation: {3}".format(doc.batch_qty,doc.batch_id,doc.name,warehouse) , fill=(0,0,0), spacing=2)
+	d.multiline_text((150,90), "Total Qty: {0}\nBatch: {1}\nBatch Name: {2}\nLocation: {3}".format(doc.batch_qty,doc.batch_id,doc.name,warehouse) , fill=(0,0,0), spacing=2)
 	d.text((40,160), "Batch Traveler", fill=(0,0,0))
 	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item))
-	#barc = Code128(str(doc.item), charset='B').image().resize((220,15))
 	barc = Image.open(io.BytesIO(barcode.content))
 	barc = barc.resize((220,15))
 	img.paste(barc,(140,160))
 	imgbuffer = io.BytesIO()
 	img.save(imgbuffer, format='PNG')
 	b64str = base64.b64encode(imgbuffer.getvalue())
+	fname = frappe.db.get_value('File',{'file_name':doc.name+"-label.png"},'name')
+	if fname:
+		frappe.delete_doc('File',fname)
 	imgfile = frappe.get_doc({'doctype':'File','file_name':doc.name+"-label.png",'attached_to_doctype':"Batch",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
