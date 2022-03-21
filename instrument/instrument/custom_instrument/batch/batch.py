@@ -60,7 +60,7 @@ def label_img(doc, method):
 	d.multiline_text((150,90), "Total Qty: {0} \nBatch: {1}\nBatch Name: {2}\nLocation: {3}".format(doc.batch_qty,doc.batch_id,doc.name,warehouse) , fill=(0,0,0), spacing=2)
 	d.text((40,160), "Batch Traveler", fill=(0,0,0))
 	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item))
-	#barc = Code128('itemname', charset='B').image().resize((220,15))
+	#barc = Code128(str(doc.item), charset='B').image().resize((220,15))
 	barc = Image.open(io.BytesIO(barcode.content))
 	barc = barc.resize((220,15))
 	img.paste(barc,(140,160))
