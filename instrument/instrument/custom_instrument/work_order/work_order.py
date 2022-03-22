@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw
 import io
 import requests
 import base64
+import textwrap
 
 @frappe.whitelist()
 def check_stock(doc,method):
@@ -145,7 +146,7 @@ def disable_bom(doc,method):
 				bom.submit()
 				
 def label_img(doc,method):
-	url = frappe.get_value('URL Data',{'sourcedoctype_name':'Work Order'},'url')
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Work Order'},'url')
 	final_string = url + doc.name
 	img = Image.new('RGB', (384,192), color='white')
 	qrc = pyqrcode.create(final_string)
@@ -155,10 +156,9 @@ def label_img(doc,method):
 	qrcimg.thumbnail((72,72))
 	img.paste(qrcimg,(26,30))
 	d = ImageDraw.Draw(img)
-	d.text((120,30), doc.name, fill=(0,0,0))
-	d.text((120,60), "Item to Manufacture: " + doc.production_item, fill=(0,0,0))
-	d.multiline_text((140,90), "Qty to Manufacture: {0} \nSales Order: {1}\nWIPWarehouse: {2}\nTarget Warehouse: {3}\nItem Name {4}".format(doc.qty,doc.sales_order,doc.wip_warehouse,doc.fg_warehouse,doc.item_name) , fill=(0,0,0), spacing=2)
-	d.text((40,160), "Work Order Traveler", fill=(0,0,0))
+	itemname = textwrap.fill(doc.item_name,width=35)
+	d.multiline_text((120,30), "{0}\n\nItem to Manufacture: {1}\n\nQty to Manufacture: {2} \nSales Order: {3}\nWIPWarehouse: {4}\nTarget Warehouse: {5}\nItem Name: {6}".format(doc.name,doc.production_item,doc.qty,doc.sales_order,doc.wip_warehouse,doc.fg_warehouse,itemname), fill=(0,0,0), spacing=1)
+	d.text((35,160), "Work Order Traveler", fill=(0,0,0))
 	imgbuffer = io.BytesIO()
 	img.save(imgbuffer, format='PNG')
 	b64str = base64.b64encode(imgbuffer.getvalue())
