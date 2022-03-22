@@ -54,13 +54,15 @@ def get_current_stock():
 
 @frappe.whitelist()
 def make_work_order(doc):
+	from erpnext.manufacturing.doctype.work_order.work_order import get_default_warehouse
 	doc = json.loads(doc)
 	production_plan_doc = frappe.get_doc("Production Plan",doc.get("name"))
 	wo_list, po_list = [], []
 	subcontracted_po = {}
+	default_warehouses = get_default_warehouse()
 	validate_data(production_plan_doc)
 	make_work_order_for_finished_goods(production_plan_doc,wo_list)
-	production_plan_doc.make_work_order_for_subassembly_items(wo_list, subcontracted_po)
+	production_plan_doc.make_work_order_for_subassembly_items(wo_list, subcontracted_po,default_warehouses)
 	production_plan_doc.make_subcontracted_purchase_order(subcontracted_po, po_list)
 	production_plan_doc.show_list_created_message('Work Order', wo_list)
 	production_plan_doc.show_list_created_message('Purchase Order', po_list)
