@@ -110,13 +110,13 @@ doc_events = {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
 	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
-	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate"],
+	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate","instrument.instrument.custom_instrument.work_order.work_order.label_img"],
 	"on_submit" :"instrument.instrument.custom_instrument.work_order.work_order.on_submit",
 	"on_cancel":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
 	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom"
 	},
 	"Item" : {
-	"validate" :"instrument.instrument.custom_instrument.item.item.validate",
+	"validate" :["instrument.instrument.custom_instrument.item.item.validate","instrument.instrument.custom_instrument.item.item.label_img"],
 	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms"
 	},
 	"Production Plan":{
@@ -129,7 +129,7 @@ doc_events = {
 	"validate" : "instrument.instrument.custom_instrument.batch.batch.label_img"
 	},
 	"Stock Entry" : {
-	"validate" : "instrument.instrument.custom_instrument.stock_entry.stock_entry.validate"
+	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate","instrument.instrument.custom_instrument.stock_entry.stock_entry.label_img"]
  	},
  	"Item Attribute" : {
  	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate",
@@ -137,6 +137,9 @@ doc_events = {
  	},
  	"Material Request":{
  	"validate":"instrument.instrument.custom_instrument.material_request.material_request.validate"
+ 	},
+ 	"Job Card":{
+ 	"validate":"instrument.instrument.custom_instrument.job_card.job_card.label_img"
  	}
 }
 

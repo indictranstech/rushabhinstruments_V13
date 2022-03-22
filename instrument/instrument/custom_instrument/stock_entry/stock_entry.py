@@ -1,5 +1,10 @@
 from __future__ import unicode_literals
 import frappe
+from PIL import Image, ImageDraw
+import requests
+import io
+import base64
+import pyqrcode
 
 
 def validate(doc,method):
@@ -45,3 +50,27 @@ def get_target_warehouse(work_order):
 		item_data = frappe.db.sql(""" SELECT warehouse FROM `tabItem Locations` where parent = '{0}' """.format(item),as_dict=1)
 		item_list = [item.warehouse for item in item_data]
 		return item_list
+		
+def label_img(doc,method):
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Stock Entry'},'url')
+	final_string = url + doc.name
+	img = Image.new('RGB', (384,192), color='white')
+	qrc = pyqrcode.create(final_string)
+	inmf = io.BytesIO()
+	qrc.png(inmf,scale=6)
+	qrcimg = Image.open(inmf)
+	qrcimg.thumbnail((72,72))
+	img.paste(qrcimg,(26,30))
+	d = ImageDraw.Draw(img)
+	d.text((150,50), doc.name, fill=(0,0,0))
+	d.text((150,70), doc.purpose, fill=(0,0,0))
+	d.multiline_text((150,90), "Work Order: {0}\nTarget Warehouse: {1}".format(doc.work_order,doc.to_warehouse) , fill=(0,0,0), spacing=2)
+	d.text((40,160), "Stock Entry Traveler", fill=(0,0,0))
+	imgbuffer = io.BytesIO()
+	img.save(imgbuffer, format='PNG')
+	b64str = base64.b64encode(imgbuffer.getvalue())
+	fname = frappe.db.get_value('File',{'file_name':doc.name+"-label.png"},'name')
+	if fname:
+		frappe.delete_doc('File',fname)
+	imgfile = frappe.get_doc({'doctype':'File','file_name':doc.name+"-label.png",'attached_to_doctype':"Stock Entry",'attached_to_name':doc.name,"content":b64str,"decode":1})
+	imgfile.insert()
