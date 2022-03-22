@@ -1,9 +1,23 @@
 frappe.ui.form.on('Material Request', {
+	setup: function(frm) {
+		frm.custom_make_buttons = {
+			'Stock Entry': 'Issue Material',
+			'Pick List': 'Pick List',
+			'Purchase Order': 'Purchase Orders',
+			'Request for Quotation': 'Request for Quotation',
+			'Supplier Quotation': 'Supplier Quotation',
+			'Work Order': 'Work Order',
+			'Purchase Receipt': 'Purchase Receipt'
+		};
+	},
 	refresh:function(frm){
 		//Hide Pick List,Work Order from Create Button
 		setTimeout(() => {
 			 	frm.remove_custom_button('Purchase Order', 'Create');
 			 	}, 10);
+		
+
+     
 		if (frm.doc.material_request_type === "Purchase") {
 			frm.add_custom_button(__('Purchase Orders'),
 				() => frm.events.make_purchase_order(frm), __('Create'));

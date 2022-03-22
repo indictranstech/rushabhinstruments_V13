@@ -47,7 +47,7 @@ def get_warehouse_for_query(doctype, txt, searchfield, start, page_len, filters)
 def get_target_warehouse(work_order):
 	item = frappe.db.get_value("Work Order",{'name':work_order},'production_item')
 	if item:
-		item_data = frappe.db.sql(""" SELECT warehouse FROM `tabItem Locations` where parent = '{0}' """.format(item))
+		item_data = frappe.db.sql(""" SELECT warehouse FROM `tabItem Locations` where parent = '{0}' """.format(item),as_dict=1)
 		item_list = [item.warehouse for item in item_data]
 		return item_list
 		
