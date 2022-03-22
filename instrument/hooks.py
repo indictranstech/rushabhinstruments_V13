@@ -110,7 +110,7 @@ doc_events = {
 	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
 	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
-	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate","instrument.instrument.custom_instrument.work_order.work_order.label_img"],
+	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.validate","instrument.instrument.custom_instrument.work_order.work_order.label_img"],
 	"on_submit" :"instrument.instrument.custom_instrument.work_order.work_order.on_submit",
 	"on_cancel":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
 	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom"
@@ -140,6 +140,12 @@ doc_events = {
  	},
  	"Job Card":{
  	"validate":"instrument.instrument.custom_instrument.job_card.job_card.label_img"
+ 	},
+ 	"Pick List":{
+ 	"validate":"instrument.instrument.custom_instrument.pick_list.pick_list.label_img"
+ 	},
+ 	"Work Order Pick List":{
+ 	"validate":"instrument.instrument.custom_instrument.work_order_pick_list.work_order_pick_list.label_img"
  	}
 }
 
