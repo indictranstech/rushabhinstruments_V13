@@ -1,8 +1,8 @@
 frappe.ui.form.on("Stock Entry", {
 	refresh:function(frm){
-		if(frm.doc.stock_entry_type == 'Material Transfer' || frm.doc.stock_entry_type == 'Material Receipt'){
-			frm.set_value("apply_putaway_rule",1)
-		}
+		// if(frm.doc.stock_entry_type == 'Material Transfer' || frm.doc.stock_entry_type == 'Material Receipt'){
+		// 	frm.set_value("apply_putaway_rule",1)
+		// }
 		if(frm.doc.stock_entry_type =="Manufacture"){
 			frm.set_value("to_warehouse",'')
 			if(frm.doc.work_order){
