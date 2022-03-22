@@ -140,6 +140,12 @@ doc_events = {
  	},
  	"Job Card":{
  	"validate":"instrument.instrument.custom_instrument.job_card.job_card.label_img"
+ 	},
+ 	"Pick List":{
+ 	"validate":"instrument.instrument.custom_instrument.pick_list.pick_list.label_img"
+ 	},
+ 	"Work Order Pick List":{
+ 	"validate":"instrument.instrument.custom_instrument.work_order_pick_list.work_order_pick_list.label_img"
  	}
 }
 

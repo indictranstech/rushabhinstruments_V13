@@ -45,7 +45,7 @@ def disable_old_boms(doc,method):
 				bom_doc.submit()
 
 def label_img(doc,method):
-	url = frappe.db.get_doc('URL Data',{'sourcedoctype_name':'Item'},'url')
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Item'},'url')
 	final_string = url + doc.name
 	img = Image.new('RGB', (192,192), color='white')
 	qrc = pyqrcode.create(final_string)
@@ -55,13 +55,14 @@ def label_img(doc,method):
 	qrcimg.thumbnail((72,72))
 	img.paste(qrcimg,(12,12))
 	d = ImageDraw.Draw(img)
-	itemname = textwrap.fill(text = doc.item_name,width=15)
-	d.text((96,12), itemname, fill=(0,0,0))
+	itemname = textwrap.fill(text = doc.item_name,width=20)
+	d.text((90,10), itemname, fill=(0,0,0))
 	d.text((12,96), doc.name, fill=(0,0,0))
 	item_locations = frappe.db.get_list('Item Locations',{'parent':doc.name},pluck='warehouse')
 	locs_str = ""
 	for loc in item_locations:
 		locs_str += loc
+	locs_str = textwrap.fill(text=locs_str,width=40)
 	d.text((12,110), "Item Locations: {0}".format(locs_str), fill=(0,0,0))
 	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item_code))
 	barc = Image.open(io.BytesIO(barcode.content))
