@@ -1,9 +1,9 @@
 frappe.ui.form.on("Purchase Receipt", {
 	refresh:function(frm){
-		if(frm.doc.__islocal){
-			frm.set_value("apply_putaway_rule",1)
+		// if(frm.doc.__islocal){
+		// 	frm.set_value("apply_putaway_rule",1)
 
-		}
+		// }
 		//Filter Engineering Revision
 		frm.set_query("engineering_revision", "items", function(doc, cdt, cdn) {
 			const row = locals[cdt][cdn];
