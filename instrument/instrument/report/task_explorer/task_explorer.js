@@ -26,7 +26,12 @@ frappe.query_reports["Task Explorer"] = {
 			label: __("Status"),
 			fieldtype: "Select",
 			options : ['Open','Working','Pending Review','Overdue','Template','Completed','Cancelled']
+		},
+		{
+			fieldname: "priority",
+			label: __("Priority"),
+			fieldtype: "Select",
+			options: ['Low','Medium','High','Urgent']
 		}
-
 	]
 };
