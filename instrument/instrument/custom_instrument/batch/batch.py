@@ -7,6 +7,8 @@ import io
 import base64
 import pyqrcode
 import requests
+import textwrap
+import re
 
 def autoname(doc, method):
 	if doc.item:
@@ -55,7 +57,7 @@ def label_img(doc, method):
 	qrcimg.thumbnail((72,72))
 	img.paste(qrcimg,(26,30))
 	d = ImageDraw.Draw(img)
-	d.multiline_text((120,35), "{0}\n\n{1}\n\nTotal Qty: {2}\nBatch: {3}\nBatch Name: {4}\nLocation: {5}".format(doc.item,doc.item_name,doc.batch_qty,doc.batch_id,doc.name,warehouse), fill=(0,0,0), spacing=1)
+	d.multiline_text((120,35), "{0}\n\n{1}\n\nTotal Qty: {2}\nBatch: {3}\nBatch Name: {4}\nLocation: {5}".format(doc.item,textwrap.fill(text=doc.item_name,width=40),doc.batch_qty,doc.batch_id,doc.name,warehouse), fill=(0,0,0), spacing=1)
 	d.text((30,160), "Batch Traveler", fill=(0,0,0))
 	barcode = requests.get('https://barcode.tec-it.com/barcode.ashx?data={0}&code=Code128&translate-esc=true'.format(doc.item))
 	barc = Image.open(io.BytesIO(barcode.content))
@@ -64,8 +66,14 @@ def label_img(doc, method):
 	imgbuffer = io.BytesIO()
 	img.save(imgbuffer, format='PNG')
 	b64str = base64.b64encode(imgbuffer.getvalue())
-	fname = frappe.db.get_value('File',{'file_name':doc.name+"-label.png"},'name')
+	fname = frappe.db.get_list('File',filters={'attached_to_name':doc.name},fields=['name','file_name'])
+	count=0
 	if fname:
-		frappe.delete_doc('File',fname)
-	imgfile = frappe.get_doc({'doctype':'File','file_name':doc.name+"-label.png",'attached_to_doctype':"Batch",'attached_to_name':doc.name,"content":b64str,"decode":1})
+		for filedoc in fname:
+			if "label" in filedoc.file_name:
+				lnum = re.search("label(.*).png",filedoc.file_name)
+				count = int(lnum.group(1))+1
+				frappe.delete_doc('File',filedoc.name)
+	namestr = doc.name + "-label{0}".format(count) + ".png"
+	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Batch",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
