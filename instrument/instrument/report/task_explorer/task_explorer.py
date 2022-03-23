@@ -35,24 +35,6 @@ def get_exploded_items(filters, data, indent=0):
 		})
 		if item.is_group :
 			get_exploded_tasks(item.name, data, indent=indent+1)
-		else:
-			print(item.name, indent)
-			item["indent"] = indent
-			data.append({
-				'name': item.name,
-				'subject': item.subject,
-				'project' : item.project,
-				'indent': indent,
-				'status': item.status,
-				'is_group':item.is_group,
-				'parent_task' : item.parent_task,
-				'priority':item.priority,
-				'issue':item.issue,
-				'exp_start_date':item.exp_start_date,
-				'exp_end_date':item.exp_end_date,
-				'expected_time':item.expected_time,
-				'progress':item.progress
-				})
 		
 def get_exploded_tasks(task,data,indent=0):
 	exploded_items = frappe.get_all("Task",
@@ -169,5 +151,7 @@ def get_conditions(filters=None):
 		conditions += " and status = '{0}' ".format(filters.get("status"))
 	if filters.get("task") :
 		conditions += " and name = '{0}' ".format(filters.get("task"))
+	if filters.get("priority"):
+		conditions += " and priority like '{0}'".format(filters.get('priority'))
 		
 	return conditions
