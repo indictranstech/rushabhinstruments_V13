@@ -120,7 +120,7 @@ doc_events = {
 	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms"
 	},
 	"Production Plan":{
-	"on_update" : "instrument.instrument.custom_instrument.production_plan.production_plan.on_update",
+	# "on_update" : "instrument.instrument.custom_instrument.production_plan.production_plan.on_update",
 	"validate" : "instrument.instrument.custom_instrument.production_plan.production_plan.validate"
 
 	},

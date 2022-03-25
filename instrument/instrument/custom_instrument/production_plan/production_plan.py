@@ -5,22 +5,22 @@ from frappe.utils import cstr, cint, flt, comma_or, getdate, nowdate, formatdate
 import json
 from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 
-@frappe.whitelist()
-def on_update(doc,method):
-	ohs = get_current_stock()
-	if doc.sub_assembly_items:
-		for row in doc.sub_assembly_items:
-			if row.production_item in ohs:
-				qty = row.qty
-				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'original_required_qty',qty)
-				frappe.db.commit()
-				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'available_quantity',ohs.get(row.production_item))
-				frappe.db.commit()
-				calculated_required_quantity = (flt(qty) - flt(ohs.get(row.production_item)) if flt(ohs.get(row.production_item)) < flt(qty) else 0)
-				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'qty',calculated_required_quantity)
-				frappe.db.commit()
-	doc.reload()
-				# if flt(row.original_required_qty) <= 0:
+# @frappe.whitelist()
+# def on_update(doc,method):
+# 	ohs = get_current_stock()
+# 	if doc.sub_assembly_items:
+# 		for row in doc.sub_assembly_items:
+# 			if row.production_item in ohs:
+# 				qty = row.qty
+# 				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'original_required_qty',qty)
+# 				frappe.db.commit()
+# 				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'available_quantity',ohs.get(row.production_item))
+# 				frappe.db.commit()
+# 				calculated_required_quantity = (flt(qty) - flt(ohs.get(row.production_item)) if flt(ohs.get(row.production_item)) < flt(qty) else 0)
+# 				frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'qty',calculated_required_quantity)
+# 				frappe.db.commit()
+# 	doc.reload()
+# 				# if flt(row.original_required_qty) <= 0:
 				# 	# row.original_required_qty = row.qty 
 				# 	frappe.db.set_value("Production Plan Sub Assembly Item",{'name':row.name},'original_required_qty',row.qty)
 				# else:
@@ -44,7 +44,10 @@ def validate(doc,method):
 				# frappe.db.set_value("Work Order",doc.name,'available_quantity',ohs.get(row.item_code))
 				# frappe.db.commit()
 				# doc.reload()
-
+	if doc.sub_assembly_items:
+		doc.sub_assembly_items.sort(key= lambda d: d.bom_level, reverse=True)
+		for idx, row in enumerate(doc.sub_assembly_items, start=1):
+			row.idx = idx
 def get_current_stock():
 	# 1.get wip warehouse
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", 'default_wip_warehouse')
@@ -150,3 +153,55 @@ def create_work_order(self, item):
 			return wo.name
 		except OverProductionError:
 			pass
+@frappe.whitelist()
+def get_sub_assembly_items(doc, manufacturing_type=None):
+	doc = json.loads(doc)
+	final_data = []
+	final_datas = []
+	for row in doc.get("po_items"):
+		bom_data = []
+		get_sub_assembly_item(row.get("bom_no"), bom_data, row.get("planned_qty"))
+		data=set_sub_assembly_items_based_on_level(row, bom_data, final_data,manufacturing_type)
+		final_datas.append(data)
+	return final_datas
+
+	
+@frappe.whitelist()
+def get_sub_assembly_item(bom_no, bom_data, to_produce_qty, indent=0):
+	data = get_children('BOM', parent = bom_no)
+	for d in data:
+		if d.expandable:
+			parent_item_code = frappe.get_cached_value("BOM", bom_no, "item")
+			stock_qty = (d.stock_qty / d.parent_bom_qty) * flt(to_produce_qty)
+			bom_data.append(frappe._dict({
+				'parent_item_code': parent_item_code,
+				'description': d.description,
+				'production_item': d.item_code,
+				'item_name': d.item_name,
+				'stock_uom': d.stock_uom,
+				'uom': d.stock_uom,
+				'bom_no': d.value,
+				'is_sub_contracted_item': d.is_sub_contracted_item,
+				'bom_level': indent,
+				'indent': indent,
+				'stock_qty': stock_qty
+			}))
+
+			if d.value:
+				get_sub_assembly_item(d.value, bom_data, stock_qty, indent=indent+1)
+
+def set_sub_assembly_items_based_on_level(row, bom_data, final_data,manufacturing_type=None):
+	ohs = get_current_stock()
+	for data in bom_data:
+		qty = data.stock_qty
+		data.original_required_qty = data.stock_qty
+		data.available_quantity = ohs.get(data.production_item)
+		calculated_required_quantity = (flt(qty) - flt(ohs.get(data.production_item)) if flt(ohs.get(data.production_item)) < flt(qty) else 0)
+		data.qty = calculated_required_quantity
+		data.production_plan_item = row.get("name")
+		data.fg_warehouse = row.get("warehouse")
+		data.schedule_date = row.get("planned_start_date")
+		data.type_of_manufacturing = manufacturing_type or ("Subcontract" if data.is_sub_contracted_item
+			else "In House")
+	return bom_data
+		
