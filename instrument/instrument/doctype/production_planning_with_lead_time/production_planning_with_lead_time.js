@@ -6,6 +6,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 
 	// }
 	get_sales_orders: function(frm) {
+		frappe.msgprint("**************")
 		frappe.call({
 			method: "get_open_sales_orders",
 			doc: frm.doc,
