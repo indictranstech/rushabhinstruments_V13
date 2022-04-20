@@ -48,6 +48,20 @@ def validate(doc,method):
 		doc.sub_assembly_items.sort(key= lambda d: d.bom_level, reverse=True)
 		for idx, row in enumerate(doc.sub_assembly_items, start=1):
 			row.idx = idx
+	if not doc.get("__islocal"):
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Production Plan' and attached_to_name=%s""",
+			(doc.name))
+		pdf_data=frappe.attach_print('Production Plan',doc.name, print_format='Production Plan')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Production Plan",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 def get_current_stock():
 	# 1.get wip warehouse
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", 'default_wip_warehouse')

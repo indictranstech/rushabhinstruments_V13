@@ -11,6 +11,21 @@ import re
 
 
 def validate(doc,method):
+	if not doc.get("__islocal"):
+		file_name = doc.name + '.pdf'
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Item' and attached_to_name=%s and file_name = %s""",
+			(doc.name,file_name))
+		pdf_data=frappe.attach_print('Item',doc.name, print_format='Item Print 8.5" x 11"')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Item",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 	if doc.item_attribute_table:
 		attribute_list = [item.attribute for item in doc.item_attribute_table]
 		attribute_set = set(attribute_list)

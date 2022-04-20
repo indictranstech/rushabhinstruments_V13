@@ -7,7 +7,20 @@ def validate(doc,method):
 		if item.engineering_revision:
 			purchasing_package = frappe.db.get_value("Purchasing Package Table",{'parent':item.engineering_revision},'purchasing_package_name')
 			item.purchasing_package = purchasing_package
-
+	if not doc.get("__islocal"):
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Purchase Receipt' and attached_to_name=%s""",
+			(doc.name))
+		pdf_data=frappe.attach_print('Purchase Receipt',doc.name, print_format='Purchase Receipt v1')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Purchase Receipt",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 # class Purchase_Receipt(Document):
 def on_submit(doc, method = None):
 	file_att = []

@@ -128,6 +128,21 @@ def validate(doc,method):
 		if item.engineering_revision:
 			manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':item.engineering_revision},'manufacturing_package_name')
 			item.manufacturing_package = manufacturing_package
+	if not doc.get("__islocal"):
+		file_name = doc.name + '.pdf'
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s and file_name = %s""",
+			(doc.name,file_name))
+		pdf_data=frappe.attach_print('Work Order',doc.name, print_format='Work Order')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Work Order",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 
 @frappe.whitelist()
 def get_engineering_revision(item_code):
