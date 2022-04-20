@@ -10,12 +10,15 @@
   "company",
   "section_break_4",
   "purpose",
+  "get_fg_work_orders",
+  "work_order_table",
   "production_plan",
   "get_work_orders",
   "section_break_3",
   "work_orders",
   "get_items",
   "work_order_pick_list_item",
+  "consider_current_stock",
   "amended_from"
  ],
  "fields": [
@@ -31,7 +34,7 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Purpose",
-   "options": "\nMaterial Transfer for Manufacture",
+   "options": "\nMaterial Transfer for Manufacture\nManufacture",
    "reqd": 1
   },
   {
@@ -65,6 +68,7 @@
   {
    "fieldname": "production_plan",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Production Plan",
    "options": "Production Plan"
@@ -88,12 +92,29 @@
    "fieldtype": "Table",
    "label": "Work Order Pick List Item",
    "options": "Work Order Pick List Item"
+  },
+  {
+   "fieldname": "work_order_table",
+   "fieldtype": "Table",
+   "label": "Work Order Table",
+   "options": "Pick List FG Work Orders"
+  },
+  {
+   "fieldname": "get_fg_work_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Work Orders"
+  },
+  {
+   "default": "0",
+   "fieldname": "consider_current_stock",
+   "fieldtype": "Check",
+   "label": "Consider Current Stock"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2021-12-22 02:48:42.256300",
+ "modified": "2022-04-13 01:05:08.928776",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Work Order Pick List",
