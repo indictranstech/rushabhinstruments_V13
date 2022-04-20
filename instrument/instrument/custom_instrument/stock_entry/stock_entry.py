@@ -22,7 +22,16 @@ def validate(doc,method):
 					manufacturing_package = frappe.db.get_value("Work Order",{'production_item':item.item_code,'name':doc.work_order},'manufacturing_package_name')
 					item.engineering_revision = engineering_revision
 					item.manufacturing_package = manufacturing_package
-
+@frappe.whitelist()
+def on_submit(doc,method):
+	if doc.work_order_pick_list:
+		pick_list_doc = frappe.get_doc("Work Order Pick List",doc.work_order_pick_list)
+		if pick_list_doc :
+			for item in pick_list_doc.work_orders:
+				if item.work_order == doc.work_order:
+					item.stock_entry_status = "Submitted"
+			pick_list_doc.save()
+			pick_list_doc.submit()
 @frappe.whitelist()
 def get_items_from_pick_list(pick_list,work_order):
 	if pick_list:

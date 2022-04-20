@@ -10,10 +10,12 @@
   "qty_of_finished_goods_already_completed",
   "qty_of_finished_goods_to_pull",
   "qty_of_finished_goods",
-  "create_stock_entry"
+  "create_stock_entry",
+  "stock_entry_status"
  ],
  "fields": [
   {
+   "columns": 2,
    "fieldname": "work_order",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -21,11 +23,14 @@
    "options": "Work Order"
   },
   {
+   "columns": 2,
    "fieldname": "qty_of_finished_goods",
    "fieldtype": "Float",
-   "label": "Qty of Finished Goods"
+   "in_list_view": 1,
+   "label": "Qty Can Be Pulled/Manufactured"
   },
   {
+   "columns": 1,
    "fieldname": "create_stock_entry",
    "fieldtype": "Button",
    "in_list_view": 1,
@@ -34,26 +39,35 @@
   {
    "fieldname": "total_qty_to_of_finished_goods_on_work_order",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Total Qty to of Finished Goods on Work Order"
   },
   {
    "fieldname": "qty_of_finished_goods_already_completed",
    "fieldtype": "Float",
-   "in_list_view": 1,
    "label": "Qty of Finished Goods Already completed"
   },
   {
+   "columns": 2,
    "fieldname": "qty_of_finished_goods_to_pull",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Qty of Finished Goods to Pull"
+  },
+  {
+   "allow_on_submit": 1,
+   "columns": 1,
+   "default": "Not Created",
+   "fieldname": "stock_entry_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Stock Entry Status",
+   "options": "Not Created\nDraft\nSubmitted"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-11-17 00:14:43.440330",
+ "modified": "2022-04-19 03:51:29.014656",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Pick Orders",

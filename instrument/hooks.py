@@ -129,7 +129,8 @@ doc_events = {
 	"validate" : "instrument.instrument.custom_instrument.batch.batch.label_img"
 	},
 	"Stock Entry" : {
-	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate","instrument.instrument.custom_instrument.stock_entry.stock_entry.label_img"]
+	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate","instrument.instrument.custom_instrument.stock_entry.stock_entry.label_img"],
+	"on_submit":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_submit"]
  	},
  	"Item Attribute" : {
  	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate",
