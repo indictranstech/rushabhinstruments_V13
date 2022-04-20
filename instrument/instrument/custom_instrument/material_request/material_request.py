@@ -22,6 +22,20 @@ def validate(doc,method):
 				item.engineering_revision = engineering_revision
 				if frappe.db.get_value("Item",{'item_code':item.item_code},'rfq_required'):
 					item.rfq_required = 1
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Material Request' and attached_to_name=%s""",
+			(doc.name))
+		pdf_data=frappe.attach_print('Material Request',doc.name, print_format='Material Request Print')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Material Request",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs

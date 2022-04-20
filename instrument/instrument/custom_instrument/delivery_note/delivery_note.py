@@ -45,3 +45,18 @@ def custom_api(doc, event=None):
 
 	response = requests.post(url, data= json.dumps(data))
     
+def validate(doc,method):
+	if not doc.get("__islocal"):
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Delivery Note' and attached_to_name=%s""",
+			(doc.name))
+		pdf_data=frappe.attach_print('Delivery Note',doc.name, print_format='Delivery Note Print')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Delivery Note",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()

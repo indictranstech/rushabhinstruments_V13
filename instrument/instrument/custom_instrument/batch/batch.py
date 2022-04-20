@@ -77,3 +77,19 @@ def label_img(doc, method):
 	namestr = doc.name + "-label{0}".format(count) + ".png"
 	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Batch",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
+def validate(doc,method):
+	# if not doc.get("__islocal"):
+	file_url = '/private/files/' + doc.name + '.pdf'
+	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_url = %s""",
+	(doc.name,file_url))
+	pdf_data=frappe.attach_print('Batch',doc.name, print_format='Batch Print 8.5" x 11"')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Batch",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()

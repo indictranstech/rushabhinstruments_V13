@@ -13,7 +13,20 @@ def validate(doc,method):
 		for item in doc.items:
 			engineering_revision = frappe.db.get_value("Item",{'item_code':item.item_code},'engineering_revision')
 			item.default_engineering_revision = engineering_revision
-
+	if not doc.get("__islocal"):
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Request for Quotation' and attached_to_name=%s""",
+			(doc.name))
+		pdf_data=frappe.attach_print('Request for Quotation',doc.name, print_format='Request for Quotation Print')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Request for Quotation",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 def on_submit(doc, method = None):
 	attach_purchasing_docs(doc,method)
 	file_att = []

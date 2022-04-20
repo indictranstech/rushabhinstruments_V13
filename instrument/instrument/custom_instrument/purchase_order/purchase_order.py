@@ -46,6 +46,20 @@ def validate(doc,method):
 			item.default_engineering_revision = engineering_revision
 	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
 		(doc.name))
+	if not doc.get("__islocal"):
+		# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
+		# 	(doc.name))
+		pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Purchase Order",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 
 def attach_purchasing_docs(doc, method):
 	for row in doc.items:

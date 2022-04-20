@@ -22,6 +22,21 @@ def validate(doc,method):
 					manufacturing_package = frappe.db.get_value("Work Order",{'production_item':item.item_code,'name':doc.work_order},'manufacturing_package_name')
 					item.engineering_revision = engineering_revision
 					item.manufacturing_package = manufacturing_package
+	if not doc.get("__islocal"):
+		file_name = doc.name + '.pdf'
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name = %s""",
+			(doc.name,file_name))
+		pdf_data=frappe.attach_print('Stock Entry',doc.name, print_format='Stock Entry')
+		
+		_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		"attached_to_doctype": "Stock Entry",
+		"attached_to_name": doc.name,
+		"is_private": 1,
+		"content": pdf_data.get('fcontent')
+		})
+		_file.save()
 @frappe.whitelist()
 def on_submit(doc,method):
 	if doc.work_order_pick_list:
