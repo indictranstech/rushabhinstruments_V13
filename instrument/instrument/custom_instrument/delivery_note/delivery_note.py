@@ -37,7 +37,8 @@ def custom_api(doc, event=None):
 	    for item in doc.items:
 	        items.append({'item_code': item.item_code, 'item_name': item.item_name, 'item_group': item.item_group, 'qty': item.qty,
 	                    'stock_uom': item.stock_uom, 'conversion_factor': 1.0, 'rate': item.rate, 
-	                    'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no})
+	                    'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no,'item_expiry_date':str(item.item_expiry_date)})
+
 	    data.update({'items': items})
 	path = frappe.db.get_single_value("Rushabh Settings", 'delivery_note_web_hook_url')
 	url = path
@@ -60,3 +61,8 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+	if doc.items:
+		for item in doc.items:
+			expiry_date = frappe.db.get_value("Batch",{'name':item.batch_no},'expiry_date')
+			if expiry_date:
+				item.item_expiry_date = expiry_date
