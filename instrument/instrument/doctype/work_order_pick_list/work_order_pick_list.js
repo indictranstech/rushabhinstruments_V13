@@ -59,6 +59,11 @@ frappe.ui.form.on('Work Order Pick List', {
 					}
 				})			
 			})
+			frm.add_custom_button(__('Work Order Pick List Item'), function() {
+					frappe.set_route('query-report', 'Work Order Pick List Item',
+					{work_order_pick_list:frm.doc.name});
+							
+			})
 		}
 
 	},
@@ -287,7 +292,6 @@ frappe.ui.form.on('Work Order Pick List Item', {
 })
 frappe.ui.form.on('Pick List FG Work Orders', {
 	work_order:function(frm,cdt,cdn){
-		frappe.msgprint("*****************")
 		var row = locals[cdt][cdn]
 		frappe.call({
 			method : "instrument.instrument.doctype.work_order_pick_list.work_order_pick_list.get_pending_qty",
@@ -297,7 +301,6 @@ frappe.ui.form.on('Pick List FG Work Orders', {
 			},
 			callback:function(r){
 				if(r.message){
-					console.log("============r.message",r.message)
 					frappe.model.set_value(row.doctype, row.name, 'pending_qty', r.message[0]['qty']);
 					frappe.model.set_value(row.doctype, row.name, 'qty_can_be_pulledmanufactured', r.message[0]['qty_will_be_produced']);
 				}
