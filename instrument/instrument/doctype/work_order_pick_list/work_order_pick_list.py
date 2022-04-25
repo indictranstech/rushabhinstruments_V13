@@ -78,10 +78,12 @@ class WorkOrderPickList(Document):
 				if fg_work_orders:
 					for row in fg_work_orders:
 						doc = frappe.get_doc("Work Order",row.get("name"))
-						if doc.skip_transfer == 1:
+						if doc.skip_transfer == 1 and doc.from_wip_warehouse == 1:
+							ohs = get_current_stock_for_manufacture()
+						elif doc.skip_transfer == 1:
 							ohs = get_current_stock()
 						else:
-							ohs = get_current_stock_for_manufacture()
+							ohs = get_current_stock()
 						qty_will_be_produced_list = []
 						for item in doc.required_items:
 							if item.item_code in ohs:
@@ -129,7 +131,6 @@ class WorkOrderPickList(Document):
 						final_subassembly_items.append(col)
 					elif (ohs_dict.get(col) < bom_qty_dict.get(col)):
 						final_subassembly_items.append(col)
-
 				self.get_work_orders_for_subassembly(final_subassembly_items,planned_start_date)
 			else:
 				self.get_work_orders_for_subassembly(sub_assembly_items,planned_start_date)
@@ -146,7 +147,7 @@ class WorkOrderPickList(Document):
 	def get_work_orders_for_subassembly(self,sub_assembly_items,planned_start_date):
 		todays_date = datetime.date.today()
 		if self.purpose == 'Material Transfer for Manufacture':
-			work_orders = frappe.db.sql("""SELECT name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in {0} and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process')""".format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
+			work_orders = frappe.db.sql("""SELECT name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in {0} and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process') order by name desc""".format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
 		else:
 			work_orders =frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0""".format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
 			work_order_1 =frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty """.format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
@@ -156,10 +157,12 @@ class WorkOrderPickList(Document):
 		if work_orders:
 			for row in work_orders:
 				doc = frappe.get_doc("Work Order",row.get("name"))
-				if work_order_doc.skip_transfer == 1:
+				if doc.skip_transfer == 1 and doc.from_wip_warehouse == 1:
+					ohs = get_current_stock_for_manufacture()
+				elif doc.skip_transfer == 1:
 					ohs = get_current_stock()
 				else:
-					ohs = get_current_stock_for_manufacture()
+					ohs = get_current_stock()
 				qty_will_be_produced_list = []
 				for item in doc.required_items:
 					if item.item_code in ohs:
@@ -175,7 +178,9 @@ class WorkOrderPickList(Document):
 							percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
 							qty_will_be_produced = 0
 							qty_will_be_produced_list.append(qty_will_be_produced)
-				
+					else:
+						qty_will_be_produced = 0
+						qty_will_be_produced_list.append(qty_will_be_produced)
 				row['qty_will_be_produced'] =min(qty_will_be_produced_list)
 				self.append('work_orders',{
 					'work_order':row.get('name'),
@@ -287,7 +292,6 @@ class WorkOrderPickList(Document):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 		batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
-		
 		allocated_item_list = []
 		allocated_item_dict = dict()
 		for row in self.work_order_pick_list_item:
@@ -781,9 +785,7 @@ def validate_serial_no_with_batch(serial_nos, item_code):
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_work_order_for_pick_list(doctype, txt, searchfield, start, page_len, filters):
-	print("=====================filters",filters.get("purpose"))
 	fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
-	print("================fg_item_groups",fg_item_groups)
 	todays_date = datetime.date.today()
 	fg_item_groups = [item.get('item_group') for item in fg_item_groups]
 	if filters.get("purpose") == "Material Transfer for Manufacture":
@@ -793,7 +795,6 @@ def get_work_order_for_pick_list(doctype, txt, searchfield, start, page_len, fil
 
 @frappe.whitelist()
 def get_pending_qty(work_order,purpose):
-	print("==============work_order",work_order)
 	if purpose == "Material Transfer for Manufacture":
 		qty = frappe.db.sql("""SELECT (qty-material_transferred_for_manufacturing) as qty from `tabWork Order` where name = '{0}'""".format(work_order),as_dict=1)
 		doc = frappe.get_doc("Work Order",work_order)
@@ -819,9 +820,6 @@ def get_pending_qty(work_order,purpose):
 	else :
 		qty = frappe.db.sql("""SELECT (qty-produced_qty) as qty from `tabWork Order` where name = '{0}'""".format(work_order))
 		return qty
-@frappe.whitelist()
-def get_subassembly_work_orders(items):
-	print("=============items",items)
 
 def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 	data = get_children('BOM', parent = bom_no)

@@ -108,13 +108,14 @@
    "default": "0",
    "fieldname": "consider_current_stock",
    "fieldtype": "Check",
-   "label": "Consider Current Stock"
+   "label": "Consider Current Stock",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-04-13 01:05:08.928776",
+ "modified": "2022-04-25 00:17:47.869546",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Work Order Pick List",
