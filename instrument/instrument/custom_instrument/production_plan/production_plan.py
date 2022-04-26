@@ -173,15 +173,19 @@ def get_sub_assembly_items(doc, manufacturing_type=None):
 	final_data = []
 	final_datas = []
 	ohs = get_current_stock()
+	# print("============ohs",ohs)
 	for row in doc.get("po_items"):
 		bom_data = []
 		get_sub_assembly_item(row.get("bom_no"), bom_data, row.get("planned_qty"))
+		# print("===========bom_data",bom_data)
 		for data in bom_data:
 			qty = data.stock_qty
 			data.original_required_qty = data.stock_qty
 			data.available_quantity = ohs.get(data.production_item)
 			calculated_required_quantity = (flt(qty) - flt(ohs.get(data.production_item)) if flt(ohs.get(data.production_item)) < flt(qty) else 0)
 			data.qty = calculated_required_quantity
+			remaining_qty = flt(ohs.get(data.production_item))-flt(qty) if flt(ohs.get(data.production_item)) > flt(qty) else 0
+			ohs.update({data.production_item:remaining_qty})
 			data.production_plan_item = row.get("name")
 			data.fg_warehouse = row.get("warehouse")
 			data.schedule_date = row.get("planned_start_date")
