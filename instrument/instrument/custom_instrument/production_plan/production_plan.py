@@ -44,10 +44,10 @@ def validate(doc,method):
 				# frappe.db.set_value("Work Order",doc.name,'available_quantity',ohs.get(row.item_code))
 				# frappe.db.commit()
 				# doc.reload()
-	if doc.sub_assembly_items:
-		doc.sub_assembly_items.sort(key= lambda d: d.bom_level, reverse=True)
-		for idx, row in enumerate(doc.sub_assembly_items, start=1):
-			row.idx = idx
+	# if doc.sub_assembly_items:
+	# 	doc.sub_assembly_items.sort(key= lambda d: d.bom_level, reverse=True)
+	# 	for idx, row in enumerate(doc.sub_assembly_items, start=1):
+	# 		row.idx = idx
 	if not doc.get("__islocal"):
 		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Production Plan' and attached_to_name=%s""",
 			(doc.name))
@@ -172,11 +172,23 @@ def get_sub_assembly_items(doc, manufacturing_type=None):
 	doc = json.loads(doc)
 	final_data = []
 	final_datas = []
+	ohs = get_current_stock()
 	for row in doc.get("po_items"):
 		bom_data = []
 		get_sub_assembly_item(row.get("bom_no"), bom_data, row.get("planned_qty"))
-		data=set_sub_assembly_items_based_on_level(row, bom_data, final_data,manufacturing_type)
-		final_datas.append(data)
+		for data in bom_data:
+			qty = data.stock_qty
+			data.original_required_qty = data.stock_qty
+			data.available_quantity = ohs.get(data.production_item)
+			calculated_required_quantity = (flt(qty) - flt(ohs.get(data.production_item)) if flt(ohs.get(data.production_item)) < flt(qty) else 0)
+			data.qty = calculated_required_quantity
+			data.production_plan_item = row.get("name")
+			data.fg_warehouse = row.get("warehouse")
+			data.schedule_date = row.get("planned_start_date")
+			data.type_of_manufacturing = manufacturing_type or ("Subcontract" if data.is_sub_contracted_item
+				else "In House")
+		# data=set_sub_assembly_items_based_on_level(row, bom_data, final_data,manufacturing_type)
+		final_datas.append(bom_data)
 	return final_datas
 
 	
