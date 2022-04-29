@@ -99,6 +99,7 @@ def update_latest_price_in_all_boms():
 		update_cost()
 
 def custom_replace_bom(args):
+	frappe.msgprint("==========Working=========")
 	frappe.db.auto_commit_on_many_writes = 1
 	args = frappe._dict(args)
 
