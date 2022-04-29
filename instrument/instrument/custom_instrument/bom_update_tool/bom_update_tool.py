@@ -80,13 +80,13 @@ def get_new_bom_unit_cost(bom):
 def enqueue_replace_bom(args):
 	if isinstance(args, string_types):
 		args = json.loads(args)
-		bom_doc = frappe.get_doc("BOM",args.get("current_bom"))
+		bom_doc = frappe.get_doc("BOM",args.get("new_bom"))
 		bom_doc.update_status =  'In Process'
 		# bom_doc.save()
 		# frappe.db.set_value("BOM",{'name':args.get("current_bom")},'update_status','In Process')
 		# frappe.db.commit()
-	replace_bom(args)
-	# frappe.enqueue("instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.replace_bom", args=args, timeout=40000)
+	# replace_bom(args)
+	frappe.enqueue("instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.replace_bom", args=args, timeout=40000)
 	frappe.msgprint(_("Queued for replacing the BOM. It may take a few minutes."))
 
 @frappe.whitelist()
