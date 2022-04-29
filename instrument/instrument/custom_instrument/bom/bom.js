@@ -74,15 +74,30 @@ frappe.ui.form.on("BOM", {
 				if (frm.doc.name && frm.doc.old_reference_bom) {
 					frm.set_value("update_status",'In Process')
 					frappe.call({
-						method: "instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.enqueue_replace_bom",
+						method: "erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.enqueue_replace_bom",
 						freeze: true,
 						args: {
-							args: {
+							boms: {
 								"current_bom": frm.doc.old_reference_bom,
 								"new_bom": frm.doc.name
 							}
+						},
+						callback: result => {
+							if (result && result.message && !result.exc) {
+								frm.events.confirm_job_start(frm, result.message);
+							}
 						}
 					});
+					// frappe.call({
+					// 	method: "instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.enqueue_replace_bom",
+					// 	freeze: true,
+					// 	args: {
+					// 		args: {
+					// 			"current_bom": frm.doc.old_reference_bom,
+					// 			"new_bom": frm.doc.name
+					// 		}
+					// 	}
+					// });
 				}else{
 					frappe.msgprint("Please Enter Old Reference BOM")
 				}
@@ -90,6 +105,14 @@ frappe.ui.form.on("BOM", {
 
 		}
 		
+	},
+	confirm_job_start: (frm, log_data) => {
+		let log_link = frappe.utils.get_form_link("BOM Update Log", log_data.name, true);
+		frappe.msgprint({
+			"message": __("BOM Updation is queued and may take a few minutes. Check {0} for progress.", [log_link]),
+			"title": __("BOM Update Initiated"),
+			"indicator": "blue"
+		});
 	},
 	item:function(frm){
 		if(frm.doc.item){
