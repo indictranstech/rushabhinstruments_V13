@@ -40,7 +40,7 @@ def replacee_bom(self):
 				bom_obj.save_version()
 		except Exception:
 			frappe.log_error(frappe.get_traceback())
-	frappe.db.set_value("BOM",{'name':self.current_bom},'update_status','Completed')
+	frappe.db.set_value("BOM",{'name':self.new_bom},'update_status','Completed')
 	frappe.db.commit()
 def validate_bom(self):
 	if cstr(self.current_bom) == cstr(self.new_bom):
@@ -86,7 +86,7 @@ def enqueue_replace_bom(args):
 		# frappe.db.set_value("BOM",{'name':args.get("current_bom")},'update_status','In Process')
 		# frappe.db.commit()
 	# replace_bom(args)
-	frappe.enqueue("instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.replace_bom", args=args, timeout=40000)
+	frappe.enqueue("instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.custom_replace_bom", args=args, timeout=40000)
 	frappe.msgprint(_("Queued for replacing the BOM. It may take a few minutes."))
 
 @frappe.whitelist()
@@ -98,7 +98,7 @@ def update_latest_price_in_all_boms():
 	if frappe.db.get_single_value("Manufacturing Settings", "update_bom_costs_automatically"):
 		update_cost()
 
-def replace_bom(args):
+def custom_replace_bom(args):
 	frappe.db.auto_commit_on_many_writes = 1
 	args = frappe._dict(args)
 
