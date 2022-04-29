@@ -77,8 +77,8 @@ frappe.ui.form.on("BOM", {
 						freeze: true,
 						args: {
 							args: {
-								"current_bom": frm.doc.name,
-								"new_bom": frm.doc.old_reference_bom
+								"current_bom": frm.doc.old_reference_bom,
+								"new_bom": frm.doc.name
 							}
 						}
 					});
