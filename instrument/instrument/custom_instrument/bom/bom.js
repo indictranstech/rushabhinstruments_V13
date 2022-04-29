@@ -70,6 +70,7 @@ frappe.ui.form.on("BOM", {
 		}
 		if(frm.doc.docstatus==1){
 			cur_frm.add_custom_button(__('Update References'),function(){
+				// Fix:Changed current bom and new bom
 				if (frm.doc.name && frm.doc.old_reference_bom) {
 					frm.set_value("update_status",'In Process')
 					frappe.call({
