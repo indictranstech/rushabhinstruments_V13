@@ -22,9 +22,11 @@
   "work_order_planning",
   "work_order_planning_section",
   "fg_items_table",
+  "get_subassembly_items",
   "sub_assembly_items_table",
   "get_raw_materials",
   "raw_materials_table",
+  "prepare_final_work_orders",
   "final_work_orders"
  ],
  "fields": [
@@ -69,7 +71,8 @@
    "fieldname": "sorted_sales_order_table",
    "fieldtype": "Table",
    "label": "Sorted Sales Order Table",
-   "options": "Sorted Sales Orders"
+   "options": "Sorted Sales Orders",
+   "read_only": 1
   },
   {
    "fieldname": "sort_so_data",
@@ -90,13 +93,15 @@
    "fieldname": "fg_items_table",
    "fieldtype": "Table",
    "label": "FG Items Table",
-   "options": "FG Items Table"
+   "options": "FG Items Table",
+   "read_only": 1
   },
   {
    "fieldname": "sub_assembly_items_table",
    "fieldtype": "Table",
    "label": "Sub Assembly Items Table",
-   "options": "Sub Assembly Items Table"
+   "options": "Sub Assembly Items Table",
+   "read_only": 1
   },
   {
    "fieldname": "get_raw_materials",
@@ -107,13 +112,15 @@
    "fieldname": "raw_materials_table",
    "fieldtype": "Table",
    "label": "Raw Materials Table",
-   "options": "Raw Materials Table"
+   "options": "Raw Materials Table",
+   "read_only": 1
   },
   {
    "fieldname": "final_work_orders",
    "fieldtype": "Table",
    "label": "Final Work Orders",
-   "options": "Final Work Orders"
+   "options": "Final Work Orders",
+   "read_only": 1
   },
   {
    "fieldname": "get_sales_orders",
@@ -135,11 +142,21 @@
    "fieldtype": "Link",
    "label": "Item",
    "options": "Item"
+  },
+  {
+   "fieldname": "get_subassembly_items",
+   "fieldtype": "Button",
+   "label": "Get Subassembly Items"
+  },
+  {
+   "fieldname": "prepare_final_work_orders",
+   "fieldtype": "Button",
+   "label": "Prepare Final Work Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-03-28 04:06:16.377550",
+ "modified": "2022-05-02 07:24:26.369457",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Production Planning With Lead Time",
