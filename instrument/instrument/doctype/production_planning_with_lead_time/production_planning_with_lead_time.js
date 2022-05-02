@@ -93,5 +93,14 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 	},
 	prepare_final_work_orders:function(frm){
 		frappe.msgprint("==========working==========")
+		frm.doc.final_work_orders = ''
+		frappe.call({
+			method: "prepare_final_work_orders",
+			doc: frm.doc,
+			callback: function(r) {
+				refresh_field("final_work_orders");
+				// frm.save()
+			}
+		});
 	}
 });
