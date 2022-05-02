@@ -55,8 +55,8 @@ class ProductionPlanningWithLeadTime(Document):
 		self.sorted_sales_order_table = ''
 		if self.sales_order_table:
 			so_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
-			sorted_so_data = sorted(so_data, key = lambda x: x["delivery_date"])
-			sorted_so_data = sorted(so_data, key = lambda x: x["priority"])
+			sorted_so_data = sorted(so_data, key = lambda x: (x["delivery_date"],x["priority"]))
+			# sorted_so_data = sorted(so_data, key = lambda x: x["priority"])
 			count = 1
 			for row in sorted_so_data:
 				row.update({'idx':count})
@@ -73,7 +73,7 @@ class ProductionPlanningWithLeadTime(Document):
 		planned_data = self.get_planned_data()
 		fg_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 		if fg_data:
-			fg_data = sorted(fg_data, key = lambda x: x["delivery_date"])
+			fg_data = sorted(fg_data, key = lambda x: (x["delivery_date"],x["priority"]))
 			count = 1
 			for row in fg_data:
 				qty = flt(row.get("qty")) - flt(ohs.get(row.get("item"))) if flt(ohs.get(row.get("item"))) < flt(row.get("qty")) else 0
@@ -174,17 +174,21 @@ class ProductionPlanningWithLeadTime(Document):
 						if item.get('qty')>0:
 							latest_date_availability = required_date if required_date > today_date else lead_time
 							item.update({'latest_date_availability':latest_date_availability})
-					
 					if item.get('order_in_days') > 0:
 						item.update({'readiness_status':'#228B22'})
 					elif item.get('order_in_days') == 0 :
 						item.update({'readiness_status':'#FF8000'})
 					else:
 						item.update({'readiness_status':'#CD3700'})
-					print("============item",item.get('idx'),item)
 					self.append('raw_materials_table',item)
 			return self.raw_materials_table
-	
+	@frappe.whitelist()
+	def prepare_final_work_orders(self):
+		if self.fg_items_table:
+			for row in self.fg_items_table:
+				if row.qty > 0:
+					pass
+
 	def get_planned_data(self):
 		# Get planned qty from material request for which production plan not in place and work order not in place
 		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
