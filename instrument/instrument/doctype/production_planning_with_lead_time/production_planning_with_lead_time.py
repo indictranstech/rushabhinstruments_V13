@@ -54,6 +54,7 @@ class ProductionPlanningWithLeadTime(Document):
 		return self.sales_order_table
 	@frappe.whitelist()
 	def sort_so_data(self):
+		# sort so data based on delivery_date and priority
 		self.sorted_sales_order_table = ''
 		if self.sales_order_table:
 			so_data = []
@@ -124,6 +125,7 @@ class ProductionPlanningWithLeadTime(Document):
 			return self.fg_items_table
 	@frappe.whitelist()
 	def sub_assembly_items(self):
+		self.sub_assembly_items_table = ''
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
@@ -133,7 +135,9 @@ class ProductionPlanningWithLeadTime(Document):
 			for row in self.fg_items_table:
 				bom_data = []
 				if row.get('planned_qty') > 0:
-					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"))
+					date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
+					date_to_be_ready = date_to_be_ready.date()
+					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"),date_to_be_ready)
 					bom_data = sorted(bom_data, key = lambda x: x["bom_level"],reverse=1)
 					for item in bom_data:
 						final_row = dict()
@@ -145,20 +149,20 @@ class ProductionPlanningWithLeadTime(Document):
 						final_row.update({'qty':planned_allocate,'shortage':planned_allocate})
 						remainingg_qty = flt(planned_data.get(item.get("production_item"))) - flt(qty) if flt(planned_data.get(item.get("production_item"))) > flt(qty) else 0
 						planned_data.update({item.get('production_item'):remainingg_qty})
-						operation_time = frappe.db.sql("""SELECT sum(time_in_mins) as operation_time from `tabBOM Operation` where parent = '{0}'""".format(item.get('bom_no')),as_dict=1)
-						total_operation_time_in_mins = flt(operation_time[0].get('operation_time'))*final_row.get('qty')
-						total_operation_time_in_days = ceil(total_operation_time_in_mins/480)
-						makeup_days = frappe.db.get_value("BOM",{'name':item.get('bom_no')},'makeup_days')
-						date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
-						date_to_be_ready = date_to_be_ready.date()
-						date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready})
+						# operation_time = frappe.db.sql("""SELECT sum(time_in_mins) as operation_time from `tabBOM Operation` where parent = '{0}'""".format(item.get('bom_no')),as_dict=1)
+						# total_operation_time_in_mins = flt(operation_time[0].get('operation_time'))*final_row.get('qty')
+						# total_operation_time_in_days = ceil(total_operation_time_in_mins/480)
+						# makeup_days = frappe.db.get_value("BOM",{'name':item.get('bom_no')},'makeup_days')
+						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
+						# date_to_be_ready = date_to_be_ready.date()
+						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready')})
 						self.append('sub_assembly_items_table',final_row)
 			return self.sub_assembly_items_table
 						
 	@frappe.whitelist()
 	def get_raw_materials(self):
-		self.raw_materials_table = []
+		self.raw_materials_table = ''
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
@@ -169,11 +173,12 @@ class ProductionPlanningWithLeadTime(Document):
 				remaining_dict = dict()
 				for item in raw_data:
 					lead_time = frappe.db.get_value("Item",{'name':item.get('item')},'lead_time_days')
-					item.update({'date_to_be_ready':row.date_to_be_ready,'available_stock':ohs.get(item.get('item')),'lead_time':lead_time,'original_qty':item.get('qty')})
+					item.update({'available_stock':ohs.get(item.get('item')),'lead_time':lead_time,'original_qty':item.get('qty')})
 					rm_readiness_days = frappe.db.get_single_value("Rushabh Settings",'rm_readiness_days')
 					date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 					date_to_be_ready = date_to_be_ready.date()
 					required_date = (date_to_be_ready-timedelta(rm_readiness_days))
+					item.update({'date_to_be_ready':required_date})
 					today_date = date.today()
 					# Calculate Order in days
 					order_in_days = (required_date - today_date)
@@ -337,17 +342,15 @@ class ProductionPlanningWithLeadTime(Document):
 
 	def get_planned_data(self):
 		# Get planned qty from material request for which production plan not in place and work order not in place
-		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1,debug=1)
-		# Manipulate in order o show in dict format
+		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
+		# Manipulate in order to show in dict format
 		planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
 		# Get planned qty from production plan for which work order not in place
-		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1,debug=1)
-		print("=========planned_pp",planned_pp)
+		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
 		# update planned_data_dict
 		if planned_pp:
 			for row in planned_pp:
 				if row.get('item_code') in planned_data_dict:
-					print("--------------item_code",row.get('item_code'))
 					qty = flt(planned_data_dict.get(row.get('item_code'))) + row.get('planned_qty')
 					planned_data_dict.update({row.get('item_code'):qty})
 				else:
@@ -440,12 +443,18 @@ def get_raw_items(bom,raw_data,qty):
 				})
 		return raw_data
 @frappe.whitelist()
-def get_sub_assembly_item(bom_no, bom_data, to_produce_qty, indent=0):
+def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready, indent=0):
 	data = get_children('BOM', parent = bom_no)
 	for d in data:
 		if d.expandable:
+			operation_time = frappe.db.sql("""SELECT sum(time_in_mins) as operation_time from `tabBOM Operation` where parent = '{0}'""".format(d.value),as_dict=1)
+			makeup_days = frappe.db.get_value("BOM",{'name':d.value},'makeup_days')
 			parent_item_code = frappe.get_cached_value("BOM", bom_no, "item")
 			stock_qty = (d.stock_qty / d.parent_bom_qty) * flt(to_produce_qty)
+			total_operation_time_in_mins = flt(operation_time[0].get('operation_time'))*stock_qty
+			total_operation_time_in_days = ceil(total_operation_time_in_mins/480)
+			# Calculate date_to_be_ready
+			date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
 			bom_data.append(frappe._dict({
 				'parent_item_code': parent_item_code,
 				'description': d.description,
@@ -457,11 +466,13 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty, indent=0):
 				'is_sub_contracted_item': d.is_sub_contracted_item,
 				'bom_level': indent,
 				'indent': indent,
-				'stock_qty': stock_qty
+				'stock_qty': stock_qty,
+				'date_to_be_ready':date_to_be_ready,
+				'total_operation_time':total_operation_time_in_days
 			}))
 
 			if d.value:
-				get_sub_assembly_item(d.value, bom_data, stock_qty, indent=indent+1)
+				get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready, indent=indent+1)
 def get_on_order_stock(self,required_date):
 	planned_po = frappe.db.sql("""SELECT poi.item_code,(poi.qty-poi.received_qty) as qty from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
 	# Manipulate in order o show in dict format
