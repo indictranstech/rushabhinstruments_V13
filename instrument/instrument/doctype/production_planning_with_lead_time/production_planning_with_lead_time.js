@@ -29,6 +29,10 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frm.fields_dict['sorted_sales_order_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['sorted_sales_order_table'].grid.wrapper.find('.grid-add-row').hide();
 
+		frm.fields_dict['fg_items_table'].grid.wrapper.find('.grid-insert-row').hide();
+		frm.fields_dict['fg_items_table'].grid.wrapper.find('.grid-insert-row-below').hide();
+		frm.fields_dict['fg_items_table'].grid.wrapper.find('.grid-add-row').hide();
+
 		if(!frm.doc.__islocal) {
 			cur_frm.add_custom_button(__('Create Material Request'),function(){
 				frappe.call({
@@ -77,7 +81,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			doc: frm.doc,
 			callback: function(r) {
 				refresh_field("fg_items_table");
-				// frm.save()
 			}
 		});
 	},
@@ -88,7 +91,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			doc: frm.doc,
 			callback: function(r) {
 				refresh_field("sub_assembly_items_table");
-				// frm.save()
 			}
 		});
 	},
@@ -99,7 +101,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			doc: frm.doc,
 			callback: function(r) {
 				refresh_field("raw_materials_table");
-				// frm.save()
 			}
 		});
 	},
@@ -110,7 +111,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			doc: frm.doc,
 			callback: function(r) {
 				refresh_field("final_work_orders");
-				// frm.save()
 			}
 		});
 	}
