@@ -31,30 +31,42 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 
 		if(!frm.doc.__islocal) {
 			cur_frm.add_custom_button(__('Create Material Request'),function(){
+				frappe.call({
+					method: "make_material_request",
+					doc: frm.doc,
+					callback: function(r) {
+
+					}
+				});
 			},__("Menu"))
 			cur_frm.add_custom_button(__('Create Work Orders'),function(){
+				frappe.call({
+					method: "create_work_order",
+					doc: frm.doc,
+					callback: function(r) {
+
+					}
+				});
 			},__("Menu"))
 		}
 	},
 	get_sales_orders: function(frm) {
-		frm.doc.sales_orders_table = ''
+		frm.doc.sales_order_table = ''
 		frappe.call({
 			method: "get_open_sales_orders",
 			doc: frm.doc,
 			callback: function(r) {
-				refresh_field("sales_orders_table");
-				frm.save()
+				refresh_field("sales_order_table");
 			}
 		});
 	},
 	sort_so_data:function(frm){
-		frm.doc.sorted_sales_orders_table = ''
+		frm.doc.sorted_sales_order_table = ''
 		frappe.call({
 			method: "sort_so_data",
 			doc: frm.doc,
 			callback: function(r) {
 				refresh_field("sorted_sales_order_table");
-				// frm.save()
 			}
 		});
 	},
@@ -92,7 +104,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		});
 	},
 	prepare_final_work_orders:function(frm){
-		frappe.msgprint("==========working==========")
 		frm.doc.final_work_orders = ''
 		frappe.call({
 			method: "prepare_final_work_orders",

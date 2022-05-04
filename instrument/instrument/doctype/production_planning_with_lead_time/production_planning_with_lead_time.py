@@ -18,6 +18,7 @@ from frappe.utils import (
 from datetime import date,timedelta
 from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 import datetime
+from erpnext.stock.doctype.item.item import get_item_defaults, get_last_purchase_details
 class ProductionPlanningWithLeadTime(Document):
 	@frappe.whitelist()
 	def get_open_sales_orders(self):
@@ -49,14 +50,26 @@ class ProductionPlanningWithLeadTime(Document):
 				'makeup_days':bom_data[0].get('makeup_days'),
 				'days_to_deliver' : days_to_deliver.days
 			})
+		# self.save()
 		return self.sales_order_table
 	@frappe.whitelist()
 	def sort_so_data(self):
 		self.sorted_sales_order_table = ''
 		if self.sales_order_table:
-			so_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
+			so_data = []
+			for row in self.sales_order_table:
+				so_data.append({
+					'sales_order':row.sales_order,
+					'item':row.item,
+					'qty':row.qty,
+					'delivery_date':row.delivery_date,
+					'priority':row.priority,
+					'bom':row.bom,
+					'days_to_deliver':row.days_to_deliver,
+					'makeup_days':row.makeup_days
+					})
+			# so_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 			sorted_so_data = sorted(so_data, key = lambda x: (x["delivery_date"],x["priority"]))
-			# sorted_so_data = sorted(so_data, key = lambda x: x["priority"])
 			count = 1
 			for row in sorted_so_data:
 				row.update({'idx':count})
@@ -65,13 +78,27 @@ class ProductionPlanningWithLeadTime(Document):
 		return self.sorted_sales_order_table
 	@frappe.whitelist()
 	def work_order_planning(self):
+		self.fg_items_table = ''
 		# fetch warehouse list from Rushabh settings
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
 		# Get Planned Stock
 		planned_data = self.get_planned_data()
-		fg_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
+		if self.sales_order_table:
+			fg_data = []
+			for row in self.sales_order_table:
+				fg_data.append({
+					'sales_order':row.sales_order,
+					'item':row.item,
+					'qty':row.qty,
+					'delivery_date':row.delivery_date,
+					'priority':row.priority,
+					'bom':row.bom,
+					'days_to_deliver':row.days_to_deliver,
+					'makeup_days':row.makeup_days
+					})
+		# fg_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 		if fg_data:
 			fg_data = sorted(fg_data, key = lambda x: (x["delivery_date"],x["priority"]))
 			count = 1
@@ -85,10 +112,12 @@ class ProductionPlanningWithLeadTime(Document):
 				remainingg_qty = flt(planned_data.get(row.get("item"))) - flt(qty) if flt(planned_data.get(row.get("item"))) > flt(qty) else 0
 				planned_data.update({row.get('item'):remainingg_qty})
 				operation_time = frappe.db.sql("""SELECT sum(time_in_mins) as operation_time from `tabBOM Operation` where parent = '{0}'""".format(row.get('bom')),as_dict=1)
-				total_operation_time_in_mins = flt(operation_time[0].get('operation_time'))*row.get('qty')
+				total_operation_time_in_mins = flt(operation_time[0].get('operation_time'))*row.get('planned_qty')
 				total_operation_time_in_days = ceil(total_operation_time_in_mins/480)
-				# Calculate date_to_be_ready 
-				date_to_be_ready = (row.get('delivery_date')-timedelta(total_operation_time_in_days)-timedelta(row.get('makeup_days')))
+				# Calculate date_to_be_ready
+				delivery_date = datetime.datetime.strptime(row.get('delivery_date'), '%Y-%m-%d')
+				delivery_date = delivery_date.date() 
+				date_to_be_ready = (delivery_date-timedelta(total_operation_time_in_days)-timedelta(row.get('makeup_days')))
 				row.update({'idx':count,'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready})
 				self.append('fg_items_table',row)
 				count = count + 1
@@ -129,6 +158,7 @@ class ProductionPlanningWithLeadTime(Document):
 						
 	@frappe.whitelist()
 	def get_raw_materials(self):
+		self.raw_materials_table = []
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
@@ -185,25 +215,144 @@ class ProductionPlanningWithLeadTime(Document):
 	@frappe.whitelist()
 	def prepare_final_work_orders(self):
 		if self.fg_items_table:
+			item_list = []
 			for row in self.fg_items_table:
-				if row.qty > 0:
-					pass
+				fg_item_dict = dict()
+				if row.planned_qty > 0:
+					for item in self.sub_assembly_items_table:
+						item_dict = dict()
+						if item.sales_order == row.sales_order and item.qty >0:
+							item_dict.update({
+								'item':item.item,
+								'qty':item.qty,
+								'sales_order':item.sales_order,
+								'bom':item.bom,
+								'total_operation_time':item.total_operation_time,
+								'date_to_be_ready':item.date_to_be_ready
+								})
+							item_list.append(item_dict)
+					fg_item_dict.update({
+						'item':row.item,
+						'qty':row.planned_qty,
+						'sales_order':row.sales_order,
+						'bom':row.bom,
+						'total_operation_time':row.total_operation_time,
+						'date_to_be_ready':row.date_to_be_ready
+						})					
+					item_list.append(fg_item_dict)
+			count = 1
+			for row in item_list:
+				row.update({'idx':count})
+				self.append("final_work_orders",row)
+				count = count + 1
+			return self.final_work_orders
+	@frappe.whitelist()
+	def create_work_order(self):
+		if self.final_work_orders:
+			from erpnext.manufacturing.doctype.work_order.work_order import get_default_warehouse
+			wo_list= []
+			default_warehouses = get_default_warehouse()
+			print("------------default_warehouses",default_warehouses)
+			self.make_work_order_for_finished_goods(wo_list, default_warehouses)
+			self.show_list_created_message("Work Order", wo_list)
+		else:
+			frappe.msgprint("Please Prepare for Final Work Orders")
+	def make_work_order_for_finished_goods(self, wo_list, default_warehouses):
+		items_data = self.get_production_items()
+		for key, item in items_data.items():
+			set_default_warehouses(item, default_warehouses)
+			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'sales_order':item.get('sales_order')})
+			if not wo: 
+				work_order = self.create_work_orders(item)
+				if work_order:
+					wo_list.append(work_order)
+			else:
+				wo = get_link_to_form("Work Order", wo)
+				so = get_link_to_form("Sales Order",item.get('sales_order'))
+				msgprint(_("Work Order {0} is already created for the item {1} and Sales Order {2} ").format(wo,item.get("production_item"),so))
+				# frappe.msgprint("Work Order {0} is already created for this item {1}".format(wo,item.get("production_item")))
+	def get_production_items(self):
+		item_dict = {}
+		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+		for d in self.final_work_orders:
+			item_data = get_item_defaults(d.item, default_company)
+			item_details = {
+				"production_item": d.item,
+				"use_multi_level_bom": 0,
+				"sales_order": d.sales_order,
+				# "sales_order_item": d.sales_order_item,
+				"bom_no": d.bom,
+				"description": item_data.get('description'),
+				"stock_uom": item_data.get('stock_uom'),
+				"company": default_company,
+				"planned_start_date": d.date_to_be_ready,
+				"qty":d.qty,
+				"production_planning_with_lead_time":self.name
+			}
+
+			# if not item_details["project"] and d.sales_order:
+			# 	item_details["project"] = frappe.get_cached_value("Sales Order", d.sales_order, "project")
+
+			# if self.get_items_from == "Material Request":
+			# 	item_details.update({"qty": d.planned_qty})
+			# 	item_dict[(d.item_code, d.material_request_item, d.warehouse)] = item_details
+			# else:
+			# 	item_details.update(
+			# 		{
+			# 			"qty": flt(item_dict.get((d.item_code, d.sales_order, d.warehouse), {}).get("qty"))
+			# 			+ (flt(d.planned_qty) - flt(d.ordered_qty))
+			# 		}
+			# 	)
+			item_dict[(d.item, d.sales_order)] = item_details
+
+		return item_dict
+
+	def create_work_orders(self, item):
+		from erpnext.manufacturing.doctype.work_order.work_order import OverProductionError
+		wo = frappe.new_doc("Work Order")
+		wo.update(item)
+		wo.planned_start_date = item.get("planned_start_date") or item.get("schedule_date")
+
+		if item.get("warehouse"):
+			wo.fg_warehouse = item.get("warehouse")
+
+		wo.set_work_order_operations()
+		wo.set_required_items()
+
+		try:
+			wo.flags.ignore_mandatory = True
+			wo.flags.ignore_validate = True
+			wo.insert()
+			return wo.name
+		except OverProductionError:
+			pass
+	def show_list_created_message(self, doctype, doc_list=None):
+		if not doc_list:
+			return
+
+		frappe.flags.mute_messages = False
+		if doc_list:
+			doc_list = [get_link_to_form(doctype, p) for p in doc_list]
+			msgprint(_("{0} created").format(comma_and(doc_list)))
 
 	def get_planned_data(self):
 		# Get planned qty from material request for which production plan not in place and work order not in place
-		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
+		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1,debug=1)
 		# Manipulate in order o show in dict format
-		planned_data_dict = {item.item_code : item.qty for item in planned_mr}
+		planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
 		# Get planned qty from production plan for which work order not in place
-		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
+		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1,debug=1)
+		print("=========planned_pp",planned_pp)
 		# update planned_data_dict
 		if planned_pp:
 			for row in planned_pp:
 				if row.get('item_code') in planned_data_dict:
+					print("--------------item_code",row.get('item_code'))
 					qty = flt(planned_data_dict.get(row.get('item_code'))) + row.get('planned_qty')
 					planned_data_dict.update({row.get('item_code'):qty})
 				else:
-					planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
+					if row.item_code != None and row.planned_qty != None:
+						planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
 		# Get planned qty from work order
 		planned_wo = frappe.db.sql("""SELECT wo.production_item,wo.qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}'""".format(self.to_date,self.from_date),as_dict=1)
 		# update planned_data_dict
@@ -213,8 +362,71 @@ class ProductionPlanningWithLeadTime(Document):
 					qty = flt(planned_data_dict.get(row.get('production_item'))) + row.get('qty')
 					planned_data_dict.update({row.get('production_item'):qty})
 				else:
-					planned_data_dict.update({row.get('production_item'):row.get('qty')})
+					if row.item_code != None and row.planned_qty != None:
+						planned_data_dict.update({row.get('production_item'):row.get('qty')})
+					else:
+						planned_data_dict = {}
 		return planned_data_dict
+	@frappe.whitelist()
+	def make_material_request(self):
+		"""Create Material Requests grouped by Sales Order and Material Request Type"""
+		material_request_list = []
+		material_request_map = {}
+		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+		mr_doc = frappe.db.get_value("Material Request",{'production_planning_with_lead_time':self.name},'name')
+		if not mr_doc:
+			material_request_doc = frappe.new_doc("Material Request")
+			if material_request_doc:
+				material_request_doc.material_request_type = "Purchase"
+				material_request_doc.transaction_date = nowdate()
+				material_request_doc.company = default_company
+				material_request_doc.production_planning_with_lead_time = self.name
+				for row in self.raw_materials_table:
+					if row.qty > 0:
+						item_doc = get_item_defaults(row.item, default_company)
+						engineering_revision = frappe.db.get_value("Engineering Revision",{'item_code':row.item,'is_default':1,'is_active':1},'name')
+						material_request_doc.append("items",{
+							'item_code': row.item,
+							'item_name': item_doc.get("item_name"),
+							'engineering_revision':item_doc.get("engineering_revision") if item_doc.get("engineering_revision") else engineering_revision,
+							'rfq_required':item_doc.get('rfq_required'),
+							'schedule_date':row.get('date_to_be_ready'),
+							'description':item_doc.get('description'),
+							'item_group':item_doc.get('item_group'),
+							'qty':row.qty,
+							'uom':item_doc.get("stock_uom"),
+							'stock_uom':item_doc.get("stock_uom"),
+							'warehouse':item_doc.get('item_defaults')[0].get('default_warehouse')
+							})
+				material_request_doc.flags.ignore_permissions = 1
+				material_request_doc.run_method("set_missing_values")
+				material_request_doc.save()
+
+				frappe.flags.mute_messages = False
+
+				if material_request_doc:
+					mr = get_link_to_form("Material Request",material_request_doc.name)
+					msgprint(_("Material Request {0} Created.").format(mr))
+				else:
+					msgprint(_("No material request created"))
+		else:
+			mr = get_link_to_form("Material Request",mr_doc)
+			msgprint(_("Material Request {0} is Already Created.").format(mr))
+		
+def set_default_warehouses(row, default_warehouses):
+	for field in ["wip_warehouse", "fg_warehouse"]:
+		if not row.get(field):
+			row[field] = default_warehouses.get(field)
+
+def make_work_order_for_finished_goods(production_plan_doc, wo_list):
+	items_data = get_production_items(production_plan_doc)
+	for key, item in items_data.items():
+		if production_plan_doc.sub_assembly_items:
+			item['use_multi_level_bom'] = 0
+
+		work_order =create_work_order(production_plan_doc,item)
+		if work_order:
+			wo_list.append(work_order)
 @frappe.whitelist()
 def get_raw_items(bom,raw_data,qty):
 	doc = frappe.get_doc("BOM",{'name':bom})
