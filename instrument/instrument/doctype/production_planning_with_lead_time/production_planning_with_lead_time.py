@@ -15,6 +15,20 @@ from frappe.utils import (
 	now_datetime,
 	nowdate,today
 )
+from dateutil.relativedelta import relativedelta
+from frappe.utils import (
+	cint,
+	date_diff,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	time_diff_in_hours,
+)
+from erpnext.manufacturing.doctype.manufacturing_settings.manufacturing_settings import (
+	get_mins_between_operations,
+)
 from datetime import date,timedelta
 from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 import datetime
@@ -119,7 +133,12 @@ class ProductionPlanningWithLeadTime(Document):
 				delivery_date = datetime.datetime.strptime(row.get('delivery_date'), '%Y-%m-%d')
 				delivery_date = delivery_date.date() 
 				date_to_be_ready = (delivery_date-timedelta(total_operation_time_in_days)-timedelta(row.get('makeup_days')))
+				date_dict = check_workstation_availability(date_to_be_ready,row.get('bom'),row.get('planned_qty'))
 				row.update({'idx':count,'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready})
+				if date_dict:
+					row.update({'planned_start_date':date_dict.get('planned_start_date')})
+				else:
+					row.update({'planned_start_date':date_to_be_ready})
 				self.append('fg_items_table',row)
 				count = count + 1
 			return self.fg_items_table
@@ -135,9 +154,9 @@ class ProductionPlanningWithLeadTime(Document):
 			for row in self.fg_items_table:
 				bom_data = []
 				if row.get('planned_qty') > 0:
-					date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
-					date_to_be_ready = date_to_be_ready.date()
-					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"),date_to_be_ready)
+					date_to_be_ready = datetime.datetime.strptime(row.get('planned_start_date'), '%Y-%m-%d')
+					planned_start_date = date_to_be_ready.date()
+					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"),planned_start_date)
 					bom_data = sorted(bom_data, key = lambda x: x["bom_level"],reverse=1)
 					for item in bom_data:
 						final_row = dict()
@@ -156,7 +175,7 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 						# date_to_be_ready = date_to_be_ready.date()
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready')})
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date')})
 						self.append('sub_assembly_items_table',final_row)
 			return self.sub_assembly_items_table
 						
@@ -175,7 +194,7 @@ class ProductionPlanningWithLeadTime(Document):
 					lead_time = frappe.db.get_value("Item",{'name':item.get('item')},'lead_time_days')
 					item.update({'available_stock':ohs.get(item.get('item')),'lead_time':lead_time,'original_qty':item.get('qty')})
 					rm_readiness_days = frappe.db.get_single_value("Rushabh Settings",'rm_readiness_days')
-					date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
+					date_to_be_ready = datetime.datetime.strptime(row.get('planned_start_date'), '%Y-%m-%d')
 					date_to_be_ready = date_to_be_ready.date()
 					required_date = (date_to_be_ready-timedelta(rm_readiness_days))
 					item.update({'date_to_be_ready':required_date})
@@ -233,7 +252,8 @@ class ProductionPlanningWithLeadTime(Document):
 								'sales_order':item.sales_order,
 								'bom':item.bom,
 								'total_operation_time':item.total_operation_time,
-								'date_to_be_ready':item.date_to_be_ready
+								'date_to_be_ready':item.planned_start_date,
+								'is_subassembly' : 1
 								})
 							item_list.append(item_dict)
 					fg_item_dict.update({
@@ -242,7 +262,8 @@ class ProductionPlanningWithLeadTime(Document):
 						'sales_order':row.sales_order,
 						'bom':row.bom,
 						'total_operation_time':row.total_operation_time,
-						'date_to_be_ready':row.date_to_be_ready
+						'date_to_be_ready':row.planned_start_date,
+						'is_subassembly':0
 						})					
 					item_list.append(fg_item_dict)
 			count = 1
@@ -257,7 +278,6 @@ class ProductionPlanningWithLeadTime(Document):
 			from erpnext.manufacturing.doctype.work_order.work_order import get_default_warehouse
 			wo_list= []
 			default_warehouses = get_default_warehouse()
-			print("------------default_warehouses",default_warehouses)
 			self.make_work_order_for_finished_goods(wo_list, default_warehouses)
 			self.show_list_created_message("Work Order", wo_list)
 		else:
@@ -266,14 +286,14 @@ class ProductionPlanningWithLeadTime(Document):
 		items_data = self.get_production_items()
 		for key, item in items_data.items():
 			set_default_warehouses(item, default_warehouses)
-			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'sales_order':item.get('sales_order')})
+			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'so_reference':item.get('so_reference')})
 			if not wo: 
 				work_order = self.create_work_orders(item)
 				if work_order:
 					wo_list.append(work_order)
 			else:
 				wo = get_link_to_form("Work Order", wo)
-				so = get_link_to_form("Sales Order",item.get('sales_order'))
+				so = get_link_to_form("Sales Order",item.get('so_reference'))
 				msgprint(_("Work Order {0} is already created for the item {1} and Sales Order {2} ").format(wo,item.get("production_item"),so))
 				# frappe.msgprint("Work Order {0} is already created for this item {1}".format(wo,item.get("production_item")))
 	def get_production_items(self):
@@ -284,7 +304,8 @@ class ProductionPlanningWithLeadTime(Document):
 			item_details = {
 				"production_item": d.item,
 				"use_multi_level_bom": 0,
-				"sales_order": d.sales_order,
+				"sales_order": d.sales_order if d.is_subassembly == 0 else None,
+				"so_reference":d.sales_order,
 				# "sales_order_item": d.sales_order_item,
 				"bom_no": d.bom,
 				"description": item_data.get('description'),
@@ -415,7 +436,7 @@ class ProductionPlanningWithLeadTime(Document):
 		else:
 			mr = get_link_to_form("Material Request",mr_doc)
 			msgprint(_("Material Request {0} is Already Created.").format(mr))
-		
+	
 def set_default_warehouses(row, default_warehouses):
 	for field in ["wip_warehouse", "fg_warehouse"]:
 		if not row.get(field):
@@ -455,6 +476,7 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready, ind
 			total_operation_time_in_days = ceil(total_operation_time_in_mins/480)
 			# Calculate date_to_be_ready
 			date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
+			date_dict = check_workstation_availability(date_to_be_ready,d.value,stock_qty)
 			bom_data.append(frappe._dict({
 				'parent_item_code': parent_item_code,
 				'description': d.description,
@@ -468,11 +490,14 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready, ind
 				'indent': indent,
 				'stock_qty': stock_qty,
 				'date_to_be_ready':date_to_be_ready,
+				'planned_start_date' : date_dict.get("planned_start_date") if date_dict else date_to_be_ready,
 				'total_operation_time':total_operation_time_in_days
 			}))
-
 			if d.value:
-				get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready, indent=indent+1)
+				if date_dict:
+					get_sub_assembly_item(d.value, bom_data, stock_qty,date_dict.get('planned_start_date'), indent=indent+1)
+				else:
+					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready, indent=indent+1)
 def get_on_order_stock(self,required_date):
 	planned_po = frappe.db.sql("""SELECT poi.item_code,(poi.qty-poi.received_qty) as qty from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
 	# Manipulate in order o show in dict format
@@ -555,3 +580,79 @@ def get_bom_item(self):
 		template_item = frappe.db.get_value('Item', self.item, ['variant_of'])
 		bom_item = "bom.item = {0}".format(frappe.db.escape(template_item)) if template_item else bom_item
 	return bom_item
+
+def get_overlap_for(self, args, check_next_available_slot=False):
+		production_capacity = 1
+
+		if self.workstation:
+			production_capacity = (
+				frappe.get_cached_value("Workstation", self.workstation, "production_capacity") or 1
+			)
+			validate_overlap_for = " and jc.workstation = %(workstation)s "
+
+		if args.get("employee"):
+			# override capacity for employee
+			production_capacity = 1
+			validate_overlap_for = " and jctl.employee = %(employee)s "
+
+		extra_cond = ""
+		if check_next_available_slot:
+			extra_cond = " or (%(from_time)s <= jctl.from_time and %(to_time)s <= jctl.to_time)"
+
+		existing = frappe.db.sql(
+			"""select jc.name as name, jctl.to_time from
+			`tabJob Card Time Log` jctl, `tabJob Card` jc where jctl.parent = jc.name and
+			(
+				(%(from_time)s > jctl.from_time and %(from_time)s < jctl.to_time) or
+				(%(to_time)s > jctl.from_time and %(to_time)s < jctl.to_time) or
+				(%(from_time)s <= jctl.from_time and %(to_time)s >= jctl.to_time) {0}
+			)
+			and jctl.name != %(name)s and jc.name != %(parent)s and jc.docstatus < 2 {1}
+			order by jctl.to_time desc limit 1""".format(
+				extra_cond, validate_overlap_for
+			),
+			{
+				"from_time": args.from_time,
+				"to_time": args.to_time,
+				"name": args.name or "No Name",
+				"parent": args.parent or "No Name",
+				"employee": args.get("employee"),
+				"workstation": self.workstation,
+			},
+			as_dict=True,
+		)
+
+		if existing and production_capacity > len(existing):
+			return
+
+		return existing[0] if existing else None
+def check_workstation_availability(date_to_be_ready,bom,qty):
+	bom_doc = frappe.get_doc("BOM",bom)
+	date_dict = dict()
+	if bom_doc.with_operations:
+		time_dict = dict()
+		for row in bom_doc.operations:
+			time_in_mins = flt(row.time_in_mins*qty)
+			time_in_days = (time_in_mins/480)
+			if row.idx == 1:
+				# first operation at planned_start date
+				planned_start_time = date_to_be_ready
+				time_dict.update({'planned_start_time':planned_start_time})
+			else:
+				planned_start_time = (
+					get_datetime(time_dict.get('planned_end_time')) + get_mins_between_operations()
+				)
+			planned_end_time = get_datetime(planned_start_time) + timedelta(time_in_days)
+			time_dict.update({'planned_end_time':planned_end_time})
+			jc_data = frappe.db.sql("""SELECT jc.name,date(jc_time.from_time) as from_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}'""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1,debug=1)
+			if jc_data == []:
+				date_dict.update({'planned_start_date':date_to_be_ready})
+			else:
+				jc_data = frappe.db.sql("""SELECT jc.name,date(jc_time.to_time) as to_time from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}' order by to_time desc""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1)
+				planned_end_time=get_datetime(jc_data[0].get('to_time')) + get_mins_between_operations()
+				date_dict.update({'planned_start_date':planned_end_time.date()})
+		return date_dict
+
+
+
+
