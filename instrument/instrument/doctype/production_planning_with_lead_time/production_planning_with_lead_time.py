@@ -209,31 +209,37 @@ class ProductionPlanningWithLeadTime(Document):
 					ohs.update({item.get('item'):remaining_qty})
 					# Allocate from planned_po nd mr of type Purchase
 					if item.get('item') not in remaining_dict:
-						on_order_stock = get_on_order_stock(self,required_date)
+						on_order_stock,schedule_date_dict = get_on_order_stock(self,required_date)
 						
 						qty = flt(item.get("qty")) - flt(on_order_stock.get(item.get("item"))) if flt(on_order_stock.get(item.get("item"))) < flt(item.get("qty")) else 0
+						if flt(item.get("qty")) == 0:
+							pass
+						elif qty == 0:
+							item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+						else:
+							latest_date_availability = today_date + timedelta(lead_time)
+							item.update({'latest_date_availability':latest_date_availability})
 						remaining_qty = flt(on_order_stock.get(item.get('item'))) - item.get('qty') 
 						remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
 						item.update({'qty':qty,'on_order_stock':on_order_stock.get(item.get("item")),'shortage':qty})
-						if item.get('qty')>0:
-							latest_date_availability = required_date if required_date > today_date else lead_time
-							item.update({'latest_date_availability':latest_date_availability})
 					else:
 						virtual_stock = remaining_dict.get(item.get('item'))
 						qty = flt(item.get("qty")) - flt(virtual_stock) if flt(virtual_stock) < flt(item.get("qty")) else 0
 						remaining_qty = virtual_stock - item.get('qty')
 
 						remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
-						item.update({'qty':qty,'on_order_stock':virtual_stock,'shortage':qty,'latest_date_availability':required_date})
-						if item.get('qty')>0:
-							latest_date_availability = required_date if required_date > today_date else lead_time
-							item.update({'latest_date_availability':latest_date_availability})
-					if item.get('order_in_days') > 0:
-						item.update({'readiness_status':'#228B22'})
-					elif item.get('order_in_days') == 0 :
-						item.update({'readiness_status':'#FF8000'})
+						item.update({'qty':qty,'on_order_stock':virtual_stock,'shortage':qty})
+					if item.get('latest_date_availability'):
+						latest_date_availability_in_days = (item.get('latest_date_availability') - today_date).days
+						readiness_status = (item.get('date_to_be_ready')-item.get('latest_date_availability'))
+						if readiness_status.days > 0:
+							item.update({'readiness_status':'#228B22'})
+						elif readiness_status.days < 0:
+							item.update({'readiness_status':'#CD3700'})
+						else:
+							item.update({'readiness_status':'#FF8000'})
 					else:
-						item.update({'readiness_status':'#CD3700'})
+						item.update({'readiness_status':'#228B22'})
 					self.append('raw_materials_table',item)
 			return self.raw_materials_table
 	@frappe.whitelist()
@@ -485,10 +491,11 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready, ind
 				else:
 					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready, indent=indent+1)
 def get_on_order_stock(self,required_date):
-	planned_po = frappe.db.sql("""SELECT poi.item_code,(poi.qty-poi.received_qty) as qty from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
+	planned_po = frappe.db.sql("""SELECT poi.item_code,sum(poi.qty-poi.received_qty) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
 	# Manipulate in order o show in dict format
 	on_order_stock = {item.item_code : item.qty for item in planned_po}
-	planned_mr = frappe.db.sql("""SELECT mri.item_code,mri.qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.schedule_date <= '{0}' and mr.material_request_type = 'Purchase' and not exists (SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.material_request = mr.name)""".format(required_date),as_dict=1)
+	schedule_date_dict = {item.item_code : item.schedule_date for item in planned_po}
+	planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty ,mri.schedule_date from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.schedule_date <= '{0}' and mr.material_request_type = 'Purchase' and not exists (SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.material_request = mr.name)""".format(required_date),as_dict=1)
 	if planned_mr:
 		for row in planned_mr:
 			if row.get('item_code') in on_order_stock:
@@ -496,7 +503,12 @@ def get_on_order_stock(self,required_date):
 				on_order_stock.update({row.get('item_code'):qty})
 			else:
 				on_order_stock.update({row.get('item_code'):row.get('qty')})
-	return on_order_stock
+			if row.get('item_code') in schedule_date_dict:
+				if row.get('schedule_date') > schedule_date_dict.get(row.get('item_code')):
+					schedule_date_dict.update({row.get('item_code'):row.schedule_date})
+			else:
+				schedule_date_dict.update({row.get('item_code'):row.schedule_date})
+	return on_order_stock,schedule_date_dict
 # fetch warehouse from Rushabh settings
 def get_warehouses():
 	# warehouse list
