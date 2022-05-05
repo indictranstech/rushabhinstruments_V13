@@ -315,21 +315,7 @@ class ProductionPlanningWithLeadTime(Document):
 				"qty":d.qty,
 				"production_planning_with_lead_time":self.name
 			}
-
-			# if not item_details["project"] and d.sales_order:
-			# 	item_details["project"] = frappe.get_cached_value("Sales Order", d.sales_order, "project")
-
-			# if self.get_items_from == "Material Request":
-			# 	item_details.update({"qty": d.planned_qty})
-			# 	item_dict[(d.item_code, d.material_request_item, d.warehouse)] = item_details
-			# else:
-			# 	item_details.update(
-			# 		{
-			# 			"qty": flt(item_dict.get((d.item_code, d.sales_order, d.warehouse), {}).get("qty"))
-			# 			+ (flt(d.planned_qty) - flt(d.ordered_qty))
-			# 		}
-			# 	)
-			item_dict[(d.item, d.sales_order)] = item_details
+			item_dict[(d.item, d.so_reference)] = item_details
 
 		return item_dict
 
