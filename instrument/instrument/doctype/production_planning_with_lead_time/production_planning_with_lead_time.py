@@ -204,9 +204,9 @@ class ProductionPlanningWithLeadTime(Document):
 					item.update({'order_in_days':order_in_days.days})
 					# Allocate from available_stock
 					qty = flt(item.get("qty")) - flt(ohs.get(item.get("item"))) if flt(ohs.get(item.get("item"))) < flt(item.get("qty")) else 0
+					remainingg_qty = flt(ohs.get(item.get("item"))) - flt(item.get("qty")) if flt(ohs.get(item.get("item"))) > flt(item.get("qty")) else 0
+					ohs.update({item.get('item'):remainingg_qty})
 					item.update({'shortage':qty,'qty':qty})
-					remaining_qty = flt(ohs.get(item.get("item"))) - flt(item.get("qty")) if flt(ohs.get(item.get("item"))) > flt(item.get("qty")) else 0
-					ohs.update({item.get('item'):remaining_qty})
 					# Allocate from planned_po nd mr of type Purchase
 					if item.get('item') not in remaining_dict:
 						on_order_stock,schedule_date_dict = get_on_order_stock(self,required_date)
