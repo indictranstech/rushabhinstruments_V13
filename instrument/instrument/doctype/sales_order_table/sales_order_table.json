@@ -13,7 +13,8 @@
   "priority",
   "bom",
   "days_to_deliver",
-  "makeup_days"
+  "makeup_days",
+  "sales_order_item"
  ],
  "fields": [
   {
@@ -77,12 +78,17 @@
    "fieldtype": "Float",
    "label": "Makeup Days",
    "read_only": 1
+  },
+  {
+   "fieldname": "sales_order_item",
+   "fieldtype": "Data",
+   "label": "Sales Order Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-02 07:18:40.290034",
+ "modified": "2022-05-06 08:56:10.916480",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Sales Order Table",
