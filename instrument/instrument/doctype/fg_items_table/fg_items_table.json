@@ -16,7 +16,8 @@
   "shortage",
   "date_to_be_ready",
   "already_planned_qty",
-  "planned_start_date"
+  "planned_start_date",
+  "sales_order_item"
  ],
  "fields": [
   {
@@ -88,12 +89,17 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "label": "Planned Start Date"
+  },
+  {
+   "fieldname": "sales_order_item",
+   "fieldtype": "Data",
+   "label": "Sales Order Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-05 03:16:37.213144",
+ "modified": "2022-05-06 08:57:26.855007",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "FG Items Table",

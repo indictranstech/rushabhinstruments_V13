@@ -12,7 +12,8 @@
   "bom",
   "total_operation_time",
   "date_to_be_ready",
-  "is_subassembly"
+  "is_subassembly",
+  "sales_order_item"
  ],
  "fields": [
   {
@@ -59,12 +60,17 @@
    "fieldname": "is_subassembly",
    "fieldtype": "Check",
    "label": "Is Subassembly"
+  },
+  {
+   "fieldname": "sales_order_item",
+   "fieldtype": "Data",
+   "label": "Sales Order Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-05 04:12:21.756316",
+ "modified": "2022-05-06 08:58:02.578724",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Final Work Orders",
