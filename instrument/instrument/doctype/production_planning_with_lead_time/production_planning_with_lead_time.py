@@ -321,7 +321,7 @@ class ProductionPlanningWithLeadTime(Document):
 				"qty":d.qty,
 				"production_planning_with_lead_time":self.name
 			}
-			item_dict[(d.item, d.so_reference)] = item_details
+			item_dict[(d.item, d.sales_order)] = item_details
 
 		return item_dict
 
