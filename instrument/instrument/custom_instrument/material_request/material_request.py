@@ -126,9 +126,11 @@ def make_rfq(doc):
 	return rfq_list
 def create_rfq(item_lists,row,doc):
 	if item_lists and row:
-		suppler_for_rfq = frappe.db.sql("""SELECT srq.supplier from `tabSupplier` s join `tabSuppliers For RFQ` srq on srq.parent = s.name where s.name = '{0}' and srq.supplier IS NOT NULL""".format(row),as_dict=1)
+		suppler_for_rfq = frappe.db.sql("""SELECT srq.supplier from `tabSupplier` s join `tabSuppliers For RFQ` srq on srq.parent = s.name where s.name = '{0}' and srq.supplier IS NOT NULL""".format(row),as_dict=1,debug=1)
 		suppler_for_rfq_list = [item.supplier for item in suppler_for_rfq]
-		suppler_for_rfq_list.append(row)
+		if suppler_for_rfq_list == []:
+			suppler_for_rfq_list = []
+			suppler_for_rfq_list.append(row)
 		rfq_doc = frappe.new_doc("Request for Quotation")
 		if rfq_doc:
 			rfq_doc.schedule_date = doc.schedule_date
