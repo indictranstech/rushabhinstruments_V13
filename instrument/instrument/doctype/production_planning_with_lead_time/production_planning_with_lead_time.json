@@ -83,7 +83,7 @@
   {
    "fieldname": "sort_so_data",
    "fieldtype": "Button",
-   "label": "Sort SO Data"
+   "label": "Sort SO And MR Data"
   },
   {
    "fieldname": "work_order_planning",
@@ -131,7 +131,7 @@
   {
    "fieldname": "get_sales_orders",
    "fieldtype": "Button",
-   "label": "Get Sales Orders"
+   "label": "Get Sales Orders And Material Requests"
   },
   {
    "fieldname": "from_delivery_date",
@@ -162,7 +162,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-05-04 05:24:14.470764",
+ "modified": "2022-05-10 01:52:42.144101",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Production Planning With Lead Time",
