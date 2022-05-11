@@ -45,6 +45,7 @@ def on_submit(doc,method):
 			for item in pick_list_doc.work_orders:
 				if item.work_order == doc.work_order:
 					item.stock_entry_status = "Submitted"
+					item.stock_entry = doc.name
 			pick_list_doc.save()
 			pick_list_doc.submit()
 @frappe.whitelist()
