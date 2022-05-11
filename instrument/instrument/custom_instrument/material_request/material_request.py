@@ -14,6 +14,18 @@ from frappe.utils import (
 	now_datetime,
 	nowdate,
 )
+def after_insert(doc,method):
+	pdf_data=frappe.attach_print('Material Request',doc.name, print_format='Material Request Print')
+		
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Material Request",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	if doc.get("__islocal"):
 		if doc.items:

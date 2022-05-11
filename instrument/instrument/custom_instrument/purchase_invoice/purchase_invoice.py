@@ -42,3 +42,15 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+def after_insert(doc,method):
+	pdf_data=frappe.attach_print('Purchase Invoice',doc.name, print_format='Purchase Invoice v1')
+		
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Purchase Invoice",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()

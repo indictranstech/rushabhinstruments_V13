@@ -8,12 +8,44 @@ import base64
 import pyqrcode
 import re
 
-
+def after_insert(doc,method):
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Job Card' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s""",
+		(doc.name))
+	# file_name = doc.name + '.pdf'
+	# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s and file_name = %s""",
+	# 	(doc.name,file_name))
+	pdf_data=frappe.attach_print('Job Card',doc.name, print_format='Job Card Print With QR')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Job Card",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	if not doc.get("__islocal"):
-		file_name = doc.name + '.pdf'
-		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s and file_name = %s""",
-			(doc.name,file_name))
+		start_string = doc.name 
+		end_string = '.png'
+		label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Job Card' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+		if label_files:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s and file_name != %s""",
+			(doc.name,label_files[0].file_name))
+		else:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s""",
+			(doc.name))
+		# file_name = doc.name + '.pdf'
+		# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Job Card' and attached_to_name=%s and file_name = %s""",
+		# 	(doc.name,file_name))
 		pdf_data=frappe.attach_print('Job Card',doc.name, print_format='Job Card Print With QR')
 		
 		_file = frappe.get_doc({

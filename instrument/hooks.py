@@ -69,34 +69,41 @@ doc_events = {
 #	}
    "Purchase Order" :{
 		"on_submit" : "instrument.instrument.custom_instrument.purchase_order.purchase_order.on_submit",
-		"validate" : "instrument.instrument.custom_instrument.purchase_order.purchase_order.validate"
+		"validate" : "instrument.instrument.custom_instrument.purchase_order.purchase_order.validate",
+		"after_insert":"instrument.instrument.custom_instrument.purchase_order.purchase_order.after_insert"
 	},
 	"Purchase Receipt" :{
 		"on_submit" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.on_submit",
-		"validate" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.validate"
+		"validate" : "instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.validate",
+		"after_insert":"instrument.instrument.custom_instrument.purchase_receipt.purchase_receipt.after_insert"
 	},
 	"Purchase Invoice" :{
 		"on_submit" : "instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.on_submit",
-		"validate":"instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.validate"
+		"validate":"instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.validate",
+		"after_insert":"instrument.instrument.custom_instrument.purchase_invoice.purchase_invoice.after_insert"
 	},
 	"Request for Quotation" :{
 		"on_submit" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.on_submit",
-		"validate" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.validate"
+		"validate" : "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.validate",
+		"after_insert":"instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.after_insert"
 	},
 	"Supplier Quotation" :{
 		"on_submit" : "instrument.instrument.custom_instrument.supplier_quotation.supplier_quotation.on_submit"
 	},
 	"Sales Order" :{
 		"on_submit" : "instrument.instrument.custom_instrument.sales_order.sales_order.on_submit",
-		"validate":"instrument.instrument.custom_instrument.sales_order.sales_order.validate"
+		"validate":"instrument.instrument.custom_instrument.sales_order.sales_order.validate",
+		"after_insert":"instrument.instrument.custom_instrument.sales_order.sales_order.after_insert"
 	},
 	"Sales Invoice" :{
 		"on_submit" : "instrument.instrument.custom_instrument.sales_invoice.sales_invoice.on_submit",
-		"validate":"instrument.instrument.custom_instrument.sales_invoice.sales_invoice.validate"
+		"validate":"instrument.instrument.custom_instrument.sales_invoice.sales_invoice.validate",
+		"after_insert":"instrument.instrument.custom_instrument.sales_invoice.sales_invoice.after_insert"
 	},
 	"Delivery Note" :{
 		"on_submit" : "instrument.instrument.custom_instrument.delivery_note.delivery_note.on_submit",
-		"validate":"instrument.instrument.custom_instrument.delivery_note.delivery_note.validate"
+		"validate":"instrument.instrument.custom_instrument.delivery_note.delivery_note.validate",
+		"after_insert":"instrument.instrument.custom_instrument.delivery_note.delivery_note.after_insert"
 	},
 	"Blanket Order" :{
 		"on_submit" : "instrument.instrument.custom_instrument.blanket_order.blanket_order.on_submit"
@@ -111,7 +118,7 @@ doc_events = {
 	"on_update_after_submit": "instrument.instrument.custom_instrument.bom.bom.disable_old_boms"
 	},
 	"Work Order" : {
-	"after_insert" : "instrument.instrument.custom_instrument.work_order.work_order.check_stock",
+	"after_insert" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.after_insert"],
 	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate","instrument.instrument.custom_instrument.work_order.work_order.label_img"],
@@ -121,39 +128,48 @@ doc_events = {
 	},
 	"Item" : {
 	"validate" :["instrument.instrument.custom_instrument.item.item.validate","instrument.instrument.custom_instrument.item.item.label_img"],
-	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms"
+	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms",
+	"after_insert":"instrument.instrument.custom_instrument.item.item.after_insert"
 	},
 	"Production Plan":{
 	# "on_update" : "instrument.instrument.custom_instrument.production_plan.production_plan.on_update",
-	"validate" : "instrument.instrument.custom_instrument.production_plan.production_plan.validate"
+	"validate" : "instrument.instrument.custom_instrument.production_plan.production_plan.validate",
+	"after_insert":"instrument.instrument.custom_instrument.production_plan.production_plan.after_insert"
 
 	},
 	"Batch" : {
 	"autoname" : "instrument.instrument.custom_instrument.batch.batch.autoname",
-	"validate" : ["instrument.instrument.custom_instrument.batch.batch.label_img","instrument.instrument.custom_instrument.batch.batch.validate"]
+	"validate" : ["instrument.instrument.custom_instrument.batch.batch.label_img","instrument.instrument.custom_instrument.batch.batch.validate"],
+	"after_insert":["instrument.instrument.custom_instrument.batch.batch.after_insert"]
 	},
 	"Stock Entry" : {
 	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate","instrument.instrument.custom_instrument.stock_entry.stock_entry.label_img"],
-	"on_submit":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_submit"]
+	"on_submit":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_submit"],
+	"on_cancel":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_cancel"],
+	"after_insert":"instrument.instrument.custom_instrument.stock_entry.stock_entry.after_insert"
  	},
  	"Item Attribute" : {
  	"validate" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.validate",
  	"after_insert" : "instrument.instrument.custom_instrument.item_attribute.item_attribute.after_insert"
  	},
  	"Material Request":{
- 	"validate":"instrument.instrument.custom_instrument.material_request.material_request.validate"
+ 	"validate":"instrument.instrument.custom_instrument.material_request.material_request.validate",
+ 	"after_insert":"instrument.instrument.custom_instrument.material_request.material_request.after_insert"
  	},
  	"Job Card":{
- 	"validate":["instrument.instrument.custom_instrument.job_card.job_card.label_img","instrument.instrument.custom_instrument.job_card.job_card.validate"]
+ 	"validate":["instrument.instrument.custom_instrument.job_card.job_card.label_img","instrument.instrument.custom_instrument.job_card.job_card.validate"],
+ 	"after_insert":"instrument.instrument.custom_instrument.job_card.job_card.after_insert"
  	},
  	"Pick List":{
- 	"validate":["instrument.instrument.custom_instrument.pick_list.pick_list.label_img","instrument.instrument.custom_instrument.pick_list.pick_list.validate"]
+ 	"validate":["instrument.instrument.custom_instrument.pick_list.pick_list.label_img","instrument.instrument.custom_instrument.pick_list.pick_list.validate"],
+ 	"after_insert":"instrument.instrument.custom_instrument.pick_list.pick_list.after_insert"
  	},
  	"Work Order Pick List":{
  	"validate":"instrument.instrument.custom_instrument.work_order_pick_list.work_order_pick_list.label_img"
  	},
  	"Payment Entry":{
- 	"validate":"instrument.instrument.custom_instrument.payment_entry.payment_entry.validate"
+ 	"validate":"instrument.instrument.custom_instrument.payment_entry.payment_entry.validate",
+ 	"after_insert":"instrument.instrument.custom_instrument.payment_entry.payment_entry.after_insert"
  	}
 }
 

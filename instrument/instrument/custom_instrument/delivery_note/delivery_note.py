@@ -66,3 +66,16 @@ def validate(doc,method):
 			expiry_date = frappe.db.get_value("Batch",{'name':item.batch_no},'expiry_date')
 			if expiry_date:
 				item.item_expiry_date = expiry_date
+
+def after_insert(doc,method):
+	pdf_data=frappe.attach_print('Delivery Note',doc.name, print_format='Delivery Note Print')
+		
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Delivery Note",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()

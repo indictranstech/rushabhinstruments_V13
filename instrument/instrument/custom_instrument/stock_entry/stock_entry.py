@@ -7,7 +7,30 @@ import base64
 import pyqrcode
 import re
 
-
+def after_insert(doc,method):
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Stock Entry' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s""",
+		(doc.name))
+	# file_name = doc.name + '.pdf'
+	# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name = %s""",
+	# 	(doc.name,file_name))
+	pdf_data=frappe.attach_print('Stock Entry',doc.name, print_format='Stock Entry')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Stock Entry",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	if doc.work_order:
 		if doc.items:
@@ -23,9 +46,18 @@ def validate(doc,method):
 					item.engineering_revision = engineering_revision
 					item.manufacturing_package = manufacturing_package
 	if not doc.get("__islocal"):
-		file_name = doc.name + '.pdf'
-		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name = %s""",
-			(doc.name,file_name))
+		start_string = doc.name 
+		end_string = '.png'
+		label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Stock Entry' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+		if label_files:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name != %s""",
+			(doc.name,label_files[0].file_name))
+		else:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s""",
+			(doc.name))
+		# file_name = doc.name + '.pdf'
+		# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name = %s""",
+		# 	(doc.name,file_name))
 		pdf_data=frappe.attach_print('Stock Entry',doc.name, print_format='Stock Entry')
 		
 		_file = frappe.get_doc({
@@ -48,6 +80,10 @@ def on_submit(doc,method):
 					item.stock_entry = doc.name
 			pick_list_doc.save()
 			pick_list_doc.submit()
+@frappe.whitelist()
+def on_cancel(doc,method):
+	frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s""",
+		(doc.name))
 @frappe.whitelist()
 def get_items_from_pick_list(pick_list,work_order):
 	if pick_list:
