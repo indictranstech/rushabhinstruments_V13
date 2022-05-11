@@ -22,36 +22,61 @@ frappe.ui.form.on('Package Document', {
 		if(selected_rows_from_attachment.length == 0 && selected_rows_from_file_locations.length ==0 ){
 			frappe.throw("Please Select the Document")
 		}
-		if(selected_rows_from_attachment.length >0){
-			frappe.call({
-				"method":"instrument.instrument.doctype.package_document.package_document.copy_doc_to_other_doc",
-				"args" :{
-					item_list : selected_rows_from_attachment,
-					package_type : frm.doc.package_type,
-					item_code : frm.doc.item_code,
-					revision : frm.doc.revision,
-					docname :frm.doc.name
+		var dialog = new frappe.ui.Dialog({
+			title: 'Enter Package Document',
+				fields: [
+				{	"fieldtype": "Link", 
+					"label": __("Package Document"), 
+					"fieldname": "package_document",
+					"options":"Package Document",
+					"description":"Package document where the selected attachments to be copy",
+					"get_query": function(){ return {'filters': [['item_code','=',frm.doc.item_code],['revision','=',frm.doc.revision]]}}
+					// "reqd": 1
 				},
-				callback:function(r){
-
+				{	
+					"fieldtype": "Button", 
+					"label": __("Submit"), 
+					"fieldname": "add_package_doc"
 				}
-			})
-		}
-		if(selected_rows_from_file_locations.length > 0){
-			frappe.call({
-				"method":"instrument.instrument.doctype.package_document.package_document.copy_doc_to_other_doc_for_file",
-				"args" : {
-					item_list : selected_rows_from_file_locations,
-					package_type : frm.doc.package_type,
-					item_code : frm.doc.item_code,
-					revision :frm.doc.revision,
-					docname :frm.doc.name
-				},
-				callback:function(r){
+				]
+		});
+		dialog.fields_dict.add_package_doc.input.onclick = function() {
+			var package_document = $("input[data-fieldname='package_document']").val();
+			if(selected_rows_from_attachment.length >0){
+				frappe.call({
+					"method":"instrument.instrument.doctype.package_document.package_document.copy_doc_to_other_doc",
+					"args" :{
+						item_list : selected_rows_from_attachment,
+						package_type : frm.doc.package_type,
+						item_code : frm.doc.item_code,
+						revision : frm.doc.revision,
+						docname :frm.doc.name,
+						package_document:package_document
+					},
+					callback:function(r){
 
-				}
-			})
+					}
+				})
+			}
+			if(selected_rows_from_file_locations.length > 0){
+				frappe.call({
+					"method":"instrument.instrument.doctype.package_document.package_document.copy_doc_to_other_doc_for_file",
+					"args" : {
+						item_list : selected_rows_from_file_locations,
+						package_type : frm.doc.package_type,
+						item_code : frm.doc.item_code,
+						revision :frm.doc.revision,
+						docname :frm.doc.name,
+						package_document:package_document
+					},
+					callback:function(r){
+
+					}
+				})
+			}
+			dialog.hide()
 		}
+		dialog.show();
 	}
 });
 

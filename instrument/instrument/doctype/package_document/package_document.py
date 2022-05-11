@@ -21,40 +21,40 @@ class PackageDocument(Document):
 
 
 @frappe.whitelist()
-def copy_doc_to_other_doc(item_list,package_type,item_code,revision,docname):
+def copy_doc_to_other_doc(item_list,package_type,item_code,revision,docname,package_document):
 	locations = 0
 	item_list = json.loads(item_list)
-	other_package_documents = frappe.db.sql("""SELECT name from `tabPackage Document` where item_code = '{0}' and revision = '{1}' and name != '{2}'""".format(item_code,revision,docname),as_dict=1)
+	# other_package_documents = frappe.db.sql("""SELECT name from `tabPackage Document` where item_code = '{0}' and revision = '{1}' and name != '{2}'""".format(item_code,revision,docname),as_dict=1)
 	
-	for row in other_package_documents:
-		doc = frappe.get_doc("Package Document",row.name)
-		if doc:
-			for col in item_list:
-				_file = frappe.get_doc({
-					"doctype": "File",
-					"file_url":col.get("attachment") ,
-					"attached_to_doctype": "Package Document",
-					"attached_to_name": row.name,
-					"is_private": 1
-					})
-				_file.save()
+	# for row in other_package_documents:
+	doc = frappe.get_doc("Package Document",package_document)
+	if doc:
+		for col in item_list:
+			_file = frappe.get_doc({
+				"doctype": "File",
+				"file_url":col.get("attachment") ,
+				"attached_to_doctype": "Package Document",
+				"attached_to_name": package_document,
+				"is_private": 1
+				})
+			_file.save()
 	
 	frappe.msgprint("Documents Copied Successfully")
 
 @frappe.whitelist()
-def copy_doc_to_other_doc_for_file(item_list,package_type,item_code,revision,docname):
+def copy_doc_to_other_doc_for_file(item_list,package_type,item_code,revision,docname,package_document):
 	item_list = json.loads(item_list)
-	other_package_documents = frappe.db.sql("""SELECT name from `tabPackage Document` where item_code = '{0}' and revision = '{1}' and name != '{2}'""".format(item_code,revision,docname),as_dict=1)
+	# other_package_documents = frappe.db.sql("""SELECT name from `tabPackage Document` where item_code = '{0}' and revision = '{1}' and name != '{2}'""".format(item_code,revision,docname),as_dict=1)
 
-	for row in other_package_documents:
-		doc = frappe.get_doc("Package Document",row.name)
-		if doc:
-			for col in item_list:
-				doc.append("file_locations",{
-					'file_name' : col.get('file_name'),
-					'location': col.get("location"),
-					'note':col.get("note")
+	# for row in other_package_documents:
+	doc = frappe.get_doc("Package Document",package_document)
+	if doc:
+		for col in item_list:
+			doc.append("file_locations",{
+				'file_name' : col.get('file_name'),
+				'location': col.get("location"),
+				'note':col.get("note")
 
-				})
-				doc.save()
+			})
+		doc.save()
 	frappe.msgprint("Documents Copied Successfully")
