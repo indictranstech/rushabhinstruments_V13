@@ -39,6 +39,18 @@ def on_submit(doc, method = None):
 def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
 
+def after_insert(doc,method):
+	pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Purchase Order",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	if doc.items:
 		for item in doc.items:

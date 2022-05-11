@@ -8,6 +8,18 @@ import os
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
 from frappe.model.mapper import get_mapped_doc
 
+def after_insert(doc,method):
+	pdf_data=frappe.attach_print('Request for Quotation',doc.name, print_format='Request for Quotation Print')
+		
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Request for Quotation",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	if doc.items:
 		for item in doc.items:

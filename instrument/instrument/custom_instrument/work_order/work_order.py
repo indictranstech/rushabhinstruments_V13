@@ -113,6 +113,27 @@ def get_prod_engineering_revision(item_code,bom_no):
 @frappe.validate_and_sanitize_search_inputs
 def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
+def after_insert(doc,method):
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Work Order' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s""",
+		(doc.name))
+	pdf_data=frappe.attach_print('Work Order',doc.name, print_format='Work Order')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Work Order",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 
 def validate(doc,method):
 	# doc.skip_transfer =1
@@ -129,9 +150,15 @@ def validate(doc,method):
 			manufacturing_package = frappe.db.get_value("Manufacturing Package Table",{'parent':item.engineering_revision},'manufacturing_package_name')
 			item.manufacturing_package = manufacturing_package
 	if not doc.get("__islocal"):
-		file_name = doc.name + '.pdf'
-		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s and file_name = %s""",
-			(doc.name,file_name))
+		start_string = doc.name 
+		end_string = '.png'
+		label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Work Order' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+		if label_files:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s and file_name != %s""",
+			(doc.name,label_files[0].file_name))
+		else:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Work Order' and attached_to_name=%s""",
+			(doc.name))
 		pdf_data=frappe.attach_print('Work Order',doc.name, print_format='Work Order')
 		
 		_file = frappe.get_doc({

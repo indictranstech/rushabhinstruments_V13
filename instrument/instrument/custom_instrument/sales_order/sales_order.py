@@ -30,8 +30,17 @@ def on_submit(doc, method = None):
 
 def validate(doc,method):
 	if not doc.get("__islocal"):
-		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s""",
-			(doc.name))
+		start_string = doc.name 
+		end_string = '.png'
+		label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Sales Order' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+		if label_files:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s and file_name != %s""",
+			(doc.name,label_files[0].file_name))
+		else:
+			frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s""",
+		(doc.name))
+		# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s""",
+		# 	(doc.name))
 		pdf_data=frappe.attach_print('Sales Order',doc.name, print_format='Sales Order Print')
 		
 		_file = frappe.get_doc({
@@ -43,3 +52,26 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+def after_insert(doc,method):
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Sales Order' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s""",
+	(doc.name))
+	# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Order' and attached_to_name=%s""",
+	# 	(doc.name))
+	pdf_data=frappe.attach_print('Sales Order',doc.name, print_format='Sales Order Print')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Sales Order",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()

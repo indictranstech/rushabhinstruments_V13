@@ -77,11 +77,45 @@ def label_img(doc, method):
 	namestr = doc.name + "-label{0}".format(count) + ".png"
 	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Batch",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
+def after_insert(doc,method):
+	# if not doc.get("__islocal"):
+	# file_url = '/private/files/' + doc.name + '.pdf'
+	# frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_url = %s""",
+	# (doc.name,file_url))
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Batch' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s""",
+		(doc.name))
+	pdf_data=frappe.attach_print('Batch',doc.name, print_format='Batch Print 8.5" x 11"')
+	
+	_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	"attached_to_doctype": "Batch",
+	"attached_to_name": doc.name,
+	"is_private": 1,
+	"content": pdf_data.get('fcontent')
+	})
+	_file.save()
 def validate(doc,method):
 	# if not doc.get("__islocal"):
-	file_url = '/private/files/' + doc.name + '.pdf'
-	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_url = %s""",
-	(doc.name,file_url))
+	# file_url = '/private/files/' + doc.name + '.pdf'
+	# frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_url = %s""",
+	# (doc.name,file_url))
+	start_string = doc.name 
+	end_string = '.png'
+	label_files = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_name = '{0}' and attached_to_doctype = 'Batch' and file_name like '{1}%{2}'""".format(doc.name,start_string,end_string),as_dict=1)
+	if label_files:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s and file_name != %s""",
+		(doc.name,label_files[0].file_name))
+	else:
+		frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Batch' and attached_to_name=%s""",
+		(doc.name))
 	pdf_data=frappe.attach_print('Batch',doc.name, print_format='Batch Print 8.5" x 11"')
 	
 	_file = frappe.get_doc({

@@ -228,6 +228,7 @@ frappe.ui.form.on('Pick Orders', {
 							callback:function(r){
 								if(r.message){
 									frappe.model.set_value(row.doctype, row.name, 'stock_entry_status','Draft');
+									frappe.model.set_value(row.doctype, row.name, 'stock_entry',r.message);
 									var old_link = window.location.href
 									var split_data = old_link.split("/app")
 									var link =  split_data[0]+"/app/stock-entry/"+r.message
