@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sales_order",
+  "material_request",
   "item",
   "qty",
   "delivery_date",
@@ -14,7 +15,8 @@
   "bom",
   "days_to_deliver",
   "makeup_days",
-  "sales_order_item"
+  "sales_order_item",
+  "material_request_item"
  ],
  "fields": [
   {
@@ -30,7 +32,6 @@
    "columns": 2,
    "fieldname": "item",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Item",
    "options": "Item",
    "read_only": 1
@@ -83,12 +84,25 @@
    "fieldname": "sales_order_item",
    "fieldtype": "Data",
    "label": "Sales Order Item"
+  },
+  {
+   "columns": 2,
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Material Request",
+   "options": "Material Request"
+  },
+  {
+   "fieldname": "material_request_item",
+   "fieldtype": "Data",
+   "label": "Material Request Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-06 08:56:10.916480",
+ "modified": "2022-05-10 02:18:25.470113",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Sales Order Table",

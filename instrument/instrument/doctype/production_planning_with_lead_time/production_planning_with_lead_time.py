@@ -39,32 +39,50 @@ class ProductionPlanningWithLeadTime(Document):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
 		self.sales_order_table = ''
 		open_so = get_sales_orders(self)
-
-		if open_so:
-			self.add_so_in_table(open_so)
-		else:
-			frappe.msgprint(_("Sales orders are not available for production"))
+		open_mr = get_open_mr(self)
 		
+		if open_so or open_mr:
+			self.add_so_in_table(open_so,open_mr)
+		else:
+			frappe.msgprint(_("Sales orders And Material Request are not available for production"))
 	@frappe.whitelist()
-	def add_so_in_table(self, open_so):
+	def add_so_in_table(self, open_so,open_mr):
 		""" Add sales orders in the table"""
 		self.set('sales_order_table', [])
-		for data in open_so:
-			bom_data = frappe.db.sql("""SELECT name,makeup_days from `tabBOM` where item = '{0}' and is_active = 1 and is_default =1 and docstatus = 1""".format(data.get("item_code")),as_dict=1)
-			dn_date = data.get('delivery_date')
-			today_date = date.today()
-			# Calculate Days to Deliver
-			days_to_deliver = (dn_date - today_date)
-			self.append('sales_order_table', {
-				'sales_order': data.get("name"),
-				'item':data.get('item_code'),
-				'delivery_date':data.get('delivery_date'),
-				'qty':data.get('qty'),
-				'bom':bom_data[0].get('name'),
-				'makeup_days':bom_data[0].get('makeup_days'),
-				'days_to_deliver' : days_to_deliver.days,
-				'sales_order_item':data.get('sales_order_item')
-			})
+		if open_so != []:
+			for data in open_so:
+				bom_data = frappe.db.sql("""SELECT name,makeup_days from `tabBOM` where item = '{0}' and is_active = 1 and is_default =1 and docstatus = 1""".format(data.get("item_code")),as_dict=1)
+				dn_date = data.get('delivery_date')
+				today_date = date.today()
+				# Calculate Days to Deliver
+				days_to_deliver = (dn_date - today_date)
+				self.append('sales_order_table', {
+					'sales_order': data.get("name"),
+					'item':data.get('item_code'),
+					'delivery_date':data.get('delivery_date'),
+					'qty':data.get('qty'),
+					'bom':bom_data[0].get('name'),
+					'makeup_days':bom_data[0].get('makeup_days'),
+					'days_to_deliver' : days_to_deliver.days,
+					'sales_order_item':data.get('sales_order_item')
+				})
+		if open_mr != []:
+			for data in open_mr:
+				bom_data = frappe.db.sql("""SELECT name,makeup_days from `tabBOM` where item = '{0}' and is_active = 1 and is_default =1 and docstatus = 1""".format(data.get("item_code")),as_dict=1)
+				dn_date = data.get('delivery_date')
+				today_date = date.today()
+				# Calculate Days to Deliver
+				days_to_deliver = (dn_date - today_date)
+				self.append('sales_order_table', {
+					'material_request': data.get("name"),
+					'item':data.get('item_code'),
+					'delivery_date':data.get('delivery_date'),
+					'qty':data.get('qty'),
+					'bom':bom_data[0].get('name'),
+					'makeup_days':bom_data[0].get('makeup_days'),
+					'days_to_deliver' : days_to_deliver.days,
+					'material_request_item':data.get('material_request_item')
+				})
 		# self.save()
 		return self.sales_order_table
 	@frappe.whitelist()
@@ -83,7 +101,9 @@ class ProductionPlanningWithLeadTime(Document):
 					'bom':row.bom,
 					'days_to_deliver':row.days_to_deliver,
 					'makeup_days':row.makeup_days,
-					'sales_order_item':row.sales_order_item
+					'sales_order_item':row.sales_order_item,
+					'material_request':row.material_request,
+					'material_request_item':row.material_request_item
 					})
 			# so_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 			sorted_so_data = sorted(so_data, key = lambda x: (x["delivery_date"],x["priority"]))
@@ -107,6 +127,7 @@ class ProductionPlanningWithLeadTime(Document):
 			for row in self.sales_order_table:
 				fg_data.append({
 					'sales_order':row.sales_order,
+					'material_request':row.material_request,
 					'item':row.item,
 					'qty':row.qty,
 					'delivery_date':row.delivery_date,
@@ -114,7 +135,8 @@ class ProductionPlanningWithLeadTime(Document):
 					'bom':row.bom,
 					'days_to_deliver':row.days_to_deliver,
 					'makeup_days':row.makeup_days,
-					'sales_order_item':row.sales_order_item
+					'sales_order_item':row.sales_order_item,
+					'material_request_item':row.material_request_item
 					})
 		# fg_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 		if fg_data:
@@ -164,7 +186,7 @@ class ProductionPlanningWithLeadTime(Document):
 					for item in bom_data:
 						final_row = dict()
 						qty = flt(item.get("stock_qty")) - flt(ohs.get(item.get("production_item"))) if flt(ohs.get(item.get("production_item"))) < flt(item.get("stock_qty")) else 0
-						final_row.update({'qty':qty,'available_stock':ohs.get(item.get('production_item')),'alreaady_planned_qty':planned_data.get(item.get('production_item')),'shortage':qty,'fg_item':item.get('parent_item_code'),'item':item.get('production_item'),'original_qty':item.get('stock_qty'),'bom':item.get('bom_no'),'sales_order':row.get('sales_order')})
+						final_row.update({'qty':qty,'available_stock':ohs.get(item.get('production_item')),'alreaady_planned_qty':planned_data.get(item.get('production_item')),'shortage':qty,'fg_item':item.get('parent_item_code'),'item':item.get('production_item'),'original_qty':item.get('stock_qty'),'bom':item.get('bom_no'),'sales_order':row.get('sales_order'),'material_request':row.get('material_request')})
 						remaining_qty = flt(ohs.get(item.get("production_item"))) - flt(item.get("stock_qty")) if flt(ohs.get(item.get("production_item"))) > flt(item.get("stock_qty")) else 0
 						ohs.update({item.get('production_item'):remaining_qty})
 						planned_allocate = flt(qty) - flt(planned_data.get(item.get("production_item"))) if flt(planned_data.get(item.get("production_item"))) < flt(qty) else 0
@@ -259,6 +281,7 @@ class ProductionPlanningWithLeadTime(Document):
 								'item':item.item,
 								'qty':item.qty,
 								'sales_order':item.sales_order,
+								'material_request':item.material_request,
 								'bom':item.bom,
 								'total_operation_time':item.total_operation_time,
 								'date_to_be_ready':item.planned_start_date,
@@ -270,6 +293,8 @@ class ProductionPlanningWithLeadTime(Document):
 						'qty':row.planned_qty,
 						'sales_order':row.sales_order,
 						'sales_order_item':row.sales_order_item,
+						'material_request':row.material_request,
+						'material_request_item':row.material_request_item,
 						'bom':row.bom,
 						'total_operation_time':row.total_operation_time,
 						'date_to_be_ready':row.planned_start_date,
@@ -323,7 +348,9 @@ class ProductionPlanningWithLeadTime(Document):
 				"company": default_company,
 				"planned_start_date": d.date_to_be_ready,
 				"qty":d.qty,
-				"production_planning_with_lead_time":self.name
+				"production_planning_with_lead_time":self.name,
+				"material_request":d.material_request if d.is_subassembly == 0 else None,
+				"material_request_item":d.material_request_item
 			}
 			item_dict[(d.item, d.sales_order)] = item_details
 
@@ -374,7 +401,7 @@ class ProductionPlanningWithLeadTime(Document):
 					if row.item_code != None and row.planned_qty != None:
 						planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
 		# Get planned qty from work order
-		planned_wo = frappe.db.sql("""SELECT wo.production_item,wo.qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}'""".format(self.to_date,self.from_date),as_dict=1)
+		planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}'""".format(self.to_date,self.from_date),as_dict=1)
 		# update planned_data_dict
 		if planned_wo:
 			for row in planned_wo:
@@ -496,7 +523,7 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				else:
 					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready,row_name, indent=indent+1)
 def get_on_order_stock(self,required_date):
-	planned_po = frappe.db.sql("""SELECT poi.item_code,if(sum(poi.qty)>0,sum(poi.qty),0) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
+	planned_po = frappe.db.sql("""SELECT poi.item_code,if(sum(poi.qty-poi.received_qty)>0,sum(poi.qty-poi.received_qty),0) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
 	# Manipulate in order to show in dict format
 	if planned_po:
 		on_order_stock = {item.item_code : item.qty for item in planned_po if item.item_code!=None}
@@ -585,6 +612,40 @@ def get_sales_orders(self):
 							and bom.is_active = 1)))
 		""", self.as_dict(), as_dict=1)
 	return open_so
+def get_open_mr(self):
+	mr_filter = item_filter = ""
+	bom_item = "bom.item = mr_item.item_code"
+
+	date_field_mapper = {
+		'from_date': ('>=', 'mr.transaction_date'),
+		'to_date': ('<=', 'mr.transaction_date'),
+		'from_delivery_date': ('>=', 'mr_item.schedule_date'),
+		'to_delivery_date': ('<=', 'mr_item.schedule_date')
+	}
+
+	for field, value in date_field_mapper.items():
+		if self.get(field):
+			mr_filter += f" and {value[1]} {value[0]} %({field})s"
+
+	# for field in ['customer']:
+	# 	if self.get(field):
+	# 		so_field = field
+	# 		so_filter += f" and so.{so_field} = %({field})s"
+
+	if self.item and frappe.db.exists('Item', self.item):
+		bom_item = self.get_bom_item() or bom_item
+		item_filter += " and mr_item.item_code = %(item_code)s"
+
+	open_mr = frappe.db.sql(f"""
+		select distinct mr.name, mr.transaction_date,date(mr_item.schedule_date) as delivery_date,mr_item.item_code,mr_item.qty,mr_item.name as material_request_item
+		from `tabMaterial Request` mr, `tabMaterial Request Item` mr_item
+		where mr_item.parent = mr.name
+			and mr.docstatus = 1 and mr.status not in ("Stopped", "Cancelled") and mr.material_request_type = "Manufacture" {mr_filter} {item_filter}
+			and (exists (select name from `tabBOM` bom where {bom_item}
+					and bom.is_active = 1)
+				)
+		""", self.as_dict(), as_dict=1,debug=1)
+	return open_mr
 def get_bom_item(self):
 	"""Check if Item or if its Template has a BOM."""
 	bom_item = None
@@ -665,7 +726,3 @@ def check_workstation_availability(date_to_be_ready,bom,qty):
 				planned_end_time=get_datetime(jc_data[0].get('to_time')) + get_mins_between_operations()
 				date_dict.update({'planned_start_date':planned_end_time.date()})
 		return date_dict
-
-
-
-

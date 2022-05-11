@@ -7,6 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "sales_order",
+  "material_request",
   "item",
   "planned_qty",
   "qty",
@@ -17,14 +18,14 @@
   "date_to_be_ready",
   "already_planned_qty",
   "planned_start_date",
-  "sales_order_item"
+  "sales_order_item",
+  "material_request_item"
  ],
  "fields": [
   {
    "columns": 2,
    "fieldname": "sales_order",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Sales Order",
    "options": "Sales Order"
   },
@@ -54,8 +55,10 @@
    "label": "Total Operation Time(In Days)"
   },
   {
+   "columns": 1,
    "fieldname": "available_stock",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Available Stock"
   },
   {
@@ -78,8 +81,10 @@
    "label": "Qty"
   },
   {
+   "columns": 1,
    "fieldname": "already_planned_qty",
    "fieldtype": "Float",
+   "in_list_view": 1,
    "label": "Planned Qty"
   },
   {
@@ -94,12 +99,23 @@
    "fieldname": "sales_order_item",
    "fieldtype": "Data",
    "label": "Sales Order Item"
+  },
+  {
+   "fieldname": "material_request",
+   "fieldtype": "Link",
+   "label": "Material Request",
+   "options": "Material Request"
+  },
+  {
+   "fieldname": "material_request_item",
+   "fieldtype": "Data",
+   "label": "Material Request Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-06 08:57:26.855007",
+ "modified": "2022-05-10 04:00:49.189204",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "FG Items Table",
