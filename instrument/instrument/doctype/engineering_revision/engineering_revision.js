@@ -60,6 +60,13 @@ frappe.ui.form.on('Engineering Revision', {
 				]
 			}
 		};
+		frm.set_query("revision", "other_engineering_revision", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.get_engineering_revisions_for_filter",
+				filters:{ 'item_code': row.item_code }
+			}
+		});
 
 	}
 });

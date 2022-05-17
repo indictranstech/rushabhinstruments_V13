@@ -20,7 +20,8 @@
   "section_break_6",
   "purchasing_package",
   "manufacturing_package",
-  "engineering_package"
+  "engineering_package",
+  "other_engineering_revision"
  ],
  "fields": [
   {
@@ -119,11 +120,17 @@
    "label": "End Transaction",
    "options": "end_document_type",
    "read_only": 1
+  },
+  {
+   "fieldname": "other_engineering_revision",
+   "fieldtype": "Table",
+   "label": "Other Engineering Revision",
+   "options": "Other Engineering Revisions"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-09-28 00:47:34.503857",
+ "modified": "2022-05-11 07:34:01.434367",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Engineering Revision",
