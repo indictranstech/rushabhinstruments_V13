@@ -30,15 +30,18 @@ def on_submit(doc, method = None):
 def custom_api(doc, event=None):
 	items = []
 	data = {}
-	data.update({'name': doc.name, 'customer': doc.customer, 'customer_name': doc.customer_name, 'company': doc.company,
-	            'posting_date': str(doc.posting_date), 'woocommerce_order_id': doc.woocommerce_order_id, 'total_qty': doc.total_qty, 
-	            'net_total': doc.net_total, 'status': doc.status})
+	dn_data = {'name': doc.name, 'customer': doc.customer, 'customer_name': doc.customer_name, 'company': doc.company,'posting_date': str(doc.posting_date), 'woocommerce_order_id': doc.woocommerce_order_id, 'total_qty': doc.total_qty,'net_total': doc.net_total, 'status': doc.status}
+	additional_dn_data = frappe.db.sql("""SELECT label,value from `tabDelivery Note Additional Custom Labels` where parent = '{0}'""".format(doc.name),as_dict=1)
+	dn_label_dict = {item.label:item.value for item in additional_dn_data}
+	dn_data.update(dn_label_dict)
+	data.update(dn_data)
 	if doc.get('items'):
 	    for item in doc.items:
-	        items.append({'item_code': item.item_code, 'item_name': item.item_name, 'item_group': item.item_group, 'qty': item.qty,
-	                    'stock_uom': item.stock_uom, 'conversion_factor': 1.0, 'rate': item.rate, 
-	                    'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no,'item_expiry_date':str(item.item_expiry_date)})
-
+	    	additional_data = frappe.db.sql("""SELECT label,value from `tabItem Additional Custom Labels` where parent = '{0}'""".format(item.item_code),as_dict=1)
+	    	label_dict = {item.label:item.value for item in additional_data}
+	    	item_data = {'item_code': item.item_code, 'item_name': item.item_name, 'item_group': item.item_group, 'qty': item.qty,'stock_uom': item.stock_uom, 'conversion_factor': 1.0, 'rate': item.rate,'against_sales_order': item.against_sales_order, 'batch_no': item.batch_no, 'serial_no': item.serial_no,'item_expiry_date':str(item.item_expiry_date)}
+	    	item_data.update(label_dict)
+	    	items.append(item_data)
 	    data.update({'items': items})
 	path = frappe.db.get_single_value("Rushabh Settings", 'delivery_note_web_hook_url')
 	url = path
