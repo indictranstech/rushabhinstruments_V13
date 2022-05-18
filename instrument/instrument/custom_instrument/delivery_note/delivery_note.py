@@ -31,6 +31,7 @@ def custom_api(doc, event=None):
 	items = []
 	data = {}
 	dn_data = {'name': doc.name, 'customer': doc.customer, 'customer_name': doc.customer_name, 'company': doc.company,'posting_date': str(doc.posting_date), 'woocommerce_order_id': doc.woocommerce_order_id, 'total_qty': doc.total_qty,'net_total': doc.net_total, 'status': doc.status}
+	# added addtional field data to dn
 	additional_dn_data = frappe.db.sql("""SELECT label,value from `tabDelivery Note Additional Custom Labels` where parent = '{0}'""".format(doc.name),as_dict=1)
 	dn_label_dict = {item.label:item.value for item in additional_dn_data}
 	dn_data.update(dn_label_dict)
