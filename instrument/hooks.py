@@ -1,8 +1,8 @@
 # from __future__ import unicode_literals
 from . import __version__ as app_version
-import frappe
-from frappe import _, msgprint
-from frappe.utils import cint, cstr, flt
+# import frappe
+# from frappe import _, msgprint
+# from frappe.utils import cint, cstr, flt
 
 app_name = "instrument"
 app_title = "instrument"
@@ -312,33 +312,33 @@ user_data_fields = [
 # 	"instrument.auth.validate"
 # ]
 
-from erpnext.buying.doctype.purchase_order.purchase_order import PurchaseOrder
+# from erpnext.buying.doctype.purchase_order.purchase_order import PurchaseOrder
 
-def validate_minimum_order_qty(self):
-	if not self.get("items"):
-		return
-	items = list(set(d.item_code for d in self.get("items")))
+# def validate_minimum_order_qty(self):
+# 	if not self.get("items"):
+# 		return
+# 	items = list(set(d.item_code for d in self.get("items")))
 
-	itemwise_min_order_qty = frappe._dict(
-		frappe.db.sql(
-			"""select name, min_order_qty
-		from tabItem where name in ({0})""".format(
-				", ".join(["%s"] * len(items))
-			),
-			items,
-		)
-	)
+# 	itemwise_min_order_qty = frappe._dict(
+# 		frappe.db.sql(
+# 			"""select name, min_order_qty
+# 		from tabItem where name in ({0})""".format(
+# 				", ".join(["%s"] * len(items))
+# 			),
+# 			items,
+# 		)
+# 	)
 
-	itemwise_qty = frappe._dict()
-	for d in self.get("items"):
-		itemwise_qty.setdefault(d.item_code, 0)
-		itemwise_qty[d.item_code] += flt(d.stock_qty)
+# 	itemwise_qty = frappe._dict()
+# 	for d in self.get("items"):
+# 		itemwise_qty.setdefault(d.item_code, 0)
+# 		itemwise_qty[d.item_code] += flt(d.stock_qty)
 
-	for item_code, qty in itemwise_qty.items():
-		if flt(qty) < flt(itemwise_min_order_qty.get(item_code)):
-			frappe.msgprint(
-				_(
-					"Item {0}: Ordered qty {1} cannot be less than minimum order qty {2} (defined in Item)."
-				).format(item_code, qty, itemwise_min_order_qty.get(item_code))
-			)
-PurchaseOrder.validate_minimum_order_qty = validate_minimum_order_qty
+# 	for item_code, qty in itemwise_qty.items():
+# 		if flt(qty) < flt(itemwise_min_order_qty.get(item_code)):
+# 			frappe.msgprint(
+# 				_(
+# 					"Item {0}: Ordered qty {1} cannot be less than minimum order qty {2} (defined in Item)."
+# 				).format(item_code, qty, itemwise_min_order_qty.get(item_code))
+# 			)
+# PurchaseOrder.validate_minimum_order_qty = validate_minimum_order_qty
