@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 from . import __version__ as app_version
 import frappe
 from frappe import _, msgprint
