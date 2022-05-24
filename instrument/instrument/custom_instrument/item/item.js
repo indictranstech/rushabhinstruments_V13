@@ -8,5 +8,25 @@ frappe.ui.form.on('Item',{
 				]
 			}
 	    }
+	},
+	item_additional_label_info_template:function(frm){
+		frm.doc.item_additional_custom_labels = ''
+		if(frm.doc.item_additional_label_info_template){
+			frappe.call({
+				method : "instrument.instrument.custom_instrument.item.item.get_label_details",
+				args:{
+					template_name : frm.doc.item_additional_label_info_template
+				},
+				callback:function(r){
+					if(r.message){
+						$.each(r.message, function(idx,item_row) {
+							var row = frappe.model.add_child(frm.doc, "Item Additional Custom Labels", "item_additional_custom_labels");
+							frappe.model.set_value(row.doctype, row.name, 'label', item_row['label']);
+						})
+						refresh_field("item_additional_custom_labels");
+					}
+				}
+			})
+		}
 	}
 })

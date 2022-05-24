@@ -124,3 +124,9 @@ def label_img(doc,method):
 	namestr = doc.name + "-label{0}".format(count) + ".png"
 	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Item",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
+
+@frappe.whitelist()
+def get_label_details(template_name):
+	if template_name:
+		data = frappe.db.sql("""SELECT a.label from `tabItem Additional Label Info Template Table` a join `tabItem Additional Label Info Template` b on b.name =a.parent where b.template_name = '{0}' order by a.idx""".format(template_name),as_dict=1)
+		return data
