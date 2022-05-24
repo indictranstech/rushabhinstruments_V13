@@ -83,3 +83,8 @@ def after_insert(doc,method):
 	"content": pdf_data.get('fcontent')
 	})
 	_file.save()
+@frappe.whitelist()
+def get_label_details(template_name):
+	if template_name:
+		data = frappe.db.sql("""SELECT a.label from `tabDelivery Note Additional Label Info Template Table` a join `tabDelivery Note Additional Label Info Template` b on b.name =a.parent where b.template_name = '{0}' order by a.idx""".format(template_name),as_dict=1)
+		return data
