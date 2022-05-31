@@ -54,6 +54,7 @@ frappe.ui.form.on('Package Document', {
 						package_document:package_document
 					},
 					callback:function(r){
+						location.reload()
 
 					}
 				})
@@ -70,6 +71,7 @@ frappe.ui.form.on('Package Document', {
 						package_document:package_document
 					},
 					callback:function(r){
+						location.reload()
 
 					}
 				})
