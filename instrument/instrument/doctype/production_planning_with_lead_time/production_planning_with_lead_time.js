@@ -33,7 +33,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frm.fields_dict['fg_items_table'].grid.wrapper.find('.grid-insert-row-below').hide();
 		frm.fields_dict['fg_items_table'].grid.wrapper.find('.grid-add-row').hide();
 
-		if(!frm.doc.__islocal) {
+		if(frm.doc.docstatus == 1) {
 			cur_frm.add_custom_button(__('Create Material Request'),function(){
 				frappe.call({
 					method: "make_material_request",

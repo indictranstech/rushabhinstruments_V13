@@ -161,7 +161,7 @@ class ProductionPlanningWithLeadTime(Document):
 				date_dict = check_workstation_availability(date_to_be_ready,row.get('bom'),row.get('planned_qty'))
 				row.update({'idx':count,'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready})
 				if date_dict:
-					row.update({'planned_start_date':date_dict.get('planned_start_date')})
+					row.update({'planned_start_date':date_dict.get('planned_start_date'),'remark':date_dict.get('remark')})
 				else:
 					row.update({'planned_start_date':date_to_be_ready})
 				self.append('fg_items_table',row)
@@ -200,7 +200,7 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 						# date_to_be_ready = date_to_be_ready.date()
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name')})
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark')})
 						self.append('sub_assembly_items_table',final_row)
 			return self.sub_assembly_items_table
 						
@@ -386,10 +386,11 @@ class ProductionPlanningWithLeadTime(Document):
 
 	def get_planned_data(self):
 		# Get planned qty from material request for which production plan not in place and work order not in place
-		planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
-		# Manipulate in order to show in dict format
-		planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
+		# planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
+		# # Manipulate in order to show in dict format
+		# planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
 		# Get planned qty from production plan for which work order not in place
+		planned_data_dict = dict()
 		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
 		# update planned_data_dict
 		if planned_pp:
@@ -515,7 +516,8 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				'date_to_be_ready':date_to_be_ready,
 				'planned_start_date' : date_dict.get("planned_start_date") if date_dict else date_to_be_ready,
 				'total_operation_time':total_operation_time_in_days,
-				'row_name':row_name
+				'row_name':row_name,
+				'remark':date_dict.get("remark") if date_dict else ""
 			}))
 			if d.value:
 				if date_dict:
@@ -714,15 +716,22 @@ def check_workstation_availability(date_to_be_ready,bom,qty):
 				time_dict.update({'planned_start_time':planned_start_time})
 			else:
 				planned_start_time = (
-					get_datetime(time_dict.get('planned_end_time')) + get_mins_between_operations()
+					get_datetime(time_dict.get('planned_end_time')) 
 				)
+				# + get_mins_between_operations()
 			planned_end_time = get_datetime(planned_start_time) + timedelta(time_in_days)
 			time_dict.update({'planned_end_time':planned_end_time})
-			jc_data = frappe.db.sql("""SELECT jc.name,date(jc_time.from_time) as from_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}'""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1)
+			jc_data = frappe.db.sql("""SELECT jc.name,jc.workstation,date(jc_time.from_time) as from_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}' and date(jc_time.to_time) between '{1}' and '{2}'""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1,debug=1)
 			if jc_data == []:
-				date_dict.update({'planned_start_date':date_to_be_ready})
+				if date_dict.get('planned_start_date'):
+					if date_dict.get('planned_start_date') < date_to_be_ready:
+						date_dict.update({'planned_start_date':date_to_be_ready,'remark':"All Workstations are available on time"})
+				else:
+					date_dict.update({'planned_start_date':date_to_be_ready,'remark':"All Workstations are available on time"})
 			else:
-				jc_data = frappe.db.sql("""SELECT jc.name,date(jc_time.to_time) as to_time from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}' order by to_time desc""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1)
-				planned_end_time=get_datetime(jc_data[0].get('to_time')) + get_mins_between_operations()
-				date_dict.update({'planned_start_date':planned_end_time.date()})
+				jc_data = frappe.db.sql("""SELECT jc.name,jc.workstation,date(jc_time.to_time) as to_time from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) > '{1}' order by to_time desc""".format(row.workstation,planned_start_time),as_dict=1)
+				planned_end_time=get_datetime(jc_data[0].get('to_time'))
+				# planned_end_time=get_datetime(jc_data[0].get('to_time')) + get_mins_between_operations()
+				remark = "Workstation {0} is not available for date {1} ".format(jc_data[0].get('workstation'),date_to_be_ready)
+				date_dict.update({'planned_start_date':planned_end_time.date(),'remark':remark})
 		return date_dict
