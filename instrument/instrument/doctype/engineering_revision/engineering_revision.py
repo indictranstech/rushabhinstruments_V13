@@ -237,3 +237,19 @@ class EngineeringRevision(Document):
 										frappe.db.commit()	
 	def on_trash(self):
 		frappe.db.sql("""delete from `tabPackage Document` where item_code = '{0}' and revision ='{1}'""".format(self.item_code,self.revision))
+
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_purchasing_pkg_name(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT name FROM `tabPackage Document` where item_code = '{0}' and package_type = 'Purchasing_Package' """.format(filters.get("item_code")))
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_manufacturing_pkg_name(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT name FROM `tabPackage Document` where item_code = '{0}' and package_type = 'Manufacturing_Package' """.format(filters.get("item_code")))
+
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_engineering_pkg_name(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT name FROM `tabPackage Document` where item_code = '{0}' and package_type = 'Engineering_Package' """.format(filters.get("item_code")))
