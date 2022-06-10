@@ -67,6 +67,43 @@ frappe.ui.form.on('Engineering Revision', {
 				filters:{ 'item_code': row.item_code }
 			}
 		});
+		frm.set_query("purchase_package_name", "other_engineering_revision", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.engineering_revision.engineering_revision.get_purchasing_pkg_name",
+				filters:{ 'item_code': row.item_code}
+			}
+		});
+		frm.set_query("manufacturing_package_name", "other_engineering_revision", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.engineering_revision.engineering_revision.get_manufacturing_pkg_name",
+				filters:{ 'item_code': row.item_code }
+			}
+		});
+		frm.set_query("engineering_package_name", "other_engineering_revision", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.engineering_revision.engineering_revision.get_engineering_pkg_name",
+				filters:{ 'item_code': row.item_code }
+			}
+		});
 
 	}
 });
+frappe.ui.form.on('Other Engineering Revisions', {
+	// exclude_purchasing_package:function(frm,cdt,cdn){
+	// 	console.log("*******************")
+	// 	var row = locals[cdt][cdn]
+	// 	console.log("$$$$$$$",row.exclude_purchasing_package)
+	// 	var df = frappe.meta.get_docfield("Other Engineering Revisions","purchase_package_name", cur_frm.doc.name);
+	// 	console.log("====================before",df)
+	// 	if(row.exclude_purchasing_package == 1){
+	// 		var df = frappe.meta.get_docfield("Other Engineering Revisions","purchase_package_name", cur_frm.doc.name);
+	// 		console.log("IIIIIIIIIIIIIIIII",df)
+	// 		df.hidden = 1;
+	// 		df.read_only=1;
+	// 		frm.refresh_fields();
+	// 	}
+	// },
+})

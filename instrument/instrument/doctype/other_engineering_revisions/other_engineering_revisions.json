@@ -12,7 +12,10 @@
   "column_break_4",
   "exclude_purchasing_package",
   "exclude_manufacturing_package",
-  "exclude_engineering_package"
+  "exclude_engineering_package",
+  "purchase_package_name",
+  "manufacturing_package_name",
+  "engineering_package_name"
  ],
  "fields": [
   {
@@ -60,12 +63,30 @@
    "fieldname": "exclude_engineering_package",
    "fieldtype": "Check",
    "label": "Exclude Engineering Package"
+  },
+  {
+   "fieldname": "purchase_package_name",
+   "fieldtype": "Link",
+   "label": "Purchase Package Name",
+   "options": "Package Document"
+  },
+  {
+   "fieldname": "manufacturing_package_name",
+   "fieldtype": "Link",
+   "label": "Manufacturing Package Name",
+   "options": "Package Document"
+  },
+  {
+   "fieldname": "engineering_package_name",
+   "fieldtype": "Link",
+   "label": "Engineering Package Name",
+   "options": "Package Document"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-16 23:37:01.016243",
+ "modified": "2022-06-10 00:58:13.699814",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Other Engineering Revisions",

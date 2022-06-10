@@ -98,6 +98,17 @@ def attach_purchasing_docs(doc, method):
 		if row.item_code and row.engineering_revision:
 			purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(row.engineering_revision),as_dict=1,debug=1)
 			purchasing_package_list = [item.purchasing_package_name for item in purchasing_package]
+			er_doc = frappe.get_doc("Engineering Revision",row.engineering_revision)
+			if er_doc:
+				for i in er_doc.other_engineering_revision:
+					if i.revision and not i.exclude_purchasing_package:
+						er_purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(i.revision),as_dict=1,debug=1)
+						if er_purchasing_package:
+							for p in er_purchasing_package:
+								purchasing_package_list.append(p.purchasing_package_name)
+					else:
+						if i.purchase_package_name and not i.exclude_purchasing_package:
+							purchasing_package_list.append(i.purchase_package_name)
 			for col in purchasing_package_list:
 				package_doc = frappe.get_doc("Package Document",col)
 				"""Copy attachments from `package document`"""
