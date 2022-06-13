@@ -17,6 +17,7 @@ class BOMItemReplacementTool(Document):
 		return frappe.db.sql("""UPDATE `tabItem Mapping` set item_code = '{0}' where item_code = '{1}'""".format(self.new_item_number,self.old_item_number),debug=1)
 	def update_boms(self):
 		bom_list = self.get_all_boms()
+		print("=============bom_list",bom_list)
 		for bom in bom_list:
 			old_bom = frappe.get_doc("BOM",bom.get("name"))
 			default_company = frappe.db.get_single_value("Global Defaults",'default_company')
@@ -48,7 +49,10 @@ class BOMItemReplacementTool(Document):
 			frappe.enqueue("erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.replace_bom", args=args, timeout=40000)
 			frappe.msgprint("New Version Created For BOM <b>{0}</b>".format(bom.get("name")))
 	def get_all_boms(self):
-		bom_list = frappe.db.sql("""SELECT distinct b.name from `tabBOM` b join `tabBOM Item` bi on bi.parent = b.name where bi.item_code = '{0}' and b.docstatus = 1 order by b.bom_level asc""".format(self.old_item_number),as_dict=1)
+		if self.old_bom_number:
+			bom_list = frappe.db.sql("""SELECT distinct b.name from `tabBOM` b join `tabBOM Item` bi on bi.parent = b.name where bi.item_code = '{0}' and bi.bom_no = '{1}' and b.docstatus = 1 order by b.bom_level asc""".format(self.old_item_number,self.old_bom_number),as_dict=1)
+		else:
+			bom_list = frappe.db.sql("""SELECT distinct b.name from `tabBOM` b join `tabBOM Item` bi on bi.parent = b.name where bi.item_code = '{0}' and b.docstatus = 1 order by b.bom_level asc""".format(self.old_item_number),as_dict=1)
 		return bom_list
 	def update_mapped_boms(self):
 		bom_list = self.get_all_mapped_boms()

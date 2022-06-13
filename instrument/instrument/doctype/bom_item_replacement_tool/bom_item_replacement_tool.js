@@ -25,6 +25,13 @@ frappe.ui.form.on('BOM Item Replacement Tool', {
 				]
 			}
 	    }
+	    cur_frm.fields_dict['old_bom_number'].get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['BOM','item', '=', frm.doc.old_item_number],
+				]
+			}
+	    }
 
 	},
 	new_item_number:function(frm){
