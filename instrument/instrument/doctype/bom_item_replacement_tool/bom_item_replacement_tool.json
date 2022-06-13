@@ -8,6 +8,7 @@
   "replace_item_section",
   "old_item_number",
   "old_item_name",
+  "old_bom_number",
   "column_break_4",
   "new_item_number",
   "new_item_name",
@@ -62,12 +63,18 @@
    "fieldname": "replace",
    "fieldtype": "Button",
    "label": "Replace"
+  },
+  {
+   "fieldname": "old_bom_number",
+   "fieldtype": "Link",
+   "label": "Old BOM Number",
+   "options": "BOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2021-12-27 01:12:39.098475",
+ "modified": "2022-06-13 01:00:02.627618",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Item Replacement Tool",
