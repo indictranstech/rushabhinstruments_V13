@@ -18,12 +18,17 @@ def autoname(doc, method):
 		currentYear = datetime.now().year
 		
 		engineering_revision = frappe.db.get_value("Item",{'item_code':doc.item},'engineering_revision')
+		# get_naming_prefix(doc,naming_series)
 		if doc.reference_doctype == 'Purchase Receipt':
 			if doc.reference_name:
 				pr_doc = frappe.get_doc("Purchase Receipt",doc.reference_name)
 				for item in pr_doc.items:
 					if item.item_code == doc.item:
-						doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+						naming_series = frappe.db.get_value("Item",{'item_code':doc.item},'batch_number_series')
+						naming_prefix = get_naming_prefix(doc,item.engineering_revision,currentYear,naming_series)
+
+						doc.name = make_autoname(naming_prefix+'-'+".#####")
+						# doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
 						doc.batch_id = doc.name
 						return doc.name
 		elif doc.reference_doctype == 'Stock Entry':
@@ -31,17 +36,41 @@ def autoname(doc, method):
 				se_doc = frappe.get_doc("Stock Entry",doc.reference_name)
 				for item in se_doc.items:
 					if item.item_code == doc.item:
-						doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+						naming_series = frappe.db.get_value("Item",{'item_code':doc.item},'batch_number_series')
+						naming_prefix = get_naming_prefix(doc,item.engineering_revision,currentYear,naming_series)
+
+						doc.name = make_autoname(naming_prefix+'-'+".#####")
+						# doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
 						doc.batch_id = doc.name
 						return doc.name
 		elif engineering_revision:
-			doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
+			naming_series = frappe.db.get_value("Item",{'item_code':doc.item},'batch_number_series')
+			naming_prefix = get_naming_prefix(doc,engineering_revision,currentYear,naming_series)
+
+			doc.name = make_autoname(naming_prefix+'-'+".#####")
+			# doc.name = make_autoname('BN-' + str(item.engineering_revision) + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
 			doc.batch_id = doc.name
 			return doc.name
 		else:
 			doc.name = make_autoname('BN-' + '-'+str(currentYear) +'-'+str(currentMonth) + '-' + '.#####')
 			doc.batch_id = doc.name
 			return doc.name
+
+def get_naming_prefix(doc,engineering_revision,currentYear,naming_series):
+	now = datetime.now()
+	week_no = datetime.date(now).isocalendar()[1]
+	naming_series = naming_series.split('-')
+	naming_series = naming_series[0]
+	new_naming = naming_series
+	if 'ENG' in naming_series:
+		new_naming = naming_series.replace('ENG',str(engineering_revision))
+	if 'YYYY' in naming_series:
+		new_naming = new_naming.replace('YYYY',str(currentYear))
+	if 'WW' in naming_series:
+		new_naming = new_naming.replace('WW',str(week_no))
+	return new_naming
+
+
 
 def label_img(doc, method):
 	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Batch'},'url')
