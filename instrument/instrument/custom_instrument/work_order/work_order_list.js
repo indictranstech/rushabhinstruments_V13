@@ -10,7 +10,7 @@ frappe.listview_settings['Work Order'] = {
 			// var newWindow =window.open(link,"_blank");
 			var old_link = window.location.href
 			var split_data = old_link.split("/app")
-			var link =  split_data[0]+"/app#work-order-pick-list/new-work-order-pick-list-1?data="+myJSON
+			var link =  split_data[0]+"/app/work-order-pick-list/new-work-order-pick-list-1?data="+myJSON
 			window.open(link);
 			// listview.call_for_selected_items(method, {"status": "Not Started"});
 		});

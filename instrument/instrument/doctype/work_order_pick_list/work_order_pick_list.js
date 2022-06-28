@@ -155,7 +155,7 @@ frappe.ui.form.on('Work Order Pick List', {
 		var data = JSON.parse(decodeURIComponent(string_data));
 		if(data.work_order_data){
 			$.each(data.work_order_data, function(idx, item_row){
-				var row = frappe.model.add_child(frm.doc, "Pick Orders", "work_orders");
+				var row = frappe.model.add_child(frm.doc, "Pick List FG Work Orders", "work_order_table");
 				frappe.model.set_value(row.doctype, row.name, 'work_order', item_row['name']);
 				if(item_row['name']){
 					frappe.call({
