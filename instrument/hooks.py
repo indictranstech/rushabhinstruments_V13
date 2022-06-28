@@ -264,9 +264,9 @@ scheduler_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "instrument.event.get_events"
-# }
+override_whitelisted_methods = {
+	"erpnext.manufacturing.doctype.work_order.work_order.stop_unstop": "instrument.instrument.custom_instrument.work_order.work_order.stop_unstop"
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

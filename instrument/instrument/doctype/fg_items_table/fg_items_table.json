@@ -20,7 +20,8 @@
   "planned_start_date",
   "sales_order_item",
   "material_request_item",
-  "remark"
+  "remark",
+  "partial_remark"
  ],
  "fields": [
   {
@@ -116,12 +117,18 @@
    "fieldname": "remark",
    "fieldtype": "Small Text",
    "label": "Remark"
+  },
+  {
+   "fieldname": "partial_remark",
+   "fieldtype": "Small Text",
+   "label": "Partial Remark",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-17 01:40:37.987928",
+ "modified": "2022-06-27 07:11:40.529398",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "FG Items Table",
