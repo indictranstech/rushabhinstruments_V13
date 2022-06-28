@@ -71,6 +71,12 @@ def validate(doc,method):
 		_file.save()
 @frappe.whitelist()
 def on_submit(doc,method):
+	#update wo_status on Production Planning With Lead Time
+	if doc.work_order:
+		d = frappe.get_doc("Work Order", doc.work_order)
+		frappe.db.set_value("Final Work Orders", {'item':d.production_item, 'sales_order':d.sales_order}, "wo_status", d.get_status())
+		frappe.db.commit()
+
 	if doc.work_order_pick_list:
 		pick_list_doc = frappe.get_doc("Work Order Pick List",doc.work_order_pick_list)
 		if pick_list_doc :
@@ -80,10 +86,21 @@ def on_submit(doc,method):
 					item.stock_entry = doc.name
 			pick_list_doc.save()
 			pick_list_doc.submit()
+	
+	# frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
+	# frappe.db.commit()
+
 @frappe.whitelist()
 def on_cancel(doc,method):
 	frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s""",
 		(doc.name))
+
+	#update wo_status on Production Planning With Lead Time
+	if doc.work_order:
+		d = frappe.get_doc("Work Order", doc.work_order)
+		frappe.db.set_value("Final Work Orders", {'item':d.production_item, 'sales_order':d.sales_order}, "wo_status", d.get_status())
+		frappe.db.commit()
+
 @frappe.whitelist()
 def get_items_from_pick_list(pick_list,work_order):
 	if pick_list:
