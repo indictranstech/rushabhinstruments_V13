@@ -209,6 +209,7 @@ class WorkOrderPickList(Document):
 				self.append("work_orders",col)
 				count = count + 1
 
+
 	@frappe.whitelist()
 	def get_work_order_items(self):
 		final_raw_item_list = []
@@ -291,6 +292,7 @@ class WorkOrderPickList(Document):
 	def batch_assignment_fifo(self):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+		
 		batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
 		allocated_item_list = []
 		allocated_item_dict = dict()
@@ -298,6 +300,7 @@ class WorkOrderPickList(Document):
 			if row.item_code not in allocated_item_dict:
 				for col in batch_data:	
 					if row.item_code == col.item and row.warehouse == col.warehouse :
+						
 						if col.qty >= row.required_qty:
 							row.batch_no = col.name
 							row.picked_qty = row.required_qty
@@ -316,6 +319,16 @@ class WorkOrderPickList(Document):
 								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
 								row.serial_no = serial_nos
 							break
+		
+	def on_submit(self):
+		allocated_batch_data = frappe.db.sql("""SELECT b.item_code,b.picked_qty,b.batch_no from `tabWork Order Pick List Item` b join `tabWork Order Pick List` wo on wo.name = b.parent""",as_dict=1,debug=1)
+		allocated_batch_data_dict = {item.batch_no:item.picked_qty for item in allocated_batch_data}
+		allocated_batch_list = []
+		for row in self.work_order_pick_list_item:
+			if row.batch_no in allocated_batch_data_dict:
+				allocated_batch_list.append(row.idx)
+		if len(allocated_batch_list) > 0:
+			frappe.throw("Kindly Review batches for rows {0}".format(allocated_batch_list))
 def get_serial_nos(item_code,batch_id):
 	serial_nos = frappe.db.sql("""SELECT name from `tabSerial No` where batch_no = '{0}' and item_code = '{1}'""".format(batch_id,item_code),as_dict=1)
 	serial_nos = [item.name for item in serial_nos]
