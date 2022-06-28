@@ -87,7 +87,6 @@ def add_bom_level(doc,method):
 
 @frappe.whitelist()
 def on_submit(doc,method):
-	print("================closedsto", doc.status)
 	if doc.required_items:
 		for item in doc.required_items:
 			if item.engineering_revision:

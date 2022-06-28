@@ -272,7 +272,7 @@ class ProductionPlanningWithLeadTime(Document):
 						else:
 							item.update({'readiness_status':'#FF8000'})
 					else:
-						item.update({'readiness_status':'#228B22'})
+						item.update({'readiness_status':'#FF0000'})
 					self.append('raw_materials_table',item)
 			return self.raw_materials_table
 	@frappe.whitelist()
