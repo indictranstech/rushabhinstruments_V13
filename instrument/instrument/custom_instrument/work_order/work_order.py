@@ -242,5 +242,12 @@ def stop_unstop(work_order, status):
 	frappe.db.commit()
 	return pro_order.status	
 	
-	
 
+def update_status_on_production_planning_with_lead_time(doc, method=None):
+	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
+	frappe.db.commit()
+
+
+def on_trash(doc, method=None):
+	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", "")
+	frappe.db.commit()

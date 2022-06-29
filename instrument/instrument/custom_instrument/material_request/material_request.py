@@ -157,3 +157,17 @@ def create_rfq(item_lists,row,doc):
 			rfq_doc.message_for_supplier = "Please supply the specified items at the best possible rates"
 			rfq_doc.save()
 			return rfq_doc.name
+
+
+def update_status_on_production_planning_with_lead_time(doc, method=None):
+	if doc.production_planning_with_lead_time:
+		for row in doc.items:
+			frappe.db.set_value("Raw Materials Table", {'item':row.item_code, 'parent':doc.production_planning_with_lead_time}, "mr_status", doc.status)
+			frappe.db.commit()
+
+
+def on_trash(doc, method=None):
+	if doc.production_planning_with_lead_time:
+		for row in doc.items:
+			frappe.db.set_value("Raw Materials Table", {'item':row.item_code, 'parent':doc.production_planning_with_lead_time}, "mr_status", "")
+			frappe.db.commit()
