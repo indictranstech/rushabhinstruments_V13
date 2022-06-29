@@ -126,9 +126,10 @@ doc_events = {
 	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
 	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate","instrument.instrument.custom_instrument.work_order.work_order.label_img"],
-	"on_submit" :"instrument.instrument.custom_instrument.work_order.work_order.on_submit",
-	"on_cancel":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
-	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom"
+	"on_submit" :["instrument.instrument.custom_instrument.work_order.work_order.on_submit", "instrument.instrument.custom_instrument.work_order.work_order.update_status_on_production_planning_with_lead_time"],
+	"on_cancel":["instrument.instrument.custom_instrument.work_order.work_order.disable_bom", "instrument.instrument.custom_instrument.work_order.work_order.update_status_on_production_planning_with_lead_time"],
+	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
+	"on_trash":"instrument.instrument.custom_instrument.work_order.work_order.on_trash"
 	},
 	"Item" : {
 	"validate" :["instrument.instrument.custom_instrument.item.item.validate","instrument.instrument.custom_instrument.item.item.label_img"],
@@ -158,7 +159,10 @@ doc_events = {
  	},
  	"Material Request":{
  	"validate":"instrument.instrument.custom_instrument.material_request.material_request.validate",
- 	"after_insert":"instrument.instrument.custom_instrument.material_request.material_request.after_insert"
+ 	"after_insert":"instrument.instrument.custom_instrument.material_request.material_request.after_insert",
+ 	"on_submit":"instrument.instrument.custom_instrument.material_request.material_request.update_status_on_production_planning_with_lead_time",
+ 	"on_cancel":"instrument.instrument.custom_instrument.material_request.material_request.update_status_on_production_planning_with_lead_time",
+ 	"on_trash":"instrument.instrument.custom_instrument.material_request.material_request.on_trash"
  	},
  	"Job Card":{
  	"validate":["instrument.instrument.custom_instrument.job_card.job_card.label_img","instrument.instrument.custom_instrument.job_card.job_card.validate"],

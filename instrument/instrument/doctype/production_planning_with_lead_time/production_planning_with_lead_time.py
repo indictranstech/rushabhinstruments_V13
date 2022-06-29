@@ -13,7 +13,7 @@ from frappe.utils import (
 	get_link_to_form,
 	getdate,
 	now_datetime,
-	nowdate,today,formatdate
+	nowdate,today,formatdate, get_first_day, get_last_day 
 )
 from dateutil.relativedelta import relativedelta
 from frappe.utils import (
@@ -34,6 +34,11 @@ from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 import datetime
 from erpnext.stock.doctype.item.item import get_item_defaults, get_last_purchase_details
 class ProductionPlanningWithLeadTime(Document):
+	def onload(self):
+		mr_doc = frappe.db.get_value("Material Request", {"production_planning_with_lead_time":self.name}, "name")
+		if mr_doc:
+			update_mr_status_in_raw_materials_table(self, mr_doc)
+
 	@frappe.whitelist()
 	def get_open_sales_orders(self):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
@@ -339,6 +344,9 @@ class ProductionPlanningWithLeadTime(Document):
 					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
 					frappe.db.commit()
 			else:
+				wo_status = frappe.db.get_value("Work Order", wo, "status")
+				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
+				frappe.db.commit()
 				wo = get_link_to_form("Work Order", wo)
 				so = get_link_to_form("Sales Order",item.get('so_reference'))
 				msgprint(_("Work Order {0} is already created for the item {1} and Sales Order {2} ").format(wo,item.get("production_item"),so))
@@ -434,6 +442,7 @@ class ProductionPlanningWithLeadTime(Document):
 		material_request_map = {}
 		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
 		mr_doc = frappe.db.get_value("Material Request",{'production_planning_with_lead_time':self.name},'name')
+
 		if not mr_doc:
 			material_request_doc = frappe.new_doc("Material Request")
 			if material_request_doc:
@@ -465,11 +474,13 @@ class ProductionPlanningWithLeadTime(Document):
 				frappe.flags.mute_messages = False
 
 				if material_request_doc:
+					update_mr_status_in_raw_materials_table(self, material_request_doc.name)
 					mr = get_link_to_form("Material Request",material_request_doc.name)
 					msgprint(_("Material Request {0} Created.").format(mr))
 				else:
 					msgprint(_("No material request created"))
 		else:
+			update_mr_status_in_raw_materials_table(self, mr_doc)
 			mr = get_link_to_form("Material Request",mr_doc)
 			msgprint(_("Material Request {0} is Already Created.").format(mr))
 	
@@ -804,10 +815,10 @@ def get_partial_qty(date_to_be_ready, item_code, fg_warehouse_list):
 				partial_qty_dict.update({row.get('item_code'):row.get('qty'), "schedule_date": row.get("schedule_date")})
 	if partial_qty_dict.get("schedule_date"):
 		schedule_date = get_datetime(partial_qty_dict.get("schedule_date")) + timedelta(1)
-		partial_remark = "{0} qty can be completed with Plan Inventory From {1}.\n".format(partial_qty_dict.get(item_code), formatdate(schedule_date, "mm-dd-yyyy"))
+		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(schedule_date, "mm-dd-yyyy"))
 		partial_qty_dict.update({"partial_remark":partial_remark})	
 	elif partial_qty_dict.get(item_code):
-		partial_remark = "{0} qty can be completed with plan inventory from {1}.\n".format(partial_qty_dict.get(item_code), formatdate(date.today(), "mm-dd-yyyy"))
+		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(date.today(), "mm-dd-yyyy"))
 		partial_qty_dict.update({"partial_remark":partial_remark})
 	else:
 		partial_qty_dict.update({"partial_remark":""})
@@ -831,3 +842,11 @@ def check_partial_workstation_availability(date_to_be_ready,bom, qty):
 			else:
 				workstation_availability.update({'remark':""})
 		return workstation_availability
+
+def update_mr_status_in_raw_materials_table(self, mr_doc):
+	doc = frappe.get_doc("Material Request", mr_doc)
+	for row in doc.items:
+		frappe.db.set_value("Raw Materials Table", {'item':row.item_code}, "mr_status", doc.status)
+		frappe.db.commit()
+
+
