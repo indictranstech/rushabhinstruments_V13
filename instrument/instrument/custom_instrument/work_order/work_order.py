@@ -8,9 +8,12 @@ import requests
 import base64
 import textwrap
 import re
+from frappe import _
 
 @frappe.whitelist()
 def check_stock(doc,method):
+	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
+	frappe.db.commit()
 	if doc.get('__islocal')!= 1:
 		final_item_status = []
 		final_item_percent = []
@@ -217,9 +220,34 @@ def label_img(doc,method):
 	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Work Order",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
 	
-	
-	
-	
-	
+
+
+# Overriding Methods
+@frappe.whitelist()
+def stop_unstop(work_order, status):
+	"""Called from client side on Stop/Unstop event"""
+	if not frappe.has_permission("Work Order", "write"):
+		frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+	pro_order = frappe.get_doc("Work Order", work_order)
+
+	if pro_order.status == "Closed":
+		frappe.throw(_("Closed Work Order can not be stopped or Re-opened"))
+
+	pro_order.update_status(status)
+	pro_order.update_planned_qty()
+	frappe.msgprint(_("Work Order has been {0}").format(status))
+	pro_order.notify_update()
+	frappe.db.set_value("Final Work Orders", {'item':pro_order.production_item, 'sales_order':pro_order.sales_order}, "wo_status", pro_order.status)
+	frappe.db.commit()
+	return pro_order.status	
 	
 
+def update_status_on_production_planning_with_lead_time(doc, method=None):
+	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
+	frappe.db.commit()
+
+
+def on_trash(doc, method=None):
+	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", "")
+	frappe.db.commit()

@@ -13,7 +13,7 @@ from frappe.utils import (
 	get_link_to_form,
 	getdate,
 	now_datetime,
-	nowdate,today
+	nowdate,today,formatdate, get_first_day, get_last_day 
 )
 from dateutil.relativedelta import relativedelta
 from frappe.utils import (
@@ -34,6 +34,11 @@ from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 import datetime
 from erpnext.stock.doctype.item.item import get_item_defaults, get_last_purchase_details
 class ProductionPlanningWithLeadTime(Document):
+	def onload(self):
+		mr_doc = frappe.db.get_value("Material Request", {"production_planning_with_lead_time":self.name}, "name")
+		if mr_doc:
+			update_mr_status_in_raw_materials_table(self, mr_doc)
+
 	@frappe.whitelist()
 	def get_open_sales_orders(self):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
@@ -158,8 +163,16 @@ class ProductionPlanningWithLeadTime(Document):
 				delivery_date = datetime.datetime.strptime(row.get('delivery_date'), '%Y-%m-%d')
 				delivery_date = delivery_date.date() 
 				date_to_be_ready = (delivery_date-timedelta(total_operation_time_in_days)-timedelta(row.get('makeup_days')))
+
+				#calculate partial stock and workstation availability
+				partial_qty_dict=get_partial_qty(date_to_be_ready, row.get("item"), warehouse_list)
+
+				partial_workstation_availability=check_partial_workstation_availability(date_to_be_ready,row.get('bom'), row.get('planned_qty'))
+				partial_remark = "{0}{1}".format(partial_qty_dict.get("partial_remark"), partial_workstation_availability.get("remark") if partial_workstation_availability else "")
+				
 				date_dict = check_workstation_availability(date_to_be_ready,row.get('bom'),row.get('planned_qty'))
-				row.update({'idx':count,'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready})
+				row.update({'idx':count,'total_operation_time':total_operation_time_in_days,'date_to_be_ready':date_to_be_ready, 'partial_remark':partial_remark})
+
 				if date_dict:
 					row.update({'planned_start_date':date_dict.get('planned_start_date'),'remark':date_dict.get('remark')})
 				else:
@@ -181,7 +194,7 @@ class ProductionPlanningWithLeadTime(Document):
 				if row.get('planned_qty') > 0:
 					date_to_be_ready = datetime.datetime.strptime(row.get('planned_start_date'), '%Y-%m-%d')
 					planned_start_date = date_to_be_ready.date()
-					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"),planned_start_date,row.name)
+					get_sub_assembly_item(row.get("bom"), bom_data, row.get("planned_qty"),planned_start_date,row.name, warehouse_list)
 					bom_data = sorted(bom_data, key = lambda x: x["bom_level"],reverse=1)
 					for item in bom_data:
 						final_row = dict()
@@ -200,7 +213,7 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 						# date_to_be_ready = date_to_be_ready.date()
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark')})
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark')})
 						self.append('sub_assembly_items_table',final_row)
 			return self.sub_assembly_items_table
 						
@@ -258,13 +271,13 @@ class ProductionPlanningWithLeadTime(Document):
 						latest_date_availability_in_days = (item.get('latest_date_availability') - today_date).days
 						readiness_status = (item.get('date_to_be_ready')-item.get('latest_date_availability'))
 						if readiness_status.days > 0:
-							item.update({'readiness_status':'#228B22'})
+							item.update({'readiness_status':'#FF0000'})
 						elif readiness_status.days < 0:
 							item.update({'readiness_status':'#CD3700'})
 						else:
 							item.update({'readiness_status':'#FF8000'})
 					else:
-						item.update({'readiness_status':'#228B22'})
+						item.update({'readiness_status':'#FF0000'})
 					self.append('raw_materials_table',item)
 			return self.raw_materials_table
 	@frappe.whitelist()
@@ -326,7 +339,14 @@ class ProductionPlanningWithLeadTime(Document):
 				work_order = self.create_work_orders(item)
 				if work_order:
 					wo_list.append(work_order)
+					#Add WO Status on Final Work Order Table 
+					wo_status = frappe.db.get_value("Work Order", work_order, "status")
+					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
+					frappe.db.commit()
 			else:
+				wo_status = frappe.db.get_value("Work Order", wo, "status")
+				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
+				frappe.db.commit()
 				wo = get_link_to_form("Work Order", wo)
 				so = get_link_to_form("Sales Order",item.get('so_reference'))
 				msgprint(_("Work Order {0} is already created for the item {1} and Sales Order {2} ").format(wo,item.get("production_item"),so))
@@ -422,6 +442,7 @@ class ProductionPlanningWithLeadTime(Document):
 		material_request_map = {}
 		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
 		mr_doc = frappe.db.get_value("Material Request",{'production_planning_with_lead_time':self.name},'name')
+
 		if not mr_doc:
 			material_request_doc = frappe.new_doc("Material Request")
 			if material_request_doc:
@@ -453,11 +474,13 @@ class ProductionPlanningWithLeadTime(Document):
 				frappe.flags.mute_messages = False
 
 				if material_request_doc:
+					update_mr_status_in_raw_materials_table(self, material_request_doc.name)
 					mr = get_link_to_form("Material Request",material_request_doc.name)
 					msgprint(_("Material Request {0} Created.").format(mr))
 				else:
 					msgprint(_("No material request created"))
 		else:
+			update_mr_status_in_raw_materials_table(self, mr_doc)
 			mr = get_link_to_form("Material Request",mr_doc)
 			msgprint(_("Material Request {0} is Already Created.").format(mr))
 	
@@ -488,7 +511,7 @@ def get_raw_items(bom,raw_data,qty):
 				})
 		return raw_data
 @frappe.whitelist()
-def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_name, indent=0):
+def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_name, warehouse_list, indent=0):
 	data = get_children('BOM', parent = bom_no)
 	for d in data:
 		if d.expandable:
@@ -501,6 +524,12 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 			# Calculate date_to_be_ready
 			date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
 			date_dict = check_workstation_availability(date_to_be_ready,d.value,stock_qty)
+
+			#calculate partial stock and workstation availability
+			partial_qty_dict=get_partial_qty(date_to_be_ready, d.item_code, warehouse_list)
+			partial_workstation_availability=check_partial_workstation_availability(date_to_be_ready,d.value, stock_qty)
+			partial_remark = "{0}{1}".format(partial_qty_dict.get("partial_remark"), partial_workstation_availability.get("remark") if partial_workstation_availability else "")
+
 			bom_data.append(frappe._dict({
 				'parent_item_code': parent_item_code,
 				'description': d.description,
@@ -517,13 +546,15 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				'planned_start_date' : date_dict.get("planned_start_date") if date_dict else date_to_be_ready,
 				'total_operation_time':total_operation_time_in_days,
 				'row_name':row_name,
-				'remark':date_dict.get("remark") if date_dict else ""
+				'remark':date_dict.get("remark") if date_dict else "",
+				"partial_remark": partial_remark
 			}))
 			if d.value:
+
 				if date_dict:
-					get_sub_assembly_item(d.value, bom_data, stock_qty,date_dict.get('planned_start_date'), row_name,indent=indent+1)
+					get_sub_assembly_item(d.value, bom_data, stock_qty,date_dict.get('planned_start_date'), row_name, warehouse_list, indent=indent+1)
 				else:
-					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready,row_name, indent=indent+1)
+					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready,row_name, warehouse_list, indent=indent+1)
 def get_on_order_stock(self,required_date):
 	planned_po = frappe.db.sql("""SELECT poi.item_code,if(sum(poi.qty-poi.received_qty)>0,sum(poi.qty-poi.received_qty),0) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
 	# Manipulate in order to show in dict format
@@ -646,7 +677,7 @@ def get_open_mr(self):
 			and (exists (select name from `tabBOM` bom where {bom_item}
 					and bom.is_active = 1)
 				)
-		""", self.as_dict(), as_dict=1,debug=1)
+		""", self.as_dict(), as_dict=1)
 	return open_mr
 def get_bom_item(self):
 	"""Check if Item or if its Template has a BOM."""
@@ -721,7 +752,7 @@ def check_workstation_availability(date_to_be_ready,bom,qty):
 				# + get_mins_between_operations()
 			planned_end_time = get_datetime(planned_start_time) + timedelta(time_in_days)
 			time_dict.update({'planned_end_time':planned_end_time})
-			jc_data = frappe.db.sql("""SELECT jc.name,jc.workstation,date(jc_time.from_time) as from_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}' and date(jc_time.to_time) between '{1}' and '{2}'""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1,debug=1)
+			jc_data = frappe.db.sql("""SELECT jc.name,jc.workstation,date(jc_time.from_time) as from_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) between '{1}' and '{2}' and date(jc_time.to_time) between '{1}' and '{2}'""".format(row.workstation,planned_start_time,planned_end_time),as_dict=1)
 			if jc_data == []:
 				if date_dict.get('planned_start_date'):
 					if date_dict.get('planned_start_date') < date_to_be_ready:
@@ -735,3 +766,87 @@ def check_workstation_availability(date_to_be_ready,bom,qty):
 				remark = "Workstation {0} is not available for date {1} ".format(jc_data[0].get('workstation'),date_to_be_ready)
 				date_dict.update({'planned_start_date':planned_end_time.date(),'remark':remark})
 		return date_dict
+
+
+def get_partial_qty(date_to_be_ready, item_code, fg_warehouse_list):
+	partial_qty_dict = dict()
+	current_stock = frappe.db.sql("""SELECT item_code, sum(actual_qty) as qty from `tabBin` where warehouse in ({0}) and item_code='{1}' group by item_code """.format(fg_warehouse_list, item_code),as_dict=1)
+
+	# update planned_data_dict
+	if current_stock:
+		for row in current_stock:
+			if row.get('item_code') in partial_qty_dict:
+				qty = flt(partial_qty_dict.get(row.get('item_code'))) + row.get('qty')
+				partial_qty_dict.update({row.get('item_code'):qty})
+			else:
+				partial_qty_dict.update({row.get('item_code'):row.get('qty')})
+
+	# Get planned qty from purchase order
+	planned_po = frappe.db.sql("""SELECT schedule_date, item_code, (qty-received_qty) as qty from `tabPurchase Order Item` where docstatus=1 and schedule_date >= '{0}' and schedule_date <= '{1}' and item_code='{2}' """.format(date.today(), date_to_be_ready, item_code), as_dict=1)
+
+	# update partial_qty_dict
+	if planned_po:
+		for row in planned_po:
+			if row.get('item_code') in partial_qty_dict:
+				qty = flt(partial_qty_dict.get(row.get('production_item'))) + row.get('qty')
+				partial_qty_dict.update({row.get('item_code'):qty})
+				if partial_qty_dict.get("schedule_date") and partial_qty_dict.get("schedule_date") < row.get("schedule_date"):
+					partial_qty_dict.update({"schedule_date":row.get("schedule_date")})
+				else:
+					partial_qty_dict.update({"schedule_date":row.get("schedule_date")})
+			else:
+				partial_qty_dict.update({row.get('item_code'):row.get('qty'), "schedule_date": row.get("schedule_date")})
+
+
+	#Get planned qty from material request for which Purchase Order not in place
+	planned_mr = frappe.db.sql("""SELECT mri.schedule_date, mri.item_code, sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.schedule_date >= '{0}' and mr.schedule_date <= '{1}' and mri.item_code='{2}' and not exists(SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` po_item on po_item.parent = po.name where po_item.material_request = mr.name)""".format(date.today(), date_to_be_ready, item_code),as_dict=1)
+	# update partial_qty_dict
+	if planned_mr:
+		for row in planned_mr:
+			if row.get('item_code') in partial_qty_dict:
+				qty = flt(partial_qty_dict.get(row.get('item_code'))) + row.get('qty')
+				partial_qty_dict.update({row.get('item_code'):qty})
+				if partial_qty_dict.get("schedule_date") and partial_qty_dict.get("schedule_date") < row.get("schedule_date"):
+					partial_qty_dict.update({"schedule_date":row.get("schedule_date")})
+				else:
+					partial_qty_dict.update({"schedule_date":row.get("schedule_date")})
+
+			else:
+				partial_qty_dict.update({row.get('item_code'):row.get('qty'), "schedule_date": row.get("schedule_date")})
+	if partial_qty_dict.get("schedule_date"):
+		schedule_date = get_datetime(partial_qty_dict.get("schedule_date")) + timedelta(1)
+		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(schedule_date, "mm-dd-yyyy"))
+		partial_qty_dict.update({"partial_remark":partial_remark})	
+	elif partial_qty_dict.get(item_code):
+		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(date.today(), "mm-dd-yyyy"))
+		partial_qty_dict.update({"partial_remark":partial_remark})
+	else:
+		partial_qty_dict.update({"partial_remark":""})
+	return partial_qty_dict
+
+
+def check_partial_workstation_availability(date_to_be_ready,bom, qty):
+	bom_doc = frappe.get_doc("BOM",bom)
+	workstation_availability = dict()
+	if bom_doc.with_operations:
+		time_dict = dict()
+		for row in bom_doc.operations:
+			jc_data = frappe.db.sql("""SELECT jc.name,jc.workstation,date(jc_time.from_time) as from_date, date(jc_time.to_time) as to_date from `tabJob Card` jc join `tabJob Card Time Log` jc_time on jc_time.parent = jc.name where jc.workstation = '{0}' and jc.status in ('Open','Work In Progress','Material Transferred','Submitted') and date(jc_time.from_time) >= '{1}' and date(jc_time.from_time) <= '{2}' and date(jc_time.to_time) >= '{1}' and date(jc_time.to_time) <= '{2}' order by jc_time.to_time desc """.format(row.workstation, date.today(), date_to_be_ready),as_dict=1)
+			if jc_data == []:
+				remark = "All Workstation is available for date {0}.".format(formatdate(date.today(), "mm-dd-yyyy"))
+				workstation_availability.update({'remark':remark})
+			elif jc_data[0].get('to_date') <  date_to_be_ready:
+				ws_date = get_datetime(jc_data[0].get('to_date')) + timedelta(1)
+				remark = "Workstation {0} is available for date {1} ".format(jc_data[0].get('workstation'),formatdate(ws_date, "mm-dd-yyyy"))
+				workstation_availability.update({'remark':remark})
+			else:
+				workstation_availability.update({'remark':""})
+		return workstation_availability
+
+def update_mr_status_in_raw_materials_table(self, mr_doc):
+	doc = frappe.get_doc("Material Request", mr_doc)
+	for row in doc.items:
+		frappe.db.set_value("Raw Materials Table", {'item':row.item_code}, "mr_status", doc.status)
+		frappe.db.commit()
+
+
