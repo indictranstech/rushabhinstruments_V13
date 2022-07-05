@@ -1,5 +1,17 @@
 import frappe
-
+import json
+from frappe.utils import (
+    add_days,
+    ceil,
+    cint,
+    comma_and,
+    flt,
+    get_link_to_form,
+    getdate,
+    now_datetime,
+    nowdate,today,formatdate, get_first_day, get_last_day 
+)
+from datetime import date,timedelta
 #Authenticate and Login to ERPNext With an API
 
 @frappe.whitelist( allow_guest=True )
@@ -126,3 +138,101 @@ def delivery_note_on_date(posting_date=None):
         b.item_code,b.item_name,b.uom,b.qty,b.rate,b.amount,b.description,b.conversion_factor,b.base_rate,b.base_amount,b.batch_no,b.serial_no,b.against_sales_order,b.against_sales_invoice,a.total_taxes_and_charges
         from `tabDelivery Note` a left join `tabDelivery Note Item` b ON a.name = b.parent where a.posting_date='{posting_date}' """,  as_dict=True)
         return(data)
+
+
+
+@frappe.whitelist(allow_guest=True)
+def create_payment_entry(data=None):
+    data=json.loads(frappe.request.data)
+    total_amount=outstanding_amount=0.0
+    pe_doc = frappe.new_doc("Payment Entry")
+    pe_doc.company = "Rushabh Instruments, LLC"
+    pe_doc.payment_type = "Receive"
+    pe_doc.party_type = "Customer"
+    pe_doc.party = data.get("party")
+    pe_doc.party_name = frappe.db.get_value("Customer", data.get("party"), "customer_name")
+    pe_doc.posting_date = today()
+    pe_doc.paid_to = "TD Bank - RI"
+    pe_doc.paid_amount = data.get("paid_amount")
+    pe_doc.received_amount =  data.get("paid_amount")
+    pe_doc.reference_no = "RU23456"
+    pe_doc.reference_date = today()
+    for row in data.get("references"):
+        if frappe.db.get_value("Sales Order", row.get("reference_name"), "name"):
+            ref_doc = frappe.get_doc("Sales Order", row.get("reference_name"))
+            total_amount=flt(ref_doc.base_grand_total)
+            outstanding_amount=flt(ref_doc.base_grand_total) - flt(ref_doc.advance_paid)
+            row["reference_doctype"] = ref_doc.doctype
+            row["total_amount"]=total_amount
+            row["outstanding_amount"]=outstanding_amount 
+            row["allocated_amount"] = outstanding_amount 
+            pe_doc.append("references", row)
+        else:
+            invoices = frappe.get_all("Sales Invoice", {"web_invoice_number":row.get("reference_name")}, "name")
+            for inv in invoices:
+                ref_doc = frappe.get_doc("Sales Invoice", inv.get("name"))
+                total_amount=flt(ref_doc.base_rounded_total)
+                outstanding_amount=flt(ref_doc.outstanding_amount)
+                inv["reference_doctype"] = ref_doc.doctype
+                inv["total_amount"] = total_amount
+                inv["outstanding_amount"] = outstanding_amount 
+                inv["allocated_amount"] = outstanding_amount
+                inv["due_date"] =  ref_doc.due_date
+                inv["reference_name"] = ref_doc.name
+                pe_doc.append("references", inv)
+    pe_doc.append("deductions", {
+        "account":"Credit Card Processing Fees - RI",
+        "cost_center":"Main - RI",
+        "amount": data.get("credit_card_processing_amount")
+    })
+    pe_doc.save()
+    # pe_doc.submit()
+    frappe.db.commit()
+    return "aaa"
+
+# "base_grand_total", "advance_paid"]
+
+
+
+
+# { 
+#     "payment_type":"Receive",
+#     "party_type":"Customer", 
+#     "party": "Azer Scientific Inc.",
+#     "company":"Rushabh Instruments, LLC",
+#     "posting_date":"2022-07-05",
+#     "paid_to":"TD Bank - RI",
+#     "paid_amount":560,
+#     "references" :[ 
+#         { 
+#         "reference_doctype":"Sales Order", 
+#         "reference_name":"SAL-ORD-2022-00259"
+#         }
+#     ],
+#     "deductions":[
+#         {
+#             "account":"Credit Card Processing Fees - RI",
+#             "cost_center":"Main - RI",
+#             "amount": 82.60
+#         }
+#     ],
+#     "reference_no":"D183994",
+#     "reference_date":"2022-07-05"
+# }
+
+# { 
+#     "party": "Azer Scientific Inc.",
+#     "paid_amount":2767.38,
+#     "credit_card_processing_amount": 82.60,
+#     "references" :[ 
+#         { 
+#             "reference_name":"SAL-ORD-2022-00259"
+#         },
+#         { 
+#             "reference_name":"SAL-ORD-2022-00260"
+#         },
+#         { 
+#             "reference_name":"SAL-ORD-2022-00261"
+#         }
+#     ]
+# }
