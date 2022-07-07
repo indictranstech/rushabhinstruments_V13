@@ -211,7 +211,7 @@ def create_payment_entry(data=None):
             "cost_center":"Main - RI",
             "amount": data.get("credit_card_processing_amount")
         })
-        pe_doc.save()
+        pe_doc.save(ignore_permissions=True)
         pe_doc.submit()
         frappe.db.commit()
         return {"payment_enrty_name":pe_doc.name}
