@@ -144,7 +144,7 @@ def delivery_note_on_date(posting_date=None):
 @frappe.whitelist(allow_guest=True)
 def create_payment_entry(data=None):
     data=json.loads(frappe.request.data)
-    total_amount=outstanding_amount=0.0
+    total_amount=outstanding_amount=total_allocated_amount=unallocated_amount=allocated_amount=0.0
     pe_doc = frappe.new_doc("Payment Entry")
     pe_doc.company = "Rushabh Instruments, LLC"
     pe_doc.payment_type = "Receive"
@@ -157,15 +157,28 @@ def create_payment_entry(data=None):
     pe_doc.received_amount =  data.get("paid_amount")
     pe_doc.reference_no = "RU23456"
     pe_doc.reference_date = today()
-    for row in data.get("references"):
+    for idx, row in enumerate(data.get("references")):
         if frappe.db.get_value("Sales Order", row.get("reference_name"), "name"):
             ref_doc = frappe.get_doc("Sales Order", row.get("reference_name"))
             total_amount=flt(ref_doc.base_grand_total)
             outstanding_amount=flt(ref_doc.base_grand_total) - flt(ref_doc.advance_paid)
+            if idx == 0:
+                unallocated_amount=data.get("paid_amount")
+
+            if unallocated_amount > outstanding_amount:
+                allocated_amount=outstanding_amount
+            else:
+                allocated_amount=unallocated_amount
+
+            total_allocated_amount+=allocated_amount
+
+            if  total_allocated_amount < (flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))):
+                unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))-total_allocated_amount
+
             row["reference_doctype"] = ref_doc.doctype
             row["total_amount"]=total_amount
             row["outstanding_amount"]=outstanding_amount 
-            row["allocated_amount"] = outstanding_amount 
+            row["allocated_amount"] = allocated_amount 
             pe_doc.append("references", row)
         else:
             invoices = frappe.get_all("Sales Invoice", {"web_invoice_number":row.get("reference_name")}, "name")
@@ -186,7 +199,7 @@ def create_payment_entry(data=None):
         "amount": data.get("credit_card_processing_amount")
     })
     pe_doc.save()
-    # pe_doc.submit()
+    pe_doc.submit()
     frappe.db.commit()
     return "aaa"
 
