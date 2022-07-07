@@ -145,107 +145,75 @@ def delivery_note_on_date(posting_date=None):
 def create_payment_entry(data=None):
     data=json.loads(frappe.request.data)
     total_amount=outstanding_amount=total_allocated_amount=unallocated_amount=allocated_amount=0.0
-    pe_doc = frappe.new_doc("Payment Entry")
-    pe_doc.company = "Rushabh Instruments, LLC"
-    pe_doc.payment_type = "Receive"
-    pe_doc.party_type = "Customer"
-    pe_doc.party = data.get("party")
-    pe_doc.party_name = frappe.db.get_value("Customer", data.get("party"), "customer_name")
-    pe_doc.posting_date = today()
-    pe_doc.paid_to = "TD Bank - RI"
-    pe_doc.paid_amount = data.get("paid_amount")
-    pe_doc.received_amount =  data.get("paid_amount")
-    pe_doc.reference_no = "RU23456"
-    pe_doc.reference_date = today()
-    for idx, row in enumerate(data.get("references")):
-        if frappe.db.get_value("Sales Order", row.get("reference_name"), "name"):
-            ref_doc = frappe.get_doc("Sales Order", row.get("reference_name"))
-            total_amount=flt(ref_doc.base_grand_total)
-            outstanding_amount=flt(ref_doc.base_grand_total) - flt(ref_doc.advance_paid)
-            if idx == 0:
-                unallocated_amount=data.get("paid_amount")
+    try:
+        pe_doc = frappe.new_doc("Payment Entry")
+        pe_doc.company = "Rushabh Instruments, LLC"
+        pe_doc.payment_type = "Receive"
+        pe_doc.party_type = "Customer"
+        pe_doc.party = data.get("party")
+        pe_doc.party_name = frappe.db.get_value("Customer", data.get("party"), "customer_name")
+        pe_doc.posting_date = today()
+        pe_doc.paid_to = "TD Bank - RI"
+        pe_doc.paid_amount = data.get("paid_amount")
+        pe_doc.received_amount =  data.get("paid_amount")
+        pe_doc.reference_no = "RU23456"
+        pe_doc.reference_date = today()
+        for idx, row in enumerate(data.get("references")):
+            if frappe.db.get_value("Sales Order", row.get("reference_name"), "name"):
+                ref_doc = frappe.get_doc("Sales Order", row.get("reference_name"))
+                total_amount=flt(ref_doc.base_grand_total)
+                outstanding_amount=flt(ref_doc.base_grand_total) - flt(ref_doc.advance_paid)
+                if idx == 0:
+                    unallocated_amount=data.get("paid_amount")
 
-            if unallocated_amount > outstanding_amount:
-                allocated_amount=outstanding_amount
+                if unallocated_amount > outstanding_amount:
+                    allocated_amount=outstanding_amount
+                else:
+                    allocated_amount=unallocated_amount
+
+                total_allocated_amount+=allocated_amount
+
+                if  total_allocated_amount < (flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))):
+                    unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))-total_allocated_amount
+
+                row["reference_doctype"] = ref_doc.doctype
+                row["total_amount"]=total_amount
+                row["outstanding_amount"]=outstanding_amount 
+                row["allocated_amount"] = allocated_amount 
+                pe_doc.append("references", row)
             else:
-                allocated_amount=unallocated_amount
+                invoices = frappe.get_all("Sales Invoice", {"web_invoice_number":row.get("reference_name")}, "name")
+                for idx, inv in enumerate(invoices):
+                    ref_doc = frappe.get_doc("Sales Invoice", inv.get("name"))
+                    total_amount=flt(ref_doc.base_rounded_total)
+                    outstanding_amount=flt(ref_doc.outstanding_amount)
 
-            total_allocated_amount+=allocated_amount
+                    if idx == 0:
+                        unallocated_amount=data.get("paid_amount")
 
-            if  total_allocated_amount < (flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))):
-                unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))-total_allocated_amount
+                    if unallocated_amount > outstanding_amount:
+                        allocated_amount=outstanding_amount
+                    else:
+                        allocated_amount=unallocated_amount
+                    total_allocated_amount+=allocated_amount
+                    if total_allocated_amount < (flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))):
+                        unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))-total_allocated_amount
 
-            row["reference_doctype"] = ref_doc.doctype
-            row["total_amount"]=total_amount
-            row["outstanding_amount"]=outstanding_amount 
-            row["allocated_amount"] = allocated_amount 
-            pe_doc.append("references", row)
-        else:
-            invoices = frappe.get_all("Sales Invoice", {"web_invoice_number":row.get("reference_name")}, "name")
-            for inv in invoices:
-                ref_doc = frappe.get_doc("Sales Invoice", inv.get("name"))
-                total_amount=flt(ref_doc.base_rounded_total)
-                outstanding_amount=flt(ref_doc.outstanding_amount)
-                inv["reference_doctype"] = ref_doc.doctype
-                inv["total_amount"] = total_amount
-                inv["outstanding_amount"] = outstanding_amount 
-                inv["allocated_amount"] = outstanding_amount
-                inv["due_date"] =  ref_doc.due_date
-                inv["reference_name"] = ref_doc.name
-                pe_doc.append("references", inv)
-    pe_doc.append("deductions", {
-        "account":"Credit Card Processing Fees - RI",
-        "cost_center":"Main - RI",
-        "amount": data.get("credit_card_processing_amount")
-    })
-    pe_doc.save()
-    pe_doc.submit()
-    frappe.db.commit()
-    return "aaa"
-
-# "base_grand_total", "advance_paid"]
-
-
-
-
-# { 
-#     "payment_type":"Receive",
-#     "party_type":"Customer", 
-#     "party": "Azer Scientific Inc.",
-#     "company":"Rushabh Instruments, LLC",
-#     "posting_date":"2022-07-05",
-#     "paid_to":"TD Bank - RI",
-#     "paid_amount":560,
-#     "references" :[ 
-#         { 
-#         "reference_doctype":"Sales Order", 
-#         "reference_name":"SAL-ORD-2022-00259"
-#         }
-#     ],
-#     "deductions":[
-#         {
-#             "account":"Credit Card Processing Fees - RI",
-#             "cost_center":"Main - RI",
-#             "amount": 82.60
-#         }
-#     ],
-#     "reference_no":"D183994",
-#     "reference_date":"2022-07-05"
-# }
-
-# { 
-#     "party": "Azer Scientific Inc.",
-#     "paid_amount":2767.38,
-#     "credit_card_processing_amount": 82.60,
-#     "references" :[ 
-#         { 
-#             "reference_name":"SAL-ORD-2022-00259"
-#         },
-#         { 
-#             "reference_name":"SAL-ORD-2022-00260"
-#         },
-#         { 
-#             "reference_name":"SAL-ORD-2022-00261"
-#         }
-#     ]
-# }
+                    inv["reference_doctype"] = ref_doc.doctype
+                    inv["total_amount"] = total_amount
+                    inv["outstanding_amount"] = outstanding_amount 
+                    inv["allocated_amount"] = allocated_amount
+                    inv["due_date"] =  ref_doc.due_date
+                    inv["reference_name"] = ref_doc.name
+                    pe_doc.append("references", inv)
+        pe_doc.append("deductions", {
+            "account":"Credit Card Processing Fees - RI",
+            "cost_center":"Main - RI",
+            "amount": data.get("credit_card_processing_amount")
+        })
+        pe_doc.save()
+        pe_doc.submit()
+        frappe.db.commit()
+        return {"payment_enrty_name":pe_doc.name}
+    except Exception as e:
+        return {"error":e}
