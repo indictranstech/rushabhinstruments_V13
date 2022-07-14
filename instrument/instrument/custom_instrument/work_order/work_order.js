@@ -58,5 +58,25 @@ frappe.ui.form.on('Work Order', {
 			}
 
 		}		
+	},
+	bom_no: function(frm){
+		frappe.call({
+			"method" :"instrument.instrument.custom_instrument.work_order.work_order.unstock_items_details",
+			"args" : {
+				bom_no : frm.doc.bom_no
+			},
+			callback:function(r){
+				if(r.message){
+					$.each(r.message, function(i, v){
+				        var d = frappe.model.add_child(frm.doc, "Unstock Items Table", "unstock_items_table");
+						d.item_code = v.item_code;
+						d.item_name = v.item_name;
+						d.description = v.description;
+						d.qty = v.qty;
+					})
+					frm.refresh_field("unstock_items_table");
+				}
+			}
+		});
 	}
 });

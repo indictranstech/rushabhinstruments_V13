@@ -251,3 +251,14 @@ def update_status_on_production_planning_with_lead_time(doc, method=None):
 def on_trash(doc, method=None):
 	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", "")
 	frappe.db.commit()
+
+
+@frappe.whitelist()
+def unstock_items_details(bom_no):
+	unstock_items = []
+	if bom_no:
+		bom_doc = frappe.get_doc("BOM", bom_no)
+		for row in bom_doc.items:
+			if not frappe.db.get_value("Item", row.item_code, "is_stock_item"):
+				unstock_items.append({"item_code":row.item_code, "item_name":row.item_name, "description":row.description, "qty":row.qty})				
+	return unstock_items
