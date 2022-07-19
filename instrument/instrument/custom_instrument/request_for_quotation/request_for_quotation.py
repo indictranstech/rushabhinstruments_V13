@@ -8,10 +8,6 @@ import os, shutil
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
 from frappe.model.mapper import get_mapped_doc
 
-import zipfile
-import tempfile
-from pathlib import Path
-import io
 
 def after_insert(doc,method):
 	pdf_data=frappe.attach_print('Request for Quotation',doc.name, print_format='Request for Quotation Print')
@@ -161,8 +157,10 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 
 def prepare_zip_attachment_for_rfq(doc, method):
 	all_files = []
-	# doc = frappe.get_doc("Request for Quotation", "PUR-RFQ-2022-00018")
 	for row in doc.items:
+		if not row.engineering_revision:
+			row.engineering_revision=frappe.db.get_value("Engineering Revision", {"item_code":row.item_code, "is_default":True, "is_active":True}, "name")
+
 		if row.item_code and row.engineering_revision:
 			engineering_revision_doc(row, all_files)
 	if all_files:
