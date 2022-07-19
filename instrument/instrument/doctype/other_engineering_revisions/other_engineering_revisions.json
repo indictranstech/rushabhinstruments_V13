@@ -65,18 +65,21 @@
    "label": "Exclude Engineering Package"
   },
   {
+   "depends_on": "eval: doc.exclude_purchasing_package==0",
    "fieldname": "purchase_package_name",
    "fieldtype": "Link",
    "label": "Purchase Package Name",
    "options": "Package Document"
   },
   {
+   "depends_on": "eval: doc.exclude_manufacturing_package==0",
    "fieldname": "manufacturing_package_name",
    "fieldtype": "Link",
    "label": "Manufacturing Package Name",
    "options": "Package Document"
   },
   {
+   "depends_on": "eval: doc.exclude_engineering_package==0",
    "fieldname": "engineering_package_name",
    "fieldtype": "Link",
    "label": "Engineering Package Name",
@@ -86,7 +89,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-06-10 00:58:13.699814",
+ "modified": "2022-07-19 09:23:28.961212",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Other Engineering Revisions",
