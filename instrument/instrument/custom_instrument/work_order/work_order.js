@@ -1,7 +1,6 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
 		
-    
 				// if(frm.doc.__islocal){
 		// 	frm.set_value('skip_transfer',1)
 		// }
@@ -57,6 +56,9 @@ frappe.ui.form.on('Work Order', {
 				})
 			}
 
+		}
+		if(frm.doc.__islocal){
+			frm.trigger("bom_no")
 		}		
 	},
 	bom_no: function(frm){
