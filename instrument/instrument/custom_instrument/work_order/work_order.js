@@ -57,7 +57,7 @@ frappe.ui.form.on('Work Order', {
 			}
 
 		}
-		if(frm.doc.__islocal){
+		if(frm.doc.__islocal && frm.doc.bom_no) {
 			frm.trigger("bom_no")
 		}		
 	},
