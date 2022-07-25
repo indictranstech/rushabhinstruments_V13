@@ -273,49 +273,66 @@ def unstock_items_details(bom_no):
 
 def prepare_zip_attachment_for_po(doc, method):
 	all_files = []
+	item_dict = []
+	engineering_revision=""
 	if not doc.engineering_revision:
-		doc.engineering_revision=frappe.db.get_value("Engineering Revision", {"item_code":doc.production_item, "is_default":True, "is_active":True}, "name")
-	item_dict={"engineering_revision":doc.engineering_revision, "item_code":doc.production_item, "name":doc.name}
-	if doc.production_item and doc.engineering_revision:
-		engineering_revision_doc(item_dict, all_files)
+		engineering_revision=frappe.db.get_value("Engineering Revision", {"item_code":doc.production_item, "is_default":True, "is_active":True}, "name")
+	else:
+		engineering_revision = doc.engineering_revision
+	item_dict.append({"engineering_revision":engineering_revision, "item_code":doc.production_item, "name":doc.name})
+	
+	for row in doc.required_items:
+		if not row.engineering_revision:
+			engineering_revision=frappe.db.get_value("Engineering Revision", {"item_code":row.item_code, "is_default":True, "is_active":True}, "name")
+		else:
+			engineering_revision = row.engineering_revision
+		
+		item_dict.append({"engineering_revision":engineering_revision, "item_code":row.item_code, "name":doc.name})
+
+	for row in item_dict:
+		if row.get('item_code') and row.get('engineering_revision'):
+			engineering_revision_doc(row, all_files)
 	if all_files:
 		create_zip_file(doc, all_files)
 		doc.reload()
 
-def engineering_revision_doc(item_dict, all_files): 
+def engineering_revision_doc(row, all_files): 
 	purchasing_package_list = []
-	purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(item_dict.get('engineering_revision')),as_dict=1,debug=False)
+	item_folder = []
+	purchasing_package = frappe.db.sql("""SELECT purchasing_package_name from `tabPurchasing Package Table` a join `tabEngineering Revision` b on a.parent = b.name where b.name = '{0}'""".format(row.get('engineering_revision')),as_dict=1,debug=False)
 	purchasing_package_list = [item.get('purchasing_package_name') for item in purchasing_package]
-
 	# file_path = os.path.realpath(get_files_path(is_private=1))
 	file_path = get_files_path(is_private=1)
-	full_path = file_path+ "/"+item_dict.get('item_code')
-	os.mkdir(full_path)
-	all_files.append(full_path)
+	if row.get('item_code') not in item_folder:
+		full_path = file_path+ "/"+row.get('item_code')
+		os.mkdir(full_path)
+		all_files.append(full_path)
+		item_folder.append(row.get('item_code'))
 
-	for col in purchasing_package_list:
-		package_doc = frappe.get_doc("Package Document",col)
-		from frappe.desk.form.load import get_attachments
-		attachments = get_attachments(package_doc.doctype, package_doc.name)
-		create_folder_with_file(attachments, full_path)
+		for col in purchasing_package_list:
+			package_doc = frappe.get_doc("Package Document",col)
+			from frappe.desk.form.load import get_attachments
+			attachments = get_attachments(package_doc.doctype, package_doc.name)
+			create_folder_with_file(attachments, full_path)
 
-	er_doc = frappe.get_doc("Engineering Revision",item_dict.get('engineering_revision'))
-	other_dict={}
-	for i in er_doc.other_engineering_revision:
-		if i.revision and not i.exclude_purchasing_package:
-			other_dict["item_code"]=i.item_code
-			other_dict["parent"]=item_dict.get("name")
-			other_dict["engineering_revision"]=i.revision
-		elif i.purchase_package_name and not i.exclude_purchasing_package:
-			other_dict["item_code"]=i.item_code
-			other_dict["parent"]=item_dict.get("name")
-			other_dict["engineering_revision"]="_".join(i.purchase_package_name.split("_")[0:2])
-		else:
-			if not i.exclude_purchasing_package:
-				other_dict["item_code"]=i.item_code
-				other_dict["parent"]=item_dict.get("name")
-				other_dict["engineering_revision"]=frappe.db.get_value("Engineering Revision", {"item_code":i.item_code, "is_default":True, "is_active":True}, "name")
-		engineering_revision_doc(other_dict, all_files)
+		if row.get('engineering_revision'):
+			er_doc = frappe.get_doc("Engineering Revision",row.get('engineering_revision'))
+			other_dict={}
+			for i in er_doc.other_engineering_revision:
+				if i.revision and not i.exclude_purchasing_package:
+					other_dict["item_code"]=i.item_code
+					other_dict["parent"]=row.get("name")
+					other_dict["engineering_revision"]=i.revision
+				elif i.purchase_package_name and not i.exclude_purchasing_package:
+					other_dict["item_code"]=i.item_code
+					other_dict["parent"]=row.get("name")
+					other_dict["engineering_revision"]="_".join(i.purchase_package_name.split("_")[0:2])
+				else:
+					if not i.exclude_purchasing_package:
+						other_dict["item_code"]=i.item_code
+						other_dict["parent"]=row.get("name")
+						other_dict["engineering_revision"]=frappe.db.get_value("Engineering Revision", {"item_code":i.item_code, "is_default":True, "is_active":True}, "name")
+				engineering_revision_doc(other_dict, all_files)
 
 
 def create_folder_with_file(attachments, full_path):
