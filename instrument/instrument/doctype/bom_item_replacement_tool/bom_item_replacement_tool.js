@@ -54,19 +54,62 @@ frappe.ui.form.on('BOM Item Replacement Tool', {
 	},
 	replace :function(frm){
 		if(frm.doc.old_item_number && frm.doc.new_item_number){
-			/*if(frm.doc.old_item_number == frm.doc.new_item_number){
-				frappe.throw("Old Item Number and New Item Number Cannot Be Same")
-			}*/
-			return frm.call({
-				doc: frm.doc,
-				method: "replace",
-				freeze: true,
-				callback: function(r) {
-					if(r.message){
-						frappe.msgprint("Item Replaced Successfully")
-					}
-				}
-			})
+			if(frm.doc.old_item_number == frm.doc.new_item_number){
+				return new Promise(function(resolve, reject) {
+					frappe.confirm(
+						'Old Item Number is same as New Item Number. Please confirm you want to proceed.',
+					function(){
+						var negative = 'frappe.validated = true';
+						resolve(negative);
+						return frm.call({
+								doc: frm.doc,
+								method: "replace",
+								freeze: true,
+								callback: function(r) {
+									if(r.message){
+										frappe.msgprint("Item Replaced Successfully")
+									}
+								}
+							})
+					},function(){
+						reject();
+					});
+				})
+
+			}
+			// return frm.call({
+			// 	doc: frm.doc,
+			// 	method: "replace",
+			// 	freeze: true,
+			// 	callback: function(r) {
+			// 		if(r.message){
+			// 			frappe.msgprint("Item Replaced Successfully")
+			// 		}
+			// 	}
+			// })
+			if((!frm.doc.old_bom_number && !frm.doc.new_bom) || (!frm.doc.old_bom_number && frm.doc.new_bom)) {
+				return new Promise(function(resolve, reject) {
+					frappe.confirm(
+						'Old Item Number Has BOM. Confirm Old BOM Number field was intentionally left blank',
+					function(){
+						var negative = 'frappe.validated = true';
+						resolve(negative);
+						return frm.call({
+								doc: frm.doc,
+								method: "replace",
+								freeze: true,
+								callback: function(r) {
+									if(r.message){
+										frappe.msgprint("Item Replaced Successfully")
+									}
+								}
+							})
+					},function(){
+						reject();
+					});
+				})
+
+			}
 		}else{
 			frappe.throw("Please Enter Old Item Number and New Item Number")
 		}
