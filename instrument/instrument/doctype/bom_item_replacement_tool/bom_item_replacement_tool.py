@@ -17,7 +17,6 @@ class BOMItemReplacementTool(Document):
 		return frappe.db.sql("""UPDATE `tabItem Mapping` set item_code = '{0}' where item_code = '{1}'""".format(self.new_item_number,self.old_item_number),debug=1)
 	def update_boms(self):
 		bom_list = self.get_all_boms()
-		print("=============bom_list",bom_list)
 		for bom in bom_list:
 			old_bom = frappe.get_doc("BOM",bom.get("name"))
 			default_company = frappe.db.get_single_value("Global Defaults",'default_company')
