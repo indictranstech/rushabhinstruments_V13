@@ -18,7 +18,6 @@ def validate(doc,method):
 		})
 		_file.save()
 def after_insert(doc,method):
-	create_pdf_for_check_and_attached(doc)
 	pdf_data=frappe.attach_print('Payment Entry',doc.name, print_format='Cheque Template v1')
 		
 	_file = frappe.get_doc({
@@ -33,7 +32,7 @@ def after_insert(doc,method):
 
 
 
-def create_pdf_for_check_and_attached(doc):
+def create_pdf_for_check_and_attached(doc, method):
 	import pdfkit
 	from PyPDF2 import PdfFileReader, PdfFileWriter
 	import io
