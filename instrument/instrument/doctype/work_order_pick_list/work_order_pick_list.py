@@ -289,36 +289,76 @@ class WorkOrderPickList(Document):
 									})
 			self.batch_assignment_fifo()
 		self.save()
+	# def batch_assignment_fifo(self):
+	# 	item_list = [item.item_code for item in self.work_order_pick_list_item]
+	# 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+		
+	# 	batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
+	# 	allocated_item_list = []
+	# 	allocated_item_dict = dict()
+	# 	for row in self.work_order_pick_list_item:
+	# 		if row.item_code not in allocated_item_dict:
+	# 			for col in batch_data:	
+	# 				if row.item_code == col.item and row.warehouse == col.warehouse :
+						
+	# 					if col.qty >= row.required_qty:
+	# 						row.batch_no = col.name
+	# 						row.picked_qty = row.required_qty
+	# 						allocated_item_list.append(row.item_code)
+	# 						allocated_item_dict.update({row.item_code:row.work_order})
+	# 						if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
+	# 							serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
+	# 							row.serial_no = serial_nos 
+	# 						break
+	# 					elif col.qty < row.required_qty:
+	# 						row.batch_no = col.name
+	# 						row.picked_qty = col.qty
+	# 						allocated_item_list.append(row.item_code)
+	# 						# allocated_item_dict.update({row.item_code:row.work_order})
+	# 						if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
+	# 							serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
+	# 							row.serial_no = serial_nos
+	# 						break
+
 	def batch_assignment_fifo(self):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
-		
+
 		batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
-		allocated_item_list = []
+
+		new_list = []
+		remain_qty=0
+		remain_item_qty=0
 		allocated_item_dict = dict()
+		pick_item_qty = dict()
 		for row in self.work_order_pick_list_item:
-			if row.item_code not in allocated_item_dict:
-				for col in batch_data:	
-					if row.item_code == col.item and row.warehouse == col.warehouse :
-						
-						if col.qty >= row.required_qty:
+			wo_item = row.item_code+row.work_order
+			for col in batch_data:
+				if row.item_code == col.item and row.warehouse == col.warehouse:
+					item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.item_code==r.get("item_code")])
+					qty=abs(row.required_qty-item_qty)
+					if col.qty>0:
+						row.stock_qty=col.qty
+					if wo_item not in allocated_item_dict:
+						if col.qty>=row.required_qty:
+							remain_qty = col.qty-row.required_qty
+							row.picked_qty=qty
 							row.batch_no = col.name
-							row.picked_qty = row.required_qty
-							allocated_item_list.append(row.item_code)
-							allocated_item_dict.update({row.item_code:row.work_order})
-							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
-								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
-								row.serial_no = serial_nos 
-							break
-						elif col.qty < row.required_qty:
-							row.batch_no = col.name
-							row.picked_qty = col.qty
-							allocated_item_list.append(row.item_code)
-							# allocated_item_dict.update({row.item_code:row.work_order})
+							col.update({"qty":remain_qty})
+							allocated_item_dict.update({wo_item:wo_item})
 							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
 								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
 								row.serial_no = serial_nos
-							break
+
+						elif col.qty>0:
+							remain_qty = qty-col.qty
+							row.picked_qty=col.qty
+							row.batch_no = col.name
+							col.update({"qty":0})
+							new_list.append(row)
+							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
+								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
+								row.serial_no = serial_nos
 		
 	def on_submit(self):
 		allocated_batch_data = frappe.db.sql("""SELECT b.item_code,b.picked_qty,b.batch_no from `tabWork Order Pick List Item` b join `tabWork Order Pick List` wo on wo.name = b.parent""",as_dict=1,debug=1)
