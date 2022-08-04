@@ -32,7 +32,7 @@ def after_insert(doc,method):
 
 
 
-def create_pdf_for_check_and_attached(doc method):
+def create_pdf_for_check_and_attached(doc,method):
 	import pdfkit
 	from PyPDF2 import PdfFileReader, PdfFileWriter
 	import io
