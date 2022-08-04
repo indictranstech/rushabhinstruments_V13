@@ -32,18 +32,17 @@ def after_insert(doc,method):
 
 
 
-def create_pdf_for_check_and_attached(doc, method):
+def create_pdf_for_check_and_attached(doc method):
 	import pdfkit
 	from PyPDF2 import PdfFileReader, PdfFileWriter
 	import io
 	from frappe.utils import get_files_path
-
 	data = {}
 	child_data = []
 	options={}
 	options["margin-right"] = "2mm"
 	options["margin-left"] = "2mm"
-	options["margin-top"] = "25mm"
+	options["margin-top"] = "2mm"
 	data["posting_date"] = doc.posting_date
 	data["party_name"] = doc.party_name
 	data["paid_amount"] = doc.paid_amount
