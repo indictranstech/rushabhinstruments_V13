@@ -1,22 +1,29 @@
 <style type="text/css">
 </style>
 <div class="conatiner">
+	<div style="box-shadow:0 0 10px gray; border-radius: 10px;">
 	<table width="100%">
 		<tr colspan="12" style="height:50px">
-			<td colspan="12" style="text-align:right;">{{frappe.utils.formatdate(data.posting_date,"mm-dd-yyyy")}}&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td colspan="12" style="text-align:right;"><br><br><br><br><br>{{frappe.utils.formatdate(data.posting_date,"mm-dd-yyyy")}}&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		</tr>
 		<tr colspan="12" style="height:50px">
-			<td colspan="10">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{data.party_name or ""}}</td>
-			<td colspan="2" style="text-align:right;">{{data.paid_amount or ""}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+			<td colspan="10">PAY TO THE<br>ORDER OF&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{data.party_name or ""}}</td>
+			<td colspan="2" style="text-align:right;"><br>&nbsp;&nbsp;&nbsp;$&nbsp;&nbsp;&nbsp;{{data.paid_amount or ""}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		</tr>
 		<tr colspan="12" style="height:50px">
-			<td colspan="12">{{frappe.utils.money_in_words(data.paid_amount).split(' ', 1)[1] or ""}}</td>
+			<td colspan="11">{{frappe.utils.money_in_words(data.paid_amount).split(' ', 1)[1] or ""}}</td>
+			<td colspan="1" style="text-align:right;">DOLLARS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+		</tr>
+		<tr colspan="12">
+			<td colspan="10"></td>
+			<td colspan="2" style="text-align:center;">void after 60 days</td>
 		</tr>
 		<tr colspan="12">
 			<td colspan="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>4323</b></td>
 			<td colspan="10" style="height:200px; text-align: right;"><img src="https://uatrushabhinstruments.indictranstech.com/files/signature.png", alt="signature">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		</tr>
 	</table>
+	</div>
 	<br>
 	<br>
 	<br>
