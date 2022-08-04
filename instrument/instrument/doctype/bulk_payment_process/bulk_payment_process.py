@@ -36,8 +36,6 @@ class BulkPaymentProcess(Document):
 	def on_update_after_submit(self):
 		if self.payment_completed==1:
 			frappe.throw(title="Not Allowed", msg="Payment Process already completed. Not allowed to change.")
-		# if self.workflow_state:
-			# if self.workflow_state=="Approved":
 		final_payment_dict = dict()
 		for item in self.items:
 			print("==========final_payment_dict",final_payment_dict)
@@ -65,46 +63,51 @@ class BulkPaymentProcess(Document):
 			for row in final_payment_dict.get(supplier):
 				print("===========row========",row)
 				amount = amount + row.amount
+				total_discount=self.check_discount(row.invoice_no)
+				amount = amount - total_discount
+				print("************", total_discount)
 				pe_doc.append('references',{
 					'reference_doctype':'Purchase Invoice',
 					'reference_name':row.invoice_no,
 					'grand_total':row.invoice_amount,
 					'outstanding_amount':row.outstanding_amount,
-					'allocated_amount':row.amount
+					'allocated_amount':row.amount,
+					'discount':total_discount
 					})
 			pe_doc.paid_amount = amount
 			pe_doc.received_amount = amount
 			pe_doc.save()
 			pe_list.append(pe_doc.name)
 			pe_doc.submit()
-		# frappe.msgprint('Payment Entry against '+ invoice_list + ' is completed')
 		self.show_list_created_message("Payment Entry", pe_list)
 		self.payment_completed=1
-		# 	if item.amount and item.invoice_no:
-		# 		pi_doc = frappe.get_doc('Purchase Invoice', item.invoice_no)
-		# 		pe_doc = frappe.new_doc('Payment Entry')
-		# 		pe_doc.payment_type ='Pay'
-		# 		pe_doc.mode_of_payment = self.mode_of_payment
-		# 		pe_doc.paid_from = self.payment_account
-		# 		pe_doc.paid_from_account_currency = self.account_currency
-		# 		pe_doc.party_type ='Supplier'
-		# 		pe_doc.party = pi_doc.supplier
-		# 		pe_doc.paid_amount = item.amount
-		# 		pe_doc.received_amount = item.amount
-		# 		pe_doc.source_exchange_rate = 1
-		# 		pe_doc.bulk_payment_process = self.name
-		# 		pe_doc.reference_no = self.reference_no
-		# 		pe_doc.reference_date = self.reference_date
-		# 		pe_doc_references = pe_doc.append('references')
-		# 		pe_doc_references.reference_doctype = 'Purchase Invoice'
-		# 		pe_doc_references.reference_name = item.invoice_no
-		# 		pe_doc_references.grand_total = item.invoice_amount
-		# 		pe_doc_references.outstanding_amount = item.outstanding_amount
-		# 		pe_doc_references.allocated_amount = item.amount
-		# 		pe_doc.submit()
-		# 		frappe.msgprint('Payment Entry against '+ item.invoice_no + ' is completed')
-		# self.payment_completed=1
+	def check_discount(self,invoice_no):
+		total_discount = 0
+		doc=frappe.get_doc("Purchase Invoice",invoice_no)
+		if doc:
+			has_payment_schedule = hasattr(doc, "payment_schedule") and doc.payment_schedule
+			if hasattr(doc, "payment_schedule") and doc.payment_schedule:
+				for term in doc.payment_schedule:
+					if not term.discounted_amount and term.discount and getdate(nowdate()) <= term.discount_date:
+						if term.discount_type == "Percentage":
+							discount_amount = flt(doc.get("grand_total")) * (term.discount / 100)
+						else:
+							discount_amount = term.discount
 
+						discount_amount_in_foreign_currency = discount_amount * doc.get("conversion_rate", 1)
+
+						
+						# received_amount -= discount_amount
+						# paid_amount -= discount_amount_in_foreign_currency
+
+						total_discount += discount_amount
+
+				if total_discount:
+					money = frappe.utils.fmt_money(total_discount, currency=doc.get("currency"))
+					frappe.msgprint(_("Discount of {} applied as per Payment Term").format(money), alert=1)
+
+			return total_discount
+	
 	def show_list_created_message(self, doctype, doc_list=None):
 		if not doc_list:
 			return

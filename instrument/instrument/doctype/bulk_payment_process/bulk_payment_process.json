@@ -24,6 +24,7 @@
   "total_outstanding_amount",
   "column_break_16",
   "total_paid_amount",
+  "total_paid_amount_including_discount",
   "payment_section",
   "company",
   "mode_of_payment",
@@ -193,12 +194,17 @@
    "options": "Bulk Payment Process",
    "print_hide": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "total_paid_amount_including_discount",
+   "fieldtype": "Currency",
+   "label": "Total Paid Amount Including Discount"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-07-28 01:42:14.668809",
+ "modified": "2022-08-04 06:36:56.641397",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Bulk Payment Process",
