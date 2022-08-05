@@ -61,11 +61,9 @@ class BulkPaymentProcess(Document):
 			pe_doc.reference_no = self.reference_no
 			pe_doc.reference_date = self.reference_date
 			for row in final_payment_dict.get(supplier):
-				print("===========row========",row)
 				amount = amount + row.amount
 				total_discount=self.check_discount(row.invoice_no)
-				amount = amount - total_discount
-				print("************", total_discount)
+				final_amount = amount - total_discount
 				pe_doc.append('references',{
 					'reference_doctype':'Purchase Invoice',
 					'reference_name':row.invoice_no,
@@ -74,8 +72,16 @@ class BulkPaymentProcess(Document):
 					'allocated_amount':row.amount,
 					'discount':total_discount
 					})
-			pe_doc.paid_amount = amount
-			pe_doc.received_amount = amount
+			pe_doc.paid_amount = final_amount
+			pe_doc.received_amount = final_amount
+			if final_amount != amount:
+				pe_doc.append('deductions',{
+					'account':'Write Off - RI',
+					'cost_center':'Main - RI',
+					'amount':flt(final_amount)-flt(amount),
+					'description':'Discount amount {0} is deducted from total invoice amount'.format(flt(flt(amount)-flt(final_amount),2)
+						)
+					})
 			pe_doc.save()
 			pe_list.append(pe_doc.name)
 			pe_doc.submit()
