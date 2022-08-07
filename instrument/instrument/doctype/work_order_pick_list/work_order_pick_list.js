@@ -141,10 +141,26 @@ frappe.ui.form.on('Work Order Pick List', {
 		frm.call({
 			method: "get_work_order_items",
 			doc: frm.doc,
-			callback: function(r, rt) {
-				refresh_field("work_order_pick_list_item");
-				// frm.save()
-				// frm.reload_doc();
+			callback: function(r) {
+				if (r.message) {
+					cur_frm.clear_table("work_order_pick_list_item");
+					$.each(r.message, function(idx, item_row){
+						var row = frappe.model.add_child(frm.doc, "Work Order Pick List Item", "work_order_pick_list_item");
+						row.item_code = item_row.item_code
+						row.uom = item_row.uom
+						row.uom_conversion_factor = item_row.uom_conversion_factor
+						row.stock_uom = item_row.stock_uom
+						row.serial_nos = item_row.serial_nos					
+						row.warehouse = item_row.warehouse
+						row.required_qty = item_row.required_qty
+						row.work_order = item_row.work_order
+						row.stock_qty=item_row.stock_qty
+						row.picked_qty=item_row.picked_qty
+						row.batch_no=item_row.batch_no
+					});
+					frm.save()
+					refresh_field("work_order_pick_list_item");
+				}
 			}
 		})
 	},

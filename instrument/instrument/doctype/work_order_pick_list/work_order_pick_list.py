@@ -287,8 +287,8 @@ class WorkOrderPickList(Document):
 										"engineering_revision" : d.get("engineering_revision"),
 										# "batch_no" : d.get('batch_no')
 									})
-			self.batch_assignment_fifo()
-		self.save()
+			return self.batch_assignment_fifo()
+		# self.save()
 	# def batch_assignment_fifo(self):
 	# 	item_list = [item.item_code for item in self.work_order_pick_list_item]
 	# 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
@@ -324,51 +324,90 @@ class WorkOrderPickList(Document):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 
-		batch_data = frappe.db.sql("""SELECT b.name,b.item,`tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
+		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=0)
 
-		new_list = []
-		remain_qty=0
-		remain_item_qty=0
-		allocated_item_dict = dict()
-		pick_item_qty = dict()
+		for row in batch_data:
+			calculate_remaining_batch_qty(row)
+
+		work_list = []
 		for row in self.work_order_pick_list_item:
-			wo_item = row.item_code+row.work_order
-			for col in batch_data:
-				if row.item_code == col.item and row.warehouse == col.warehouse:
-					item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.item_code==r.get("item_code")])
-					qty=abs(row.required_qty-item_qty)
-					if col.qty>0:
-						row.stock_qty=col.qty
-					if wo_item not in allocated_item_dict:
-						if col.qty>=row.required_qty:
-							remain_qty = col.qty-row.required_qty
-							row.picked_qty=qty
-							row.batch_no = col.name
-							col.update({"qty":remain_qty})
-							allocated_item_dict.update({wo_item:wo_item})
-							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
-								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
-								row.serial_no = serial_nos
-
-						elif col.qty>0:
-							remain_qty = qty-col.qty
-							row.picked_qty=col.qty
-							row.batch_no = col.name
-							col.update({"qty":0})
-							new_list.append(row)
-							if frappe.get_cached_value('Item', row.item_code, 'has_serial_no') == 1:
-								serial_nos = get_serial_no_batchwise(row.item_code,col.name,col.warehouse,row.required_qty)
-								row.serial_no = serial_nos
+			work_list.append({"item_code":row.item_code, "uom":row.uom, "uom_conversion_factor":row.uom_conversion_factor, "stock_uom":row.stock_uom, "serial_nos":row.serial_no, "warehouse":row.warehouse, "required_qty":row.required_qty, "work_order":row.work_order, "stock_qty":0, "picked_qty":0})
 		
+		new_list=[]
+		allocated_item_dict = dict()
+		allocated_war_item_dict = dict()
+		for row in work_list:
+		    wo_item = row.get("item_code")+row.get("work_order")
+		    war_item = row.get("work_order")+row.get("item_code")+row.get("warehouse")
+		    for col in batch_data:
+		        if row.get("item_code")==col.get("item") and row.get("warehouse")==col.get("warehouse") and wo_item not in allocated_item_dict:
+		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("work_order")==wo_item])            
+		            rem_reqd_qty = abs(item_qty-row.get("required_qty"))
+		            row.update({"required_qty":rem_reqd_qty})
+		            
+		            if col.get("qty")>= row.get("required_qty"):
+		                batch_qty = col.get("qty") - row.get("required_qty") 
+		                new_list.append({
+		                    "item_code":row.get("item_code"), 
+		                    "warehouse":row.get("warehouse"), 
+		                    "required_qty":row.get("required_qty"),
+		                    "work_order":row.get("work_order"),
+		                    "stock_qty":col.get("qty"),
+		                    "picked_qty":row.get("required_qty"),
+		                    "batch_no": col.get("name"),
+							"uom":row.get("uom"), 
+							"uom_conversion_factor":row.get("uom_conversion_factor"), 
+							"stock_uom":row.get("stock_uom")
+		                })
+		                col.update({"qty":batch_qty})
+		                allocated_item_dict.update({wo_item:wo_item})
+		            else:
+		                reqd_qty = row.get("required_qty")-col.get("qty")
+		                if col.get("qty") > 0:
+		                    new_list.append({
+		                        "item_code":row.get("item_code"), 
+		                        "warehouse":row.get("warehouse"), 
+		                        "required_qty":row.get("required_qty"),
+		                        "work_order":row.get("work_order"),
+		                        "stock_qty":col.get("qty"),
+		                        "picked_qty":col.get("qty"),
+		                        "batch_no": col.get("name"),
+		                        "uom":row.get("uom"), 
+								"uom_conversion_factor":row.get("uom_conversion_factor"), 
+								"stock_uom":row.get("stock_uom")
+		                    })
+		                elif war_item not in allocated_war_item_dict:
+		                    new_list.append({
+		                        "item_code":row.get("item_code"), 
+		                        "warehouse":row.get("warehouse"), 
+		                        "required_qty":row.get("required_qty"),
+		                        "work_order":row.get("work_order"),
+		                        "stock_qty": 0,
+		                        "picked_qty": 0,
+		                        "batch_no": "",
+		                        "uom":row.get("uom"), 
+								"uom_conversion_factor":row.get("uom_conversion_factor"), 
+								"stock_uom":row.get("stock_uom")
+		                    })
+		                    allocated_war_item_dict.update({war_item:war_item})
+		                col.update({"qty":0})		
+		return new_list
+
 	def on_submit(self):
-		allocated_batch_data = frappe.db.sql("""SELECT b.item_code,b.picked_qty,b.batch_no from `tabWork Order Pick List Item` b join `tabWork Order Pick List` wo on wo.name = b.parent""",as_dict=1,debug=1)
+		allocated_batch_data = frappe.db.sql("""SELECT b.item_code,b.picked_qty,b.batch_no from `tabWork Order Pick List Item` b join `tabWork Order Pick List` wo on wo.name = b.parent""",as_dict=1,debug=0)
 		allocated_batch_data_dict = {item.batch_no:item.picked_qty for item in allocated_batch_data}
 		allocated_batch_list = []
 		for row in self.work_order_pick_list_item:
 			if row.batch_no in allocated_batch_data_dict:
 				allocated_batch_list.append(row.idx)
-		if len(allocated_batch_list) > 0:
-			frappe.throw("Kindly Review batches for rows {0}".format(allocated_batch_list))
+		# if len(allocated_batch_list) > 0:
+		# 	frappe.throw("Kindly Review batches for rows {0}".format(allocated_batch_list))
+
+def calculate_remaining_batch_qty(row):
+	used_qty = frappe.db.sql("""SELECT item_code, sum(picked_qty) as picked_qty From `tabWork Order Pick List Item` where batch_no='{0}' and item_code='{1}' and docstatus=1""".format(row.name, row.item), as_dict=1)
+	if used_qty:
+		row["qty"] = abs(row.qty - flt(used_qty[0].get('picked_qty')))
+
 def get_serial_nos(item_code,batch_id):
 	serial_nos = frappe.db.sql("""SELECT name from `tabSerial No` where batch_no = '{0}' and item_code = '{1}'""".format(batch_id,item_code),as_dict=1)
 	serial_nos = [item.name for item in serial_nos]
