@@ -365,3 +365,25 @@ def create_zip_file(doc, all_files):
 	file_doc.file_url = file_url
 	file_doc.insert(ignore_permissions=True)
 	frappe.db.commit()
+
+
+@frappe.whitelist()
+def get_fg_item_for_consolidated_pick_list(item):
+	fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
+	fg_item_groups = [item.get('item_group') for item in fg_item_groups]
+	item_group = frappe.db.get_value("Item", {"name":item}, "item_group")
+	return True if item_group in fg_item_groups else False
+
+
+@frappe.whitelist()
+def make_consolidated_pick_list(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+	target_doc = get_mapped_doc("Work Order", source_name, {
+			"Work Order": {
+				"doctype": "Consolidated Pick List",
+				"field_map": {
+					"name": "work_order",
+				},
+			}
+		})
+	return target_doc
