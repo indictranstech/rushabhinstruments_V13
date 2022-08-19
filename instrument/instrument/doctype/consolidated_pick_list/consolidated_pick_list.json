@@ -34,6 +34,20 @@
   "get_items",
   "work_order_pick_list_item",
   "consider_current_stock",
+  "section_break_29",
+  "get_sales_orders",
+  "sales_order_table",
+  "pick_list_sales_order_table",
+  "section_break_32",
+  "get_so_items",
+  "sales_order_pick_list_item",
+  "section_break_36",
+  "get_purchase_orders",
+  "purchase_order_table",
+  "pick_list_purchase_order_table",
+  "section_break_40",
+  "get_po_items",
+  "purchase_order_pick_list_item",
   "amended_from"
  ],
  "fields": [
@@ -75,6 +89,7 @@
    "fieldname": "work_order_table",
    "fieldtype": "Table",
    "label": "Work Order Table",
+   "mandatory_depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
    "options": "Pick List FG Work Orders"
   },
   {
@@ -91,6 +106,7 @@
    "label": "Get Work Orders"
   },
   {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
    "fieldname": "section_break_3",
    "fieldtype": "Section Break"
   },
@@ -140,6 +156,7 @@
    "label": "Planned End Date"
   },
   {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
    "fieldname": "section_break_9",
    "fieldtype": "Section Break"
   },
@@ -215,12 +232,88 @@
    "hidden": 1,
    "label": "Work Order",
    "options": "Work Order"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "section_break_29",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_sales_orders",
+   "fieldtype": "Button",
+   "label": "Get Sales Orders"
+  },
+  {
+   "fieldname": "sales_order_table",
+   "fieldtype": "Table",
+   "label": "Sales Order Table",
+   "options": "Sales Order Pick List Table"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "section_break_32",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_so_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "pick_list_sales_order_table",
+   "fieldtype": "Table",
+   "label": "Pick List Sales Order Table",
+   "options": "Pick List Sales Order Table"
+  },
+  {
+   "fieldname": "sales_order_pick_list_item",
+   "fieldtype": "Table",
+   "label": "Sales Order Pick List Item",
+   "options": "Sales Order Pick List Item"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "section_break_36",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_purchase_orders",
+   "fieldtype": "Button",
+   "label": "Get Purchase Orders"
+  },
+  {
+   "fieldname": "purchase_order_table",
+   "fieldtype": "Table",
+   "label": "Purchase Order Table",
+   "options": "Purchase Order Table"
+  },
+  {
+   "fieldname": "pick_list_purchase_order_table",
+   "fieldtype": "Table",
+   "label": "Pick List Purchase Order Table",
+   "options": "Pick List Purchase Order Table"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "section_break_40",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_po_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "purchase_order_pick_list_item",
+   "fieldtype": "Table",
+   "label": "Purchase Order Pick List Item",
+   "options": "Purchase Order Pick List Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-17 03:13:39.544366",
+ "modified": "2022-08-19 09:09:25.800629",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
