@@ -35,7 +35,7 @@
   "work_order_pick_list_item",
   "consider_current_stock",
   "section_break_29",
-  "get_sales_orders",
+  "get_fg_sales_orders",
   "sales_order_table",
   "pick_list_sales_order_table",
   "section_break_32",
@@ -239,11 +239,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "get_sales_orders",
-   "fieldtype": "Button",
-   "label": "Get Sales Orders"
-  },
-  {
    "fieldname": "sales_order_table",
    "fieldtype": "Table",
    "label": "Sales Order Table",
@@ -308,12 +303,17 @@
    "fieldtype": "Table",
    "label": "Purchase Order Pick List Item",
    "options": "Purchase Order Pick List Item"
+  },
+  {
+   "fieldname": "get_fg_sales_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Sales Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-19 09:09:25.800629",
+ "modified": "2022-08-20 02:55:36.575171",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

@@ -114,6 +114,21 @@ frappe.ui.form.on('Consolidated Pick List', {
 		})
 
 	},
+
+	get_fg_sales_orders:(frm) =>{
+		frm.doc.work_order_table = ''
+		frm.dirty();
+		frm.call({
+			method: "get_fg_sales_orders",
+			doc: frm.doc,
+			callback: function(r, rt) {
+				refresh_field("sales_order_table");
+				refresh_field("pick_list_sales_order_table");
+				// frm.set_value("work_order", "")
+			}
+		})
+
+	},
 		// if(frm.doc.production_plan){
 		// 	frappe.call({
 		// 		method : 'instrument.instrument.doctype.work_order_pick_list.work_order_pick_list.get_work_orders',
@@ -167,6 +182,39 @@ frappe.ui.form.on('Consolidated Pick List', {
 			}
 		})
 	},
+
+	get_so_items: (frm) => {
+		frm.doc.sales_order_pick_list_item = ''
+		frm.dirty();
+		frm.call({
+			method: "get_sales_order_items",
+			doc: frm.doc,
+			callback: function(r) {
+				if (r.message) {
+					console.log("===========")
+					cur_frm.clear_table("sales_order_pick_list_item");
+					$.each(r.message, function(idx, item_row){
+						var row = frappe.model.add_child(frm.doc, "Sales Order Pick List Item", "sales_order_pick_list_item");
+						row.item_code = item_row.item_code
+						row.uom = item_row.uom
+						row.uom_conversion_factor = item_row.uom_conversion_factor
+						row.stock_uom = item_row.stock_uom
+						row.serial_nos = item_row.serial_nos					
+						row.warehouse = item_row.warehouse
+						row.required_qty = item_row.required_qty
+						row.sales_order = item_row.sales_order
+						row.stock_qty=item_row.stock_qty
+						row.picked_qty=item_row.picked_qty
+						row.batch_no=item_row.batch_no
+					});
+					frm.save()
+					refresh_field("sales_order_pick_list_item");
+				}
+			}
+		})
+	},
+
+
 	onload:function(frm){
 		var query = window.location.href
 		var index = query.indexOf("=")
