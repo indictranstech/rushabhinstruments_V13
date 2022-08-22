@@ -25,6 +25,8 @@
   "production_plan",
   "end_date",
   "work_order",
+  "sales_order",
+  "purchase_order",
   "section_break_9",
   "get_fg_work_orders",
   "work_order_table",
@@ -308,12 +310,26 @@
    "fieldname": "get_fg_sales_orders",
    "fieldtype": "Button",
    "label": "Get FG Sales Orders"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "label": "Sales Order",
+   "options": "Sales Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "label": "Purchase Order",
+   "options": "Purchase Order",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-20 02:55:36.575171",
+ "modified": "2022-08-22 02:43:16.951648",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

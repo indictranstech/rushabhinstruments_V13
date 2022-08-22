@@ -67,6 +67,14 @@ frappe.ui.form.on('Consolidated Pick List', {
 			frm.set_value("planned_start_date", "")
 			frm.set_value("planned_end_date", "")
 			frm.set_value("expected_delivery_date", "")
+		} else if (frm.doc.__islocal && frm.doc.sales_order){
+			frm.trigger("get_fg_sales_orders")
+			frm.set_value("purpose", "Sales Order Fulfillment")			
+			frm.set_value("delivery_start_date", "")
+			frm.set_value("delivery_end_date", "")
+			frm.set_value("customer", "")
+			frm.set_value("customer_po_number", "")
+
 		}
 	},
 	get_work_orders: (frm) => {
@@ -191,7 +199,6 @@ frappe.ui.form.on('Consolidated Pick List', {
 			doc: frm.doc,
 			callback: function(r) {
 				if (r.message) {
-					console.log("===========")
 					cur_frm.clear_table("sales_order_pick_list_item");
 					$.each(r.message, function(idx, item_row){
 						var row = frappe.model.add_child(frm.doc, "Sales Order Pick List Item", "sales_order_pick_list_item");
