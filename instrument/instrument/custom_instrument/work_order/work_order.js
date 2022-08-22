@@ -1,6 +1,9 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
 		
+		setTimeout(() => {
+			frm.remove_custom_button((__('Create Pick List')));
+		}, 10)
 				// if(frm.doc.__islocal){
 		// 	frm.set_value('skip_transfer',1)
 		// }
@@ -59,8 +62,11 @@ frappe.ui.form.on('Work Order', {
 		}
 		if(frm.doc.__islocal && frm.doc.bom_no) {
 			frm.trigger("bom_no")
-		}		
+		}
+
+		frm.trigger("add_consolidated_pick_list_button")		
 	},
+
 	bom_no: function(frm){
 		frappe.call({
 			"method" :"instrument.instrument.custom_instrument.work_order.work_order.unstock_items_details",
@@ -80,5 +86,28 @@ frappe.ui.form.on('Work Order', {
 				}
 			}
 		});
-	}
+	},
+
+	add_consolidated_pick_list_button: function(frm){
+		frm.call({
+			method: "instrument.instrument.custom_instrument.work_order.work_order.get_fg_item_for_consolidated_pick_list",
+			"args" : {
+				item : frm.doc.production_item
+			},
+			callback: function(r){
+				if (r.message){
+					frm.trigger("add_consolidated_button")
+				}
+			}
+		})
+	},
+
+	add_consolidated_button: function(frm) { 
+		frm.add_custom_button(__('Consolidated Pick List'), function() {
+			frappe.model.open_mapped_doc({
+				method: "instrument.instrument.custom_instrument.work_order.work_order.make_consolidated_pick_list",
+				frm: cur_frm
+			})
+		})
+	}						
 });

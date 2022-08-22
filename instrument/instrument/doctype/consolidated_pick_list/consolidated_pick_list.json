@@ -1,0 +1,394 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2022-08-16 01:30:51.393465",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "company",
+  "section_break_4",
+  "purpose",
+  "filters_section",
+  "delivery_start_date",
+  "planned_start_date",
+  "customer",
+  "workstation",
+  "start_date",
+  "supplier",
+  "column_break_7",
+  "delivery_end_date",
+  "customer_po_number",
+  "planned_end_date",
+  "expected_delivery_date",
+  "production_plan",
+  "end_date",
+  "work_order",
+  "section_break_9",
+  "get_fg_work_orders",
+  "work_order_table",
+  "get_work_orders",
+  "section_break_3",
+  "work_orders",
+  "get_items",
+  "work_order_pick_list_item",
+  "consider_current_stock",
+  "section_break_29",
+  "get_fg_sales_orders",
+  "sales_order_table",
+  "pick_list_sales_order_table",
+  "section_break_32",
+  "get_so_items",
+  "sales_order_pick_list_item",
+  "section_break_36",
+  "get_purchase_orders",
+  "purchase_order_table",
+  "pick_list_purchase_order_table",
+  "section_break_40",
+  "get_po_items",
+  "purchase_order_pick_list_item",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Naming Series",
+   "options": "WO-PICK-.YYYY.-",
+   "reqd": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "columns": 3,
+   "default": "Material Transfer for Manufacture",
+   "fieldname": "purpose",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Purpose",
+   "options": "\nMaterial Transfer for Manufacture\nManufacture\nSales Order Fulfillment\nMaterial Transfer for Subcontracted Goods",
+   "reqd": 1
+  },
+  {
+   "fieldname": "get_fg_work_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Work Orders"
+  },
+  {
+   "fieldname": "work_order_table",
+   "fieldtype": "Table",
+   "label": "Work Order Table",
+   "mandatory_depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "options": "Pick List FG Work Orders"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "production_plan",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Production Plan",
+   "options": "Production Plan"
+  },
+  {
+   "fieldname": "get_work_orders",
+   "fieldtype": "Button",
+   "label": "Get Work Orders"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "section_break_3",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "work_orders",
+   "fieldtype": "Table",
+   "label": "Pick List Work Order Table",
+   "options": "Pick Orders"
+  },
+  {
+   "fieldname": "get_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "work_order_pick_list_item",
+   "fieldtype": "Table",
+   "label": "Work Order Pick List Item",
+   "options": "Work Order Pick List Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "consider_current_stock",
+   "fieldtype": "Check",
+   "label": "Consider Current Stock",
+   "read_only": 1
+  },
+  {
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Filters"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "planned_start_date",
+   "fieldtype": "Date",
+   "label": "Planned Start Date"
+  },
+  {
+   "fieldname": "column_break_7",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "planned_end_date",
+   "fieldtype": "Date",
+   "label": "Planned End Date"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "section_break_9",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Consolidated Pick List",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "expected_delivery_date",
+   "fieldtype": "Date",
+   "label": "Expected Delivery Date"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
+   "fieldname": "workstation",
+   "fieldtype": "Link",
+   "label": "Workstation",
+   "options": "Workstation"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\" || doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "delivery_start_date",
+   "fieldtype": "Date",
+   "label": "Delivery Start Date"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "delivery_end_date",
+   "fieldtype": "Date",
+   "label": "Delivery End Date"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "customer_po_number",
+   "fieldtype": "Data",
+   "label": "Customer PO Number"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "work_order",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Work Order",
+   "options": "Work Order"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "section_break_29",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "sales_order_table",
+   "fieldtype": "Table",
+   "label": "Sales Order Table",
+   "options": "Sales Order Pick List Table"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "section_break_32",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_so_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "pick_list_sales_order_table",
+   "fieldtype": "Table",
+   "label": "Pick List Sales Order Table",
+   "options": "Pick List Sales Order Table"
+  },
+  {
+   "fieldname": "sales_order_pick_list_item",
+   "fieldtype": "Table",
+   "label": "Sales Order Pick List Item",
+   "options": "Sales Order Pick List Item"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "section_break_36",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_purchase_orders",
+   "fieldtype": "Button",
+   "label": "Get Purchase Orders"
+  },
+  {
+   "fieldname": "purchase_order_table",
+   "fieldtype": "Table",
+   "label": "Purchase Order Table",
+   "options": "Purchase Order Table"
+  },
+  {
+   "fieldname": "pick_list_purchase_order_table",
+   "fieldtype": "Table",
+   "label": "Pick List Purchase Order Table",
+   "options": "Pick List Purchase Order Table"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "section_break_40",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_po_items",
+   "fieldtype": "Button",
+   "label": "Get Items"
+  },
+  {
+   "fieldname": "purchase_order_pick_list_item",
+   "fieldtype": "Table",
+   "label": "Purchase Order Pick List Item",
+   "options": "Purchase Order Pick List Item"
+  },
+  {
+   "fieldname": "get_fg_sales_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Sales Orders"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2022-08-20 02:55:36.575171",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Consolidated Pick List",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "format:{mapped_item}_{item_code}",
+ "allow_rename": 1,
  "creation": "2021-10-18 04:55:14.023976",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -60,7 +60,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-01-05 06:54:40.590593",
+ "modified": "2022-08-22 01:02:34.979539",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Item Mapping",

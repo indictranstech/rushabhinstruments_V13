@@ -3,8 +3,17 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.model.naming import make_autoname
 
 class ItemMapping(Document):
+	def autoname(self):
+		attribute_values = []
+		for row in self.attribute_table:
+			attribute_values.append(row.value)
+		value = "_".join(attribute_values)
+		self.name = self.mapped_item+"_"+value
+
+
 	def validate(self):
 		if self.attribute_table:
 			attribute_list = [item.attribute for item in self.attribute_table]
