@@ -254,8 +254,6 @@ class ConsolidatedPickList(Document):
 						engineering_revision = frappe.db.get_value("Work Order Item",{'parent':item.work_order,'item_code':row},'engineering_revision')
 
 						if row in item_locations_dict:
-							print("========", row)
-							print("======", item_locations_dict.get(row))
 							col = item_locations_dict.get(row)
 							for i in col:
 								# Fetch batch  FIFO basis
@@ -469,7 +467,7 @@ class ConsolidatedPickList(Document):
 		    # war_item = row.get("sales_order")+row.get("item_code")+row.get("warehouse")
 		    for col in batch_data:
 		        if row.get("item_code")==col.get("item") and row.get("warehouse")==col.get("warehouse") and so_item not in allocated_item_dict:
-		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("sales_order")==sales_order])            
+		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("sales_order")==so_item])            
 		            rem_reqd_qty = abs(item_qty-row.get("required_qty"))
 		            row.update({"required_qty":rem_reqd_qty})
 		            
@@ -520,8 +518,9 @@ class ConsolidatedPickList(Document):
 
 	@frappe.whitelist()
 	def get_fg_sales_orders(self):
-		filters={"delivery_start_date":self.delivery_start_date, "delivery_end_date":self.delivery_end_date, "customer":self.customer, "customer_po_number":self.customer_po_number}
+		filters={"delivery_start_date":self.delivery_start_date, "delivery_end_date":self.delivery_end_date, "customer":self.customer, "customer_po_number":self.customer_po_number, "sales_order":self.sales_order}
 		self.sales_order_table = ''
+		self.purpose == "Sales Order Fulfillment"
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
 		fg_item_groups = [item.get('item_group') for item in fg_item_groups]
@@ -810,6 +809,8 @@ def wo_filter_condition(filters):
 
 def so_filter_condition(filters):
 	conditions = "1=1"
+	if filters.get("sales_order"):
+		conditions += " and so.name = '{0}'".format(filters.get("sales_order"))
 	if filters.get("customer"):
 		conditions += " and so.customer = '{0}'".format(filters.get("customer"))
 	if filters.get("customer_po_number"):

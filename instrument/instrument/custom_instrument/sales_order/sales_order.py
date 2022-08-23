@@ -75,3 +75,32 @@ def after_insert(doc,method):
 	"content": pdf_data.get('fcontent')
 	})
 	_file.save()
+
+
+
+@frappe.whitelist()
+def get_fg_item_for_consolidated_pick_list(doc):
+	import json
+	item_group = []
+	doc = json.loads(doc)
+	for row in doc.get("items"):
+		item_group.append(row.get("item_group")) 
+	fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
+	fg_item_groups = [item.get('item_group') for item in fg_item_groups]
+
+	item_group=list(set(item_group).intersection(fg_item_groups))
+	return True if item_group else False
+
+
+@frappe.whitelist()
+def make_consolidated_pick_list(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+	target_doc = get_mapped_doc("Sales Order", source_name, {
+			"Sales Order": {
+				"doctype": "Consolidated Pick List",
+				"field_map": {
+					"name": "sales_order",
+				},
+			}
+		})
+	return target_doc

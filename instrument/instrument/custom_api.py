@@ -164,7 +164,7 @@ def create_payment_entry(data=None):
                 total_amount=flt(ref_doc.base_grand_total)
                 outstanding_amount=flt(ref_doc.base_grand_total) - flt(ref_doc.advance_paid)
                 if idx == 0:
-                    unallocated_amount=data.get("paid_amount")
+                    unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))
 
                 if unallocated_amount > outstanding_amount:
                     allocated_amount=outstanding_amount
@@ -189,7 +189,7 @@ def create_payment_entry(data=None):
                     outstanding_amount=flt(ref_doc.outstanding_amount)
 
                     if idx == 0:
-                        unallocated_amount=data.get("paid_amount")
+                        unallocated_amount=flt(data.get("paid_amount"))+flt(data.get("credit_card_processing_amount"))
 
                     if unallocated_amount > outstanding_amount:
                         allocated_amount=outstanding_amount
