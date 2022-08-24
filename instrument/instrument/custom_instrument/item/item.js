@@ -1,5 +1,10 @@
 frappe.ui.form.on('Item',{
 	refresh:function(frm){
+		var prev_route = frappe.get_prev_route();
+		if ("Item Mapping" == prev_route[1] || "Mapped BOM" == prev_route[1] || "BOM Creation Tool" == prev_route[1]) {
+			frm.set_value("is_map_item", 1)
+		}
+
 		//Filter Engineering Revision
 		cur_frm.fields_dict['engineering_revision'].get_query = function(doc, cdt, cdn) {
 			return {
