@@ -30,10 +30,6 @@ def after_insert(doc,method):
 	})
 	_file.save()
 
-	for row in doc.items:
-		name = frappe.db.get_value("Sales Order Item", {"item_code":row.item_code, "parent":row.sales_order}, "name")
-		row.so_detail = name
-
 
 def create_pdf_for_check_and_attached(doc,method):
 	import pdfkit
