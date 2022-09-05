@@ -54,3 +54,11 @@ def after_insert(doc,method):
 	"content": pdf_data.get('fcontent')
 	})
 	_file.save()
+
+	for row in doc.items:
+		name = frappe.db.get_value("Sales Order Item", {"item_code":row.item_code, "parent":row.sales_order}, "name")
+		row.so_detail = name
+	doc.save()
+	frappe.db.commit()
+	# frappe.db.set_value("Sales Invoice Item", row.name, "so_detail", name)
+	# frappe.db.commit()
