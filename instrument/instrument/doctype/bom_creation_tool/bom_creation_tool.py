@@ -430,7 +430,9 @@ def override_bom_list(mapped_bom,override_bom_child):
 def get_all_boms_in_order(bom_childs):
 	if len(bom_childs)>1:
 		final_list = [row.get('mapped_bom') for row in bom_childs if row.get("mapped_bom")]
-		childs = frappe.db.sql("""SELECT mb.name,mb.bom_level from `tabMapped BOM` mb where mb.name in {0} order by mb.bom_level asc""".format(tuple(final_list)),as_dict=1)
+
+		final_list = '(' + ','.join("'{}'".format(i) for i in final_list) + ')'
+		childs = frappe.db.sql("""SELECT mb.name,mb.bom_level from `tabMapped BOM` mb where mb.name in {0} order by mb.bom_level asc""".format(final_list),as_dict=1)
 		return childs
 
 # Filter attribute values
