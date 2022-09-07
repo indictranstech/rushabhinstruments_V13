@@ -6,7 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "sales_order",
+  "purchase_order",
   "item",
   "qty",
   "qty_can_be_pulled",
@@ -15,14 +15,6 @@
   "stock_entry_status"
  ],
  "fields": [
-  {
-   "columns": 2,
-   "fieldname": "sales_order",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Sales Order",
-   "options": "Sales Order"
-  },
   {
    "columns": 2,
    "fieldname": "item",
@@ -66,12 +58,20 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Stock Entry Status"
+  },
+  {
+   "columns": 2,
+   "fieldname": "purchase_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Purchase Order",
+   "options": "Purchase Order"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-08-19 09:00:17.292443",
+ "modified": "2022-09-07 07:43:03.556428",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Pick List Purchase Order Table",
