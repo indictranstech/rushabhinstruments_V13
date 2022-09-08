@@ -437,3 +437,29 @@ frappe.ui.form.on('Pick List FG Work Orders', {
 		})
 	}
 })
+
+
+frappe.ui.form.on('Pick List Purchase Order Table', {
+	create_stock_entry:function(frm,cdt,cdn){
+		var row = locals[cdt][cdn]
+		frappe.call({
+			method : "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_stock_entry_for_po",
+			args :{
+				purchase_order : row.purchase_order,
+				item : row.item,
+				row_name: row.name
+			},
+			callback:function(r){
+				if(r.message){
+					var data = r.message
+					// frappe.model.set_value(row.doctype, row.name, 'stock_entry', data.name);
+					// frappe.model.set_value(row.doctype, row.name, 'stock_entry_status', data.status);
+					// frm.save()
+					// frm.submit()
+					frm.reload_doc();
+				}
+
+			}
+		})
+	}
+})

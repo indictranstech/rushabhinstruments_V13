@@ -1345,3 +1345,31 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 
 
 
+@frappe.whitelist()
+def create_stock_entry_for_po(purchase_order, item, row_name):
+	po_raw_data = frappe.db.sql("""SELECT a.supplier_warehouse as target_warehouse, a.set_warehouse as source_warehouse, b.main_item_code, b.rm_item_code, b.required_qty, b.rate, b.parent as purchase_order from `tabPurchase Order` a left join `tabPurchase Order Item Supplied` b on a.name=b.parent where b.parent='{0}' and b.main_item_code='{1}' """.format(purchase_order, item), as_dict=1)
+
+	stock_entry = frappe.db.sql("""SELECT a.purchase_order, b.subcontracted_item from `tabStock Entry` a left join `tabStock Entry Detail` b on a.name=b.parent where a.purchase_order='{0}' and b.subcontracted_item='{1}'""".format(purchase_order, item), as_dict=True)
+	if len(stock_entry)==0:
+		doc = frappe.new_doc("Stock Entry")
+		doc.stock_entry_type = "Send to Subcontractor"
+		doc.purchase_order = purchase_order
+		for row in po_raw_data:
+			doc.append("items", {
+				"subcontracted_item": row.get("main_item_code"),
+				"item_code":row.get("rm_item_code"),
+				"qty": row.get("required_qty"),
+				"s_warehouse": row.get("source_warehouse"),
+				"t_warehouse": row.get("target_warehouse"),
+				"basic_rate": row.get("rate")
+			})	
+		doc.save()
+		# doc.submit()
+		status = "Submitted" if doc.docstatus==1 else "Draft" 
+		frappe.msgprint("Stock Entries created {0}".format(doc.name))
+		frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry", doc.name)
+		frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry_status", status)
+		frappe.db.commit()
+		return {"name":doc.name, 'status':status}
+	else:
+		frappe.msgprint("Stock Entries already created for Purchase Order {0}".format(purchase_order))
