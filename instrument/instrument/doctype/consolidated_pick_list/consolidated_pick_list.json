@@ -314,6 +314,7 @@
   {
    "fieldname": "sales_order",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Sales Order",
    "options": "Sales Order",
    "read_only": 1
@@ -321,6 +322,7 @@
   {
    "fieldname": "purchase_order",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Purchase Order",
    "options": "Purchase Order",
    "read_only": 1
@@ -329,7 +331,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-22 02:43:16.951648",
+ "modified": "2022-09-08 08:56:42.179219",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

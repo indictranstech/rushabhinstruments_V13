@@ -75,8 +75,15 @@ frappe.ui.form.on('Consolidated Pick List', {
 			frm.set_value("customer", "")
 			frm.set_value("customer_po_number", "")
 
+		} else if (frm.doc.__islocal && frm.doc.purchase_order) {
+			frm.trigger("get_fg_purchase_orders")
+			frm.set_value("purpose", "Material Transfer for Subcontracted Goods")
+			frm.set_value("start_date", "")
+			frm.set_value("end_date", "")
+			frm.set_value("supplier", "")
 		}
 	},
+
 	get_work_orders: (frm) => {
 		frm.doc.work_orders = ''
 		frm.dirty();
@@ -255,7 +262,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 			});
 		}
 	},
-	get_purchase_orders:(frm) =>{
+	get_fg_purchase_orders:(frm) =>{
 		frm.doc.purchase_order_table = ''
 		frm.doc.pick_list_purchase_order_table = ''
 		frm.dirty();
@@ -290,7 +297,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 						row.serial_nos = item_row.serial_nos					
 						row.warehouse = item_row.warehouse
 						row.required_qty = item_row.required_qty
-						row.sales_order = item_row.sales_order
+						row.purchase_order = item_row.purchase_order
 						row.stock_qty=item_row.stock_qty
 						row.picked_qty=item_row.picked_qty
 						row.batch_no=item_row.batch_no
