@@ -654,7 +654,7 @@ class ConsolidatedPickList(Document):
 					final_raw_item_list.append({'item_code':item.item, 'required_qty':item.qty, 'purchase_order':item.purchase_order})
 					po_raw_data = frappe.db.sql("""SELECT main_item_code, rm_item_code as item_code, required_qty, parent as purchase_order from `tabPurchase Order Item Supplied` where parent='{0}' and main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1)
 					final_raw_item_list.extend(po_raw_data)
-		print("=========", final_raw_item_list)
+
 		for row in final_raw_item_list:
 			item_locations_dict = get_so_and_po_item_locations(self, row.get('item_code'), self.company, row.get('required_qty'),row.get('purchase_order'), row.get("main_item_code"))
 			final_data.append(item_locations_dict)
@@ -663,7 +663,6 @@ class ConsolidatedPickList(Document):
 			for row in item:
 				item_data = get_item_defaults(row, self.company)
 				for itm in item.get(row):
-					print("=====sss====", itm.get("main_item_code"))
 					self.append("purchase_order_pick_list_item",{
 						"main_item": itm.get("main_item_code"),
 						"item_code": row,
@@ -706,6 +705,10 @@ class ConsolidatedPickList(Document):
 					rem_reqd_qty = abs(item_qty-row.get("required_qty"))
 					row.update({"required_qty":rem_reqd_qty})
 
+					serial_no = ""
+					if frappe.get_cached_value('Item', row.get("item_code"), 'has_serial_no') == 1:
+						serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
+						serial_no = serial_nos
 					if col.get("qty")>= row.get("required_qty"):
 						batch_qty = col.get("qty") - row.get("required_qty")
 						new_list.append({
@@ -719,7 +722,8 @@ class ConsolidatedPickList(Document):
 							"batch_no": col.get("name"),
 							"uom":row.get("uom"), 
 							"uom_conversion_factor":row.get("uom_conversion_factor"),
-							"stock_uom":row.get("stock_uom")
+							"stock_uom":row.get("stock_uom"),
+							"serial_no": serial_no
 						})
 						col.update({"qty":batch_qty})
 						allocated_item_dict.update({po_item:po_item})
@@ -737,9 +741,11 @@ class ConsolidatedPickList(Document):
 								"batch_no": col.get("name"),
 								"uom":row.get("uom"), 
 								"uom_conversion_factor":row.get("uom_conversion_factor"),
-								"stock_uom":row.get("stock_uom")
+								"stock_uom":row.get("stock_uom"),
+								"serial_no": serial_no
 							})
-						col.update({"qty":0})		
+						col.update({"qty":0})
+		print("===========", new_list)		
 		return new_list
 
 def calculate_remaining_batch_qty(row):
@@ -763,7 +769,7 @@ def get_serial_nos(item_code,batch_id):
 	return serial_nos
 def get_serial_no_batchwise(item_code,batch_no,warehouse,qty):
 	if frappe.db.get_single_value("Stock Settings", "automatically_set_serial_nos_based_on_fifo"):
-		return "\n".join(frappe.db.sql_list("""SELECT name from `tabSerial No`
+		return ", ".join(frappe.db.sql_list("""SELECT name from `tabSerial No`
 			where item_code=%(item_code)s and warehouse=%(warehouse)s 
 			and batch_no=IF(%(batch_no)s IS NULL, batch_no, %(batch_no)s) order
 			by timestamp(purchase_date, purchase_time) asc limit %(qty)s""", {
@@ -771,7 +777,7 @@ def get_serial_no_batchwise(item_code,batch_no,warehouse,qty):
 				"warehouse": warehouse,
 				"batch_no": batch_no,
 				"qty": abs(cint(qty))
-			}))
+			}, debug=1))
 
 def get_item_locations(self,item_list,company):
 	item_locations_dict = dict()
@@ -1354,23 +1360,27 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 def create_stock_entry_for_po(purchase_order, item, row_name, name):
 	# po_raw_data = frappe.db.sql("""SELECT a.supplier_warehouse as target_warehouse, a.set_warehouse as source_warehouse, b.main_item_code, b.rm_item_code, b.required_qty, b.rate, b.parent as purchase_order from `tabPurchase Order` a left join `tabPurchase Order Item Supplied` b on a.name=b.parent where b.parent='{0}' and b.main_item_code='{1}' """.format(purchase_order, item), as_dict=1)
 
-	po_raw_data = frappe.db.sql("""SELECT main_item, item_code, warehouse, purchase_order, picked_qty from `tabPurchase Order Pick List Item` where purchase_order='{0}' and main_item='{1}' and parent='{2}' """.format(purchase_order, item, name), as_dict=1)
+	po_raw_data = frappe.db.sql("""SELECT main_item, item_code, warehouse, purchase_order, picked_qty, batch_no, serial_no from `tabPurchase Order Pick List Item` where purchase_order='{0}' and main_item='{1}' and parent='{2}' """.format(purchase_order, item, name), as_dict=1)
 
 
 	stock_entry = frappe.db.sql("""SELECT a.purchase_order, b.subcontracted_item from `tabStock Entry` a left join `tabStock Entry Detail` b on a.name=b.parent where a.purchase_order='{0}' and b.subcontracted_item='{1}'""".format(purchase_order, item), as_dict=True)
+	t_warehouse = frappe.db.get_value("Purchase Order", purchase_order, "supplier_warehouse")
 	if len(stock_entry)==0:
 		doc = frappe.new_doc("Stock Entry")
 		doc.stock_entry_type = "Send to Subcontractor"
 		doc.purchase_order = purchase_order
 		for row in po_raw_data:
-			doc.append("items", {
-				"subcontracted_item": row.get("main_item"),
-				"item_code":row.get("item_code"),
-				"qty": row.get("picked_qty"),
-				"s_warehouse": row.get("warehouse"),
-				"t_warehouse": frappe.db.get_value("Purchase Order", purchase_order, "supplier_warehouse"),
-				"basic_rate": frappe.db.get_value("Purchase Order Item Supplied", {"parent":purchase_order, "main_item_code":row.get("main_item"), "rm_item_code":row.get("item_code")}, "rate")
-			})	
+			if t_warehouse != row.get("warehouse"): 
+				doc.append("items", {
+					"subcontracted_item": row.get("main_item"),
+					"item_code":row.get("item_code"),
+					"qty": row.get("picked_qty"),
+					"s_warehouse": row.get("warehouse"),
+					"t_warehouse": t_warehouse,
+					"basic_rate": frappe.db.get_value("Purchase Order Item Supplied", {"parent":purchase_order, "main_item_code":row.get("main_item"), "rm_item_code":row.get("item_code")}, "rate"),
+					"batch_no": row.get("batch_no"),
+					"serial_no": row.get("serial_no")
+				})	
 		doc.save()
 		doc.submit()
 		status = "Submitted" if doc.docstatus==1 else "Draft" 
