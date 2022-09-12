@@ -290,6 +290,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 					cur_frm.clear_table("purchase_order_pick_list_item");
 					$.each(r.message, function(idx, item_row){
 						var row = frappe.model.add_child(frm.doc, "Purchase Order Pick List Item", "purchase_order_pick_list_item");
+						row.main_item = item_row.main_item
 						row.item_code = item_row.item_code
 						row.uom = item_row.uom
 						row.uom_conversion_factor = item_row.uom_conversion_factor
@@ -447,7 +448,8 @@ frappe.ui.form.on('Pick List Purchase Order Table', {
 			args :{
 				purchase_order : row.purchase_order,
 				item : row.item,
-				row_name: row.name
+				row_name: row.name,
+				name: frm.doc.name
 			},
 			callback:function(r){
 				if(r.message){

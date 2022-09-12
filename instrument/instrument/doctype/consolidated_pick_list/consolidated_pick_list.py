@@ -410,12 +410,12 @@ class ConsolidatedPickList(Document):
 	def get_sales_order_items(self):
 		final_raw_item_list = []
 		final_data = dict()
-
+		main_item_code = ""
 		if self.pick_list_sales_order_table:
 			for item in self.pick_list_sales_order_table:
 				# Get all the avaialble locations for required items
 				if self.purpose == 'Sales Order Fulfillment':
-					item_locations_dict = get_so_and_po_item_locations(self, item.item, self.company, item.qty, item.sales_order)
+					item_locations_dict = get_so_and_po_item_locations(self, item.item, self.company, item.qty, item.sales_order, main_item_code)
 				final_data[item.sales_order] = item_locations_dict
 			
 			# add items in item_locations
@@ -652,18 +652,20 @@ class ConsolidatedPickList(Document):
 				# Get all the avaialble locations for required items
 				if self.purpose == 'Material Transfer for Subcontracted Goods':
 					final_raw_item_list.append({'item_code':item.item, 'required_qty':item.qty, 'purchase_order':item.purchase_order})
-					po_raw_data = frappe.db.sql("""SELECT rm_item_code as item_code, required_qty, parent as purchase_order from `tabPurchase Order Item Supplied` where parent='{0}' and main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1)
+					po_raw_data = frappe.db.sql("""SELECT main_item_code, rm_item_code as item_code, required_qty, parent as purchase_order from `tabPurchase Order Item Supplied` where parent='{0}' and main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1)
 					final_raw_item_list.extend(po_raw_data)
-		
+		print("=========", final_raw_item_list)
 		for row in final_raw_item_list:
-			item_locations_dict = get_so_and_po_item_locations(self, row.get('item_code'), self.company, row.get('required_qty'),row.get('purchase_order'))
+			item_locations_dict = get_so_and_po_item_locations(self, row.get('item_code'), self.company, row.get('required_qty'),row.get('purchase_order'), row.get("main_item_code"))
 			final_data.append(item_locations_dict)
 		
 		for item in final_data:
 			for row in item:
 				item_data = get_item_defaults(row, self.company)
 				for itm in item.get(row):
+					print("=====sss====", itm.get("main_item_code"))
 					self.append("purchase_order_pick_list_item",{
+						"main_item": itm.get("main_item_code"),
 						"item_code": row,
 						"item_name": item_data.get("item_name"),
 						"warehouse":itm.get("warehouse"),
@@ -691,7 +693,7 @@ class ConsolidatedPickList(Document):
 
 		po_list = []
 		for row in self.purchase_order_pick_list_item:
-			po_list.append({"item_code":row.item_code, "uom":row.uom, "uom_conversion_factor":row.uom_conversion_factor, "stock_uom":row.stock_uom, "serial_nos":row.serial_no, "warehouse":row.warehouse, "required_qty":row.required_qty, "purchase_order":row.purchase_order, "stock_qty":0, "picked_qty":0})
+			po_list.append({"main_item":row.main_item, "item_code":row.item_code, "uom":row.uom, "uom_conversion_factor":row.uom_conversion_factor, "stock_uom":row.stock_uom, "serial_nos":row.serial_no, "warehouse":row.warehouse, "required_qty":row.required_qty, "purchase_order":row.purchase_order, "stock_qty":0, "picked_qty":0})
 		
 		new_list=[]
 		allocated_item_dict = dict()
@@ -707,6 +709,7 @@ class ConsolidatedPickList(Document):
 					if col.get("qty")>= row.get("required_qty"):
 						batch_qty = col.get("qty") - row.get("required_qty")
 						new_list.append({
+							"main_item":row.get("main_item"),
 							"item_code":row.get("item_code"), 
 							"warehouse":row.get("warehouse"), 
 							"required_qty":row.get("required_qty"),
@@ -724,6 +727,7 @@ class ConsolidatedPickList(Document):
 						reqd_qty = row.get("required_qty")-col.get("qty")
 						if col.get("qty") > 0:
 							new_list.append({
+								"main_item":row.get("main_item"),
 								"item_code":row.get("item_code"), 
 								"warehouse":row.get("warehouse"), 
 								"required_qty":row.get("required_qty"),
@@ -786,7 +790,7 @@ def get_item_locations(self,item_list,company):
 		item_locations_dict[item] = item_locations
 	return item_locations_dict
 
-def get_so_and_po_item_locations(self, item, company, qty, order):
+def get_so_and_po_item_locations(self, item, company, qty, order, main_item_code):
 	item_locations_dict = dict()
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", "default_wip_warehouse")
 	warehouses = [x.get('name') for x in frappe.get_list("Warehouse", {'company': company}, "name")]
@@ -803,6 +807,7 @@ def get_so_and_po_item_locations(self, item, company, qty, order):
 		for row in item_locations:
 			row["required_qty"] = qty
 			row["order"] = order
+			row["main_item_code"] = main_item_code
 		item_locations_dict[item] = item_locations
 	return item_locations_dict
 
@@ -1346,8 +1351,11 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 
 
 @frappe.whitelist()
-def create_stock_entry_for_po(purchase_order, item, row_name):
-	po_raw_data = frappe.db.sql("""SELECT a.supplier_warehouse as target_warehouse, a.set_warehouse as source_warehouse, b.main_item_code, b.rm_item_code, b.required_qty, b.rate, b.parent as purchase_order from `tabPurchase Order` a left join `tabPurchase Order Item Supplied` b on a.name=b.parent where b.parent='{0}' and b.main_item_code='{1}' """.format(purchase_order, item), as_dict=1)
+def create_stock_entry_for_po(purchase_order, item, row_name, name):
+	# po_raw_data = frappe.db.sql("""SELECT a.supplier_warehouse as target_warehouse, a.set_warehouse as source_warehouse, b.main_item_code, b.rm_item_code, b.required_qty, b.rate, b.parent as purchase_order from `tabPurchase Order` a left join `tabPurchase Order Item Supplied` b on a.name=b.parent where b.parent='{0}' and b.main_item_code='{1}' """.format(purchase_order, item), as_dict=1)
+
+	po_raw_data = frappe.db.sql("""SELECT main_item, item_code, warehouse, purchase_order, picked_qty from `tabPurchase Order Pick List Item` where purchase_order='{0}' and main_item='{1}' and parent='{2}' """.format(purchase_order, item, name), as_dict=1)
+
 
 	stock_entry = frappe.db.sql("""SELECT a.purchase_order, b.subcontracted_item from `tabStock Entry` a left join `tabStock Entry Detail` b on a.name=b.parent where a.purchase_order='{0}' and b.subcontracted_item='{1}'""".format(purchase_order, item), as_dict=True)
 	if len(stock_entry)==0:
@@ -1356,15 +1364,15 @@ def create_stock_entry_for_po(purchase_order, item, row_name):
 		doc.purchase_order = purchase_order
 		for row in po_raw_data:
 			doc.append("items", {
-				"subcontracted_item": row.get("main_item_code"),
-				"item_code":row.get("rm_item_code"),
-				"qty": row.get("required_qty"),
-				"s_warehouse": row.get("source_warehouse"),
-				"t_warehouse": row.get("target_warehouse"),
-				"basic_rate": row.get("rate")
+				"subcontracted_item": row.get("main_item"),
+				"item_code":row.get("item_code"),
+				"qty": row.get("picked_qty"),
+				"s_warehouse": row.get("warehouse"),
+				"t_warehouse": frappe.db.get_value("Purchase Order", purchase_order, "supplier_warehouse"),
+				"basic_rate": frappe.db.get_value("Purchase Order Item Supplied", {"parent":purchase_order, "main_item_code":row.get("main_item"), "rm_item_code":row.get("item_code")}, "rate")
 			})	
 		doc.save()
-		# doc.submit()
+		doc.submit()
 		status = "Submitted" if doc.docstatus==1 else "Draft" 
 		frappe.msgprint("Stock Entries created {0}".format(doc.name))
 		frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry", doc.name)

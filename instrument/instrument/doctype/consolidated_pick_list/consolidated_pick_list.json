@@ -44,7 +44,7 @@
   "get_so_items",
   "sales_order_pick_list_item",
   "section_break_36",
-  "get_purchase_orders",
+  "get_fg_purchase_orders",
   "purchase_order_table",
   "pick_list_purchase_order_table",
   "section_break_40",
@@ -274,11 +274,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "get_purchase_orders",
-   "fieldtype": "Button",
-   "label": "Get Purchase Orders"
-  },
-  {
    "fieldname": "purchase_order_table",
    "fieldtype": "Table",
    "label": "Purchase Order Table",
@@ -326,12 +321,17 @@
    "label": "Purchase Order",
    "options": "Purchase Order",
    "read_only": 1
+  },
+  {
+   "fieldname": "get_fg_purchase_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Purchase Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-08 08:56:42.179219",
+ "modified": "2022-09-12 04:03:44.548169",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
