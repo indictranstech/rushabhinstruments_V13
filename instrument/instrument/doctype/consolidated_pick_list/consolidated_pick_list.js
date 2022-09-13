@@ -75,8 +75,25 @@ frappe.ui.form.on('Consolidated Pick List', {
 			frm.set_value("customer", "")
 			frm.set_value("customer_po_number", "")
 
+		} else if (frm.doc.__islocal && frm.doc.purchase_order) {
+			frm.trigger("get_fg_purchase_orders")
+			frm.set_value("purpose", "Material Transfer for Subcontracted Goods")
+			frm.set_value("start_date", "")
+			frm.set_value("end_date", "")
+			frm.set_value("supplier", "")
 		}
 	},
+
+	purpose: (frm) => {
+		if ((frm.doc.purpose == 'Material Transfer for Manufacture') && (frm.doc.purpose == 'Manufacture')){
+			frm.set_value("naming_series", "WO-PICK-.YYYY.-")
+		} else if (frm.doc.purpose == 'Sales Order Fulfillment') {
+			frm.set_value("naming_series", "SO-PICK-.YYYY.-")
+		} else {
+			frm.set_value("naming_series", "PO-PICK-.YYYY.-")
+		}
+	},
+
 	get_work_orders: (frm) => {
 		frm.doc.work_orders = ''
 		frm.dirty();
@@ -254,7 +271,56 @@ frappe.ui.form.on('Consolidated Pick List', {
 				}
 			});
 		}
+	},
+	get_fg_purchase_orders:(frm) =>{
+		frm.doc.purchase_order_table = ''
+		frm.doc.pick_list_purchase_order_table = ''
+		frm.dirty();
+		frm.call({
+			method: "get_fg_purchase_orders",
+			doc: frm.doc,
+			callback: function(r, rt) {
+				refresh_field("purchase_order_table");
+				refresh_field("pick_list_purchase_order_table");
+				// frm.set_value("work_order", "")
+			}
+		})
+
+	},
+
+
+	get_po_items: (frm) => {
+		frm.doc.purchase_order_pick_list_item = ''
+		frm.dirty();
+		frm.call({
+			method: "get_purchase_order_items",
+			doc: frm.doc,
+			callback: function(r) {
+				if (r.message) {
+					cur_frm.clear_table("purchase_order_pick_list_item");
+					$.each(r.message, function(idx, item_row){
+						var row = frappe.model.add_child(frm.doc, "Purchase Order Pick List Item", "purchase_order_pick_list_item");
+						row.main_item = item_row.main_item
+						row.item_code = item_row.item_code
+						row.uom = item_row.uom
+						row.uom_conversion_factor = item_row.uom_conversion_factor
+						row.stock_uom = item_row.stock_uom
+						row.serial_nos = item_row.serial_nos					
+						row.warehouse = item_row.warehouse
+						row.required_qty = item_row.required_qty
+						row.purchase_order = item_row.purchase_order
+						row.stock_qty=item_row.stock_qty
+						row.picked_qty=item_row.picked_qty
+						row.batch_no=item_row.batch_no
+						row.serial_no = item_row.serial_no
+					});
+					frm.save()
+					refresh_field("purchase_order_pick_list_item");
+				}
+			}
+		})
 	}
+
 });
 frappe.ui.form.on('Pick Orders', {
 	work_order:function(frm,cdt,cdn){
@@ -378,6 +444,57 @@ frappe.ui.form.on('Pick List FG Work Orders', {
 				if(r.message){
 					frappe.model.set_value(row.doctype, row.name, 'pending_qty', r.message[0]['qty']);
 					frappe.model.set_value(row.doctype, row.name, 'qty_can_be_pulledmanufactured', r.message[0]['qty_will_be_produced']);
+				}
+			}
+		})
+	}
+})
+
+
+frappe.ui.form.on('Pick List Purchase Order Table', {
+	create_stock_entry:function(frm,cdt,cdn){
+		var row = locals[cdt][cdn]
+		frappe.call({
+			method : "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_stock_entry_for_po",
+			args :{
+				purchase_order : row.purchase_order,
+				item : row.item,
+				row_name: row.name,
+				name: frm.doc.name
+			},
+			callback:function(r){
+				if(r.message){
+					var data = r.message
+					frappe.model.set_value(row.doctype, row.name, 'stock_entry', data.name);
+					frappe.model.set_value(row.doctype, row.name, 'stock_entry_status', data.status);
+					frm.save()
+					// frm.submit()
+					frm.refresh_field("pick_list_purchase_order_table");
+				}
+
+			}
+		})
+	}
+})
+
+frappe.ui.form.on('Pick List Sales Order Table', {
+	create_delivery_note:function(frm,cdt,cdn){
+		var row = locals[cdt][cdn]
+		frappe.call({
+			method : "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_dn_for_so",
+			args :{
+				sales_order : row.sales_order,
+				item : row.item,
+				row_name: row.name,
+				name: frm.doc.name
+			},
+			callback:function(r){
+				if(r.message){
+					var data = r.message
+					frappe.model.set_value(row.doctype, row.name, 'delivery_note', data.name);
+					frappe.model.set_value(row.doctype, row.name, 'delivery_note_status', data.status);
+					frm.save()
+					frm.refresh_field("pick_list_sales_order_table");
 				}
 			}
 		})

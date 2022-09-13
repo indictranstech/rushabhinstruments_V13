@@ -44,7 +44,7 @@
   "get_so_items",
   "sales_order_pick_list_item",
   "section_break_36",
-  "get_purchase_orders",
+  "get_fg_purchase_orders",
   "purchase_order_table",
   "pick_list_purchase_order_table",
   "section_break_40",
@@ -54,13 +54,14 @@
  ],
  "fields": [
   {
+   "default": "WO-PICK-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Naming Series",
-   "options": "WO-PICK-.YYYY.-",
-   "reqd": 1,
-   "set_only_once": 1
+   "options": "WO-PICK-.YYYY.-\nSO-PICK-.YYYY.-\nPO-PICK-.YYYY.-",
+   "reqd": 1
   },
   {
    "fieldname": "company",
@@ -274,11 +275,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "get_purchase_orders",
-   "fieldtype": "Button",
-   "label": "Get Purchase Orders"
-  },
-  {
    "fieldname": "purchase_order_table",
    "fieldtype": "Table",
    "label": "Purchase Order Table",
@@ -314,6 +310,7 @@
   {
    "fieldname": "sales_order",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Sales Order",
    "options": "Sales Order",
    "read_only": 1
@@ -321,15 +318,21 @@
   {
    "fieldname": "purchase_order",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Purchase Order",
    "options": "Purchase Order",
    "read_only": 1
+  },
+  {
+   "fieldname": "get_fg_purchase_orders",
+   "fieldtype": "Button",
+   "label": "Get FG Purchase Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-22 02:43:16.951648",
+ "modified": "2022-09-13 04:10:57.506591",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

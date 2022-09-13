@@ -983,3 +983,17 @@ def add_items_in_ste(ste_doc, row, qty, po_details, batch_no=None):
 			"serial_no": "\n".join(row.serial_no) if row.serial_no else "",
 		}
 	)
+
+
+@frappe.whitelist()
+def make_consolidated_pick_list(source_name, target_doc=None):
+	from frappe.model.mapper import get_mapped_doc
+	target_doc = get_mapped_doc("Purchase Order", source_name, {
+			"Purchase Order": {
+				"doctype": "Consolidated Pick List",
+				"field_map": {
+					"name": "purchase_order"
+				},
+			}
+		})
+	return target_doc

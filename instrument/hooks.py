@@ -280,7 +280,8 @@ override_whitelisted_methods = {
 # along with any modifications made in other Frappe apps
 override_doctype_dashboards = {
 	"Item":  "instrument.instrument.custom_instrument.item.item_dashboard.get_data",
-	"Sales Order" : "instrument.instrument.custom_instrument.sales_order.sales_order_dashboard.get_data"
+	"Sales Order" : "instrument.instrument.custom_instrument.sales_order.sales_order_dashboard.get_data",
+	"Purchase Order" : "instrument.instrument.custom_instrument.purchase_order.purchase_order_dashboard.get_data"
 }
 
 # exempt linked doctypes from being automatically cancelled
