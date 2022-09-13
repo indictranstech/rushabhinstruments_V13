@@ -64,19 +64,21 @@ frappe.ui.form.on('Consolidated Pick List', {
 
 		if (frm.doc.__islocal && frm.doc.work_order) {
 			frm.trigger("get_fg_work_orders")
+			frm.set_value("naming_series", "WO-PICK-.YYYY.-")
 			frm.set_value("planned_start_date", "")
 			frm.set_value("planned_end_date", "")
 			frm.set_value("expected_delivery_date", "")
 		} else if (frm.doc.__islocal && frm.doc.sales_order){
 			frm.trigger("get_fg_sales_orders")
+			frm.set_value("naming_series", "SO-PICK-.YYYY.-")
 			frm.set_value("purpose", "Sales Order Fulfillment")			
 			frm.set_value("delivery_start_date", "")
 			frm.set_value("delivery_end_date", "")
 			frm.set_value("customer", "")
 			frm.set_value("customer_po_number", "")
-
 		} else if (frm.doc.__islocal && frm.doc.purchase_order) {
 			frm.trigger("get_fg_purchase_orders")
+			frm.set_value("naming_series", "PO-PICK-.YYYY.-")
 			frm.set_value("purpose", "Material Transfer for Subcontracted Goods")
 			frm.set_value("start_date", "")
 			frm.set_value("end_date", "")
@@ -141,18 +143,43 @@ frappe.ui.form.on('Consolidated Pick List', {
 	},
 
 	get_fg_sales_orders:(frm) =>{
-		frm.doc.work_order_table = ''
+		frm.doc.sales_order_table = ''
 		frm.dirty();
 		frm.call({
 			method: "get_fg_sales_orders",
 			doc: frm.doc,
 			callback: function(r, rt) {
 				refresh_field("sales_order_table");
+				// refresh_field("pick_list_sales_order_table");
+				// frm.set_value("work_order", "")
+			}
+		})
+	},
+
+	get_sales_orders:(frm) =>{
+		frm.doc.pick_list_sales_order_table = ''
+		frm.dirty();
+		frm.call({
+			method: "get_sales_orders",
+			doc: frm.doc,
+			callback: function(r, rt) {
 				refresh_field("pick_list_sales_order_table");
 				// frm.set_value("work_order", "")
 			}
 		})
+	},
 
+	get_purchase_orders:(frm) =>{
+		frm.doc.pick_list_purchase_order_table = ''
+		frm.dirty();
+		frm.call({
+			method: "get_purchase_orders",
+			doc: frm.doc,
+			callback: function(r, rt) {
+				refresh_field("pick_list_purchase_order_table");
+				// frm.set_value("work_order", "")
+			}
+		})
 	},
 		// if(frm.doc.production_plan){
 		// 	frappe.call({
@@ -274,14 +301,14 @@ frappe.ui.form.on('Consolidated Pick List', {
 	},
 	get_fg_purchase_orders:(frm) =>{
 		frm.doc.purchase_order_table = ''
-		frm.doc.pick_list_purchase_order_table = ''
+		// frm.doc.pick_list_purchase_order_table = ''
 		frm.dirty();
 		frm.call({
 			method: "get_fg_purchase_orders",
 			doc: frm.doc,
 			callback: function(r, rt) {
 				refresh_field("purchase_order_table");
-				refresh_field("pick_list_purchase_order_table");
+				// refresh_field("pick_list_purchase_order_table");
 				// frm.set_value("work_order", "")
 			}
 		})

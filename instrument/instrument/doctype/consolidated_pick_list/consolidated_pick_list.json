@@ -39,6 +39,8 @@
   "section_break_29",
   "get_fg_sales_orders",
   "sales_order_table",
+  "section_break_34",
+  "get_sales_orders",
   "pick_list_sales_order_table",
   "section_break_32",
   "get_so_items",
@@ -46,6 +48,8 @@
   "section_break_36",
   "get_fg_purchase_orders",
   "purchase_order_table",
+  "section_break_43",
+  "get_purchase_orders",
   "pick_list_purchase_order_table",
   "section_break_40",
   "get_po_items",
@@ -242,6 +246,7 @@
    "fieldtype": "Section Break"
   },
   {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
    "fieldname": "sales_order_table",
    "fieldtype": "Table",
    "label": "Sales Order Table",
@@ -327,12 +332,33 @@
    "fieldname": "get_fg_purchase_orders",
    "fieldtype": "Button",
    "label": "Get FG Purchase Orders"
+  },
+  {
+   "collapsible_depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "section_break_34",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_sales_orders",
+   "fieldtype": "Button",
+   "label": "Get Sales Orders"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
+   "fieldname": "section_break_43",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "get_purchase_orders",
+   "fieldtype": "Button",
+   "label": "Get Purchase Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-13 04:10:57.506591",
+ "modified": "2022-09-13 11:28:06.231180",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
