@@ -526,8 +526,12 @@ class ConsolidatedPickList(Document):
 		fg_item_groups = [item.get('item_group') for item in fg_item_groups]
 		if fg_item_groups:
 			if self.purpose == "Sales Order Fulfillment":
-				fg_sales_orders = frappe.db.sql("""SELECT so.name,(i.qty - i.delivered_qty) as pending_qty , i.item_code, i.qty, i.produced_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in {0} and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2}""".format(tuple(fg_item_groups),todays_date, so_filter_condition(filters)),as_dict=1,debug=1)
-				sales_order = []
+				fg_sales_orders = frappe.db.sql("""SELECT so.name,(i.qty - i.delivered_qty) as pending_qty , i.item_code, i.qty, i.produced_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in {0} and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2}""".format(tuple(fg_item_groups),todays_date, so_filter_condition(filters)),as_dict=1,debug=0)
+
+				sales_order = frappe.db.sql("""SELECT so.name, sum(i.qty - i.delivered_qty) as pending_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in {0} and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2} group by so.name""".format(tuple(fg_item_groups),todays_date, so_filter_condition(filters)), as_dict=True, debug=1)
+
+				qty_prod = {}
+				# sales_order = []
 				if fg_sales_orders:
 					for row in fg_sales_orders:
 						qty_will_be_produced_list = []
@@ -549,33 +553,27 @@ class ConsolidatedPickList(Document):
 						
 						row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
 
-						self.append('pick_list_sales_order_table',{
-							'sales_order':row.get('name'),
-							'item':row.get('item_code'),
-							'qty':row.get('pending_qty'),
-							'qty_can_be_pulled' :row.get('qty_will_be_produced')
-						})
-
-						if sales_order:
-							for i in sales_order:
-								if row.get("sales_order") in i:
-									i["sales_order"] = row.get("name")
-									i["pending_qty"] = i.get("pending_qty")+row.get('pending_qty')
-									i["qty_can_be_pulled"] = i.get("qty_can_be_pulled")+row.get('qty_will_be_produced')
-						else:
-							sales_order.append({
+						if row.get("pending_qty") > 0:
+							self.append('pick_list_sales_order_table',{
 								'sales_order':row.get('name'),
-								'pending_qty':row.get('pending_qty'),
+								'item':row.get('item_code'),
+								'qty':row.get('pending_qty'),
 								'qty_can_be_pulled' :row.get('qty_will_be_produced')
 							})
 
+						qty=0.0
+						if qty_prod.get(row.get('name')):
+							qty=qty_prod.get(row.get('name'))+row.get('qty_will_be_produced')
+							qty_prod.update({row.get('name'):qty})
+						else:
+							qty_prod.update({row.get('name'):row.get('qty_will_be_produced')})
+
 					for row in sales_order:
-						self.append('sales_order_table',{
-							'sales_order':row.get('sales_order'),
-							'pending_qty':row.get('pending_qty'),
-							'qty_can_be_pulled' :row.get('qty_can_be_pulled')
-							# 'total_qty':row.get('qty'),
-							# 'qty_already_completed':row.get('produced_qty')
+						if row.get("pending_qty") > 0:
+							self.append('sales_order_table',{
+								'sales_order':row.get('name'),
+								'pending_qty':row.get('pending_qty'),
+								'qty_can_be_pulled' : qty_prod.get(row.get('name'))
 							})
 				else:
 					frappe.throw("Please Enter Item Groups for FG in Rushabh Settings")
@@ -1358,8 +1356,6 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 
 @frappe.whitelist()
 def create_stock_entry_for_po(purchase_order, item, row_name, name):
-	# po_raw_data = frappe.db.sql("""SELECT a.supplier_warehouse as target_warehouse, a.set_warehouse as source_warehouse, b.main_item_code, b.rm_item_code, b.required_qty, b.rate, b.parent as purchase_order from `tabPurchase Order` a left join `tabPurchase Order Item Supplied` b on a.name=b.parent where b.parent='{0}' and b.main_item_code='{1}' """.format(purchase_order, item), as_dict=1)
-
 	po_raw_data = frappe.db.sql("""SELECT main_item, item_code, warehouse, purchase_order, picked_qty, batch_no, serial_no from `tabPurchase Order Pick List Item` where purchase_order='{0}' and main_item='{1}' and parent='{2}' """.format(purchase_order, item, name), as_dict=1)
 
 
@@ -1385,9 +1381,69 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 		doc.submit()
 		status = "Submitted" if doc.docstatus==1 else "Draft" 
 		frappe.msgprint("Stock Entries created {0}".format(doc.name))
-		frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry", doc.name)
-		frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry_status", status)
-		frappe.db.commit()
+		# frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry", doc.name)
+		# frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry_status", status)
+		# frappe.db.commit()
 		return {"name":doc.name, 'status':status}
 	else:
 		frappe.msgprint("Stock Entries already created for Purchase Order {0}".format(purchase_order))
+
+
+@frappe.whitelist()
+def create_dn_for_so(sales_order, item, row_name, name):
+	so_data = frappe.db.sql("""SELECT item_code, warehouse, sales_order, picked_qty, batch_no, serial_no from `tabSales Order Pick List Item` where sales_order='{0}' and item_code='{1}' and parent='{2}' """.format(sales_order, item, name), as_dict=1)
+
+	customer = frappe.db.get_value("Sales Order", sales_order, "customer")
+
+	dn_entry = frappe.db.sql("""SELECT name From `tabDelivery Note Item` where against_sales_order='{0}' and item_code='{1}'""".format(sales_order, item), as_dict=1)
+
+	if len(dn_entry)==0:
+		so_doc = frappe.get_doc("Sales Order", sales_order)
+		doc = frappe.new_doc("Delivery Note")
+		doc.naming_series = "MAT-DN-.YYYY.-"
+		doc.customer = so_doc.customer
+		doc.woocommerce_order_id = so_doc.woocommerce_order_id
+		doc.woocommerce_order_id = so_doc.woocommerce_order_id
+		doc.currency = so_doc.currency
+		doc.selling_price_list = so_doc.selling_price_list
+		doc.selling_price_list = so_doc.selling_price_list
+		doc.taxes_and_charges = "US ST 6% - RI"
+		doc.tc_name = so_doc.tc_name
+		doc.terms = so_doc.terms
+		for row in so_doc.items:
+			if row.item_code == item: 
+				doc.append("items", {
+					"item_code": row.item_code,
+					"item_name": row.item_name,
+					"description": row.description,
+					"uom": row.uom,
+					"stock_uom": row.stock_uom,
+					"conversion_factor": row.conversion_factor,
+					"qty":so_data[0].get("picked_qty"),
+					"rate": row.rate,
+					"warehouse": so_data[0].get("warehouse"),
+					"batch_no": so_data[0].get("batch_no"),
+					"against_sales_order": sales_order
+				})
+
+		for row in so_doc.taxes:
+			doc.append("taxes", {
+				"charge_type": row.charge_type,
+				"account_head": row.account_head,	
+				"description": row.account_head,
+				"rate": row.rate
+			})
+		doc.save()
+		doc.submit()
+
+		if doc.name:
+			status = "To Bill" if doc.docstatus==1 else "Draft" 
+			frappe.msgprint("Delivery Note created {0}".format(doc.name))
+			return {"name":doc.name, 'status':status}
+	else:
+		frappe.msgprint("Delivery Note already created for Sales Order {0}".format(sales_order))
+
+	
+
+
+

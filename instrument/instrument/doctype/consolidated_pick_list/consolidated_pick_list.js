@@ -455,13 +455,37 @@ frappe.ui.form.on('Pick List Purchase Order Table', {
 			callback:function(r){
 				if(r.message){
 					var data = r.message
-					// frappe.model.set_value(row.doctype, row.name, 'stock_entry', data.name);
-					// frappe.model.set_value(row.doctype, row.name, 'stock_entry_status', data.status);
-					// frm.save()
+					frappe.model.set_value(row.doctype, row.name, 'stock_entry', data.name);
+					frappe.model.set_value(row.doctype, row.name, 'stock_entry_status', data.status);
+					frm.save()
 					// frm.submit()
-					frm.reload_doc();
+					frm.refresh_field("pick_list_purchase_order_table");
 				}
 
+			}
+		})
+	}
+})
+
+frappe.ui.form.on('Pick List Sales Order Table', {
+	create_delivery_note:function(frm,cdt,cdn){
+		var row = locals[cdt][cdn]
+		frappe.call({
+			method : "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_dn_for_so",
+			args :{
+				sales_order : row.sales_order,
+				item : row.item,
+				row_name: row.name,
+				name: frm.doc.name
+			},
+			callback:function(r){
+				if(r.message){
+					var data = r.message
+					frappe.model.set_value(row.doctype, row.name, 'delivery_note', data.name);
+					frappe.model.set_value(row.doctype, row.name, 'delivery_note_status', data.status);
+					frm.save()
+					frm.refresh_field("pick_list_sales_order_table");
+				}
 			}
 		})
 	}
