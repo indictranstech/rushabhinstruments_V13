@@ -84,6 +84,16 @@ frappe.ui.form.on('Consolidated Pick List', {
 		}
 	},
 
+	purpose: (frm) => {
+		if ((frm.doc.purpose == 'Material Transfer for Manufacture') && (frm.doc.purpose == 'Manufacture')){
+			frm.set_value("naming_series", "WO-PICK-.YYYY.-")
+		} else if (frm.doc.purpose == 'Sales Order Fulfillment') {
+			frm.set_value("naming_series", "SO-PICK-.YYYY.-")
+		} else {
+			frm.set_value("naming_series", "PO-PICK-.YYYY.-")
+		}
+	},
+
 	get_work_orders: (frm) => {
 		frm.doc.work_orders = ''
 		frm.dirty();

@@ -54,13 +54,14 @@
  ],
  "fields": [
   {
+   "default": "WO-PICK-.YYYY.-",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Naming Series",
-   "options": "WO-PICK-.YYYY.-",
-   "reqd": 1,
-   "set_only_once": 1
+   "options": "WO-PICK-.YYYY.-\nSO-PICK-.YYYY.-\nPO-PICK-.YYYY.-",
+   "reqd": 1
   },
   {
    "fieldname": "company",
@@ -331,7 +332,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-12 04:03:44.548169",
+ "modified": "2022-09-13 04:10:57.506591",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
