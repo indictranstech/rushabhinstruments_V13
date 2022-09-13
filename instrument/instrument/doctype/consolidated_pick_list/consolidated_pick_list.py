@@ -409,39 +409,37 @@ class ConsolidatedPickList(Document):
 	@frappe.whitelist()
 	def get_sales_order_items(self):
 		final_raw_item_list = []
-		final_data = dict()
+		# final_data = dict()
+		final_data = []
 		main_item_code = ""
 		if self.pick_list_sales_order_table:
 			for item in self.pick_list_sales_order_table:
 				# Get all the avaialble locations for required items
 				if self.purpose == 'Sales Order Fulfillment':
 					item_locations_dict = get_so_and_po_item_locations(self, item.item, self.company, item.qty, item.sales_order, main_item_code)
-				final_data[item.sales_order] = item_locations_dict
+					final_data.append(item_locations_dict)
 			
 			# add items in item_locations
-			sales_order_list = [item.sales_order for item in self.pick_list_sales_order_table]
-			for sales_order in sales_order_list:
-				for row in final_data:
-					if row == sales_order:
-						final_row = final_data.get(row)
-						for i in final_row:
-							item_data = get_item_defaults(i, self.company)
-							j = final_row.get(i)
-							for d in j:
-								if flt(d.get("required_qty")) > 0:
-									self.append("sales_order_pick_list_item",{
-										"item_code": i,
-										"item_name": item_data.get("item_name"),
-										"warehouse":d.get("warehouse"),
-										"required_qty":d.get("required_qty"),
-										"stock_qty": d.get("qty"),
-										"sales_order" : row,
-										"picked_qty" : d.get('picked_qty'),
-										"uom" : d.get('stock_uom'),
-										"stock_uom":d.get('stock_uom'),
-										"description" :item_data.get('description'),
-										"item_group" : item_data.get("item_group"),
-									})
+			# sales_order_list = [item.sales_order for item in self.pick_list_sales_order_table]
+			# # for sales_order in sales_order_list:
+			for item in final_data:
+				for row in item:
+					item_data = get_item_defaults(row, self.company)
+					for itm in item.get(row):
+						if flt(itm.get("required_qty")) > 0:
+							self.append("sales_order_pick_list_item",{
+								"item_code": row,
+								"item_name": item_data.get("item_name"),
+								"warehouse":itm.get("warehouse"),
+								"required_qty":itm.get("required_qty"),
+								"stock_qty": itm.get("qty"),
+								"sales_order" : itm.get("order"),
+								"picked_qty" : itm.get('picked_qty'),
+								"uom" : itm.get('stock_uom'),
+								"stock_uom":itm.get('stock_uom'),
+								"description":item_data.get('description'),
+								"item_group" : item_data.get("item_group")
+							})
 			return self.so_batch_assignment_fifo()
 
 
@@ -470,7 +468,12 @@ class ConsolidatedPickList(Document):
 		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("sales_order")==so_item])            
 		            rem_reqd_qty = abs(item_qty-row.get("required_qty"))
 		            row.update({"required_qty":rem_reqd_qty})
-		            
+
+		            serial_no = ""
+		            if frappe.get_cached_value("Item", row.get("item_code"), 'has_serial_no') == 1:
+		            	serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
+		            	serial_no = serial_nos
+
 		            if col.get("qty")>= row.get("required_qty"):
 		                batch_qty = col.get("qty") - row.get("required_qty") 
 		                new_list.append({
@@ -483,7 +486,8 @@ class ConsolidatedPickList(Document):
 		                    "batch_no": col.get("name"),
 							"uom":row.get("uom"), 
 							"uom_conversion_factor":row.get("uom_conversion_factor"), 
-							"stock_uom":row.get("stock_uom")
+							"stock_uom":row.get("stock_uom"),
+							"serial_no": serial_no
 		                })
 		                col.update({"qty":batch_qty})
 		                allocated_item_dict.update({so_item:so_item})
@@ -500,7 +504,8 @@ class ConsolidatedPickList(Document):
 		                        "batch_no": col.get("name"),
 		                        "uom":row.get("uom"), 
 								"uom_conversion_factor":row.get("uom_conversion_factor"), 
-								"stock_uom":row.get("stock_uom")
+								"stock_uom":row.get("stock_uom"),
+								"serial_no": serial_no
 		                    })
 		                col.update({"qty":0})		
 		return new_list
@@ -553,13 +558,13 @@ class ConsolidatedPickList(Document):
 						
 						row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
 
-						if row.get("pending_qty") > 0:
-							self.append('pick_list_sales_order_table',{
-								'sales_order':row.get('name'),
-								'item':row.get('item_code'),
-								'qty':row.get('pending_qty'),
-								'qty_can_be_pulled' :row.get('qty_will_be_produced')
-							})
+						# if row.get("pending_qty") > 0:
+						# 	self.append('pick_list_sales_order_table',{
+						# 		'sales_order':row.get('name'),
+						# 		'item':row.get('item_code'),
+						# 		'qty':row.get('pending_qty'),
+						# 		'qty_can_be_pulled' :row.get('qty_will_be_produced')
+						# 	})
 
 						qty=0.0
 						if qty_prod.get(row.get('name')):
@@ -578,6 +583,45 @@ class ConsolidatedPickList(Document):
 				else:
 					frappe.throw("Please Enter Item Groups for FG in Rushabh Settings")
 
+	#get Sales Orders
+	@frappe.whitelist()
+	def get_sales_orders(self):
+		qty_prod = {}
+		for itm in self.sales_order_table:
+			fg_sales_orders = frappe.db.sql("""SELECT so.name,(i.qty - i.delivered_qty) as pending_qty , i.item_code, i.qty, i.produced_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where so.name='{0}' """.format(itm.sales_order), as_dict=1)
+
+			qty_will_be_produced_list = []
+
+
+			for row in fg_sales_orders:
+
+				ohs = get_current_stock()
+				if row.get("item_code") in ohs:
+					if row.get("pending_qty") <= ohs.get(row.get("item_code")):
+						percent_stock = 100
+						qty_will_be_produced = row.get("pending_qty")
+						qty_will_be_produced_list.append(qty_will_be_produced)
+					elif row.get("pending_qty") > ohs.get(row.get("item_code")) and ohs.get(row.get("item_code")) > 0: 
+						percent_stock = (ohs.get(row.get("item_code"))/row.get("pending_qty")*100)
+						qty_will_be_produced = (percent_stock/100*row.get("pending_qty"))
+						qty_will_be_produced_list.append(qty_will_be_produced)
+					else : 
+						percent_stock = (ohs.get(row.get("item_code"))/row.get("pending_qty")*100)
+						qty_will_be_produced = 0
+						qty_will_be_produced_list.append(qty_will_be_produced)
+				
+				row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
+
+				if row.get("pending_qty") > 0:
+					self.append('pick_list_sales_order_table',{
+						'sales_order':row.get('name'),
+						'item':row.get('item_code'),
+						'qty':row.get('pending_qty'),
+						'qty_can_be_pulled' :row.get('qty_will_be_produced')
+					})
+		return True
+
+
 	#Get FG Purchase Orders
 	@frappe.whitelist()
 	def get_fg_purchase_orders(self):
@@ -590,7 +634,7 @@ class ConsolidatedPickList(Document):
 
 		if fg_item_groups:
 			if self.purpose == "Material Transfer for Subcontracted Goods":
-				fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in {0} and po.schedule_date >= '{1}' and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2}""".format(tuple(fg_item_groups),todays_date, po_filter_condition(filters)),as_dict=1,debug=1)
+				fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in {0} and po.schedule_date >= '{1}' and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2}""".format(tuple(fg_item_groups),todays_date, po_filter_condition(filters)),as_dict=1,debug=0)
 
 				purchase_order = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty, i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in {0} and po.schedule_date >= '{1}' and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2} group by po.name""".format(tuple(fg_item_groups),todays_date, po_filter_condition(filters)),as_dict=1,debug=0)
 
@@ -617,12 +661,12 @@ class ConsolidatedPickList(Document):
 						
 						row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
 
-						self.append('pick_list_purchase_order_table',{
-							'purchase_order':row.get('name'),
-							'item':row.get('item_code'),
-							'qty':row.get('pending_qty'),
-							'qty_can_be_pulled' :row.get('qty_will_be_produced')
-						})
+						# self.append('pick_list_purchase_order_table',{
+						# 	'purchase_order':row.get('name'),
+						# 	'item':row.get('item_code'),
+						# 	'qty':row.get('pending_qty'),
+						# 	'qty_can_be_pulled' :row.get('qty_will_be_produced')
+						# })
 
 						qty=0.0
 						if qty_prod.get(row.get('name')):
@@ -639,6 +683,41 @@ class ConsolidatedPickList(Document):
 						})
 				else:
 					frappe.throw("Please Enter Item Groups for FG in Rushabh Settings")
+
+	#get Purchase Orders
+	@frappe.whitelist()
+	def get_purchase_orders(self):
+		for itm in self.purchase_order_table:
+			fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where po.name='{0}' """.format(itm.purchase_order),as_dict=1,debug=0)
+
+			qty_prod = {}
+			for row in fg_purchase_orders:
+				qty_will_be_produced_list = []
+				ohs = get_current_stock()
+				if row.get("item_code") in ohs:
+					if row.get("pending_qty") <= ohs.get(row.get("item_code")):
+						percent_stock = 100
+						qty_will_be_produced = row.get("pending_qty")
+						qty_will_be_produced_list.append(qty_will_be_produced)
+					elif row.get("pending_qty") > ohs.get(row.get("item_code")) and ohs.get(row.get("item_code")) > 0: 
+						percent_stock = (ohs.get(row.get("item_code"))/row.get("pending_qty")*100)
+						qty_will_be_produced = (percent_stock/100*row.get("pending_qty"))
+						qty_will_be_produced_list.append(qty_will_be_produced)
+					else : 
+						percent_stock = (ohs.get(row.get("item_code"))/row.get("pending_qty")*100)
+						qty_will_be_produced = 0
+						qty_will_be_produced_list.append(qty_will_be_produced)
+				
+				row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
+
+				self.append('pick_list_purchase_order_table',{
+					'purchase_order':row.get('name'),
+					'item':row.get('item_code'),
+					'qty':row.get('pending_qty'),
+					'qty_can_be_pulled' :row.get('qty_will_be_produced')
+				})
+
+		return True
 
 	#Pick Sales Order Pick Qty From Batch Basis On FIFO
 	@frappe.whitelist()
@@ -743,7 +822,6 @@ class ConsolidatedPickList(Document):
 								"serial_no": serial_no
 							})
 						col.update({"qty":0})
-		print("===========", new_list)		
 		return new_list
 
 def calculate_remaining_batch_qty(row):
@@ -1381,9 +1459,6 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 		doc.submit()
 		status = "Submitted" if doc.docstatus==1 else "Draft" 
 		frappe.msgprint("Stock Entries created {0}".format(doc.name))
-		# frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry", doc.name)
-		# frappe.db.set_value("Pick List Purchase Order Table", row_name, "stock_entry_status", status)
-		# frappe.db.commit()
 		return {"name":doc.name, 'status':status}
 	else:
 		frappe.msgprint("Stock Entries already created for Purchase Order {0}".format(purchase_order))
@@ -1392,7 +1467,6 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 @frappe.whitelist()
 def create_dn_for_so(sales_order, item, row_name, name):
 	so_data = frappe.db.sql("""SELECT item_code, warehouse, sales_order, picked_qty, batch_no, serial_no from `tabSales Order Pick List Item` where sales_order='{0}' and item_code='{1}' and parent='{2}' """.format(sales_order, item, name), as_dict=1)
-
 	customer = frappe.db.get_value("Sales Order", sales_order, "customer")
 
 	dn_entry = frappe.db.sql("""SELECT name From `tabDelivery Note Item` where against_sales_order='{0}' and item_code='{1}'""".format(sales_order, item), as_dict=1)
@@ -1411,20 +1485,21 @@ def create_dn_for_so(sales_order, item, row_name, name):
 		doc.tc_name = so_doc.tc_name
 		doc.terms = so_doc.terms
 		for row in so_doc.items:
-			if row.item_code == item: 
-				doc.append("items", {
-					"item_code": row.item_code,
-					"item_name": row.item_name,
-					"description": row.description,
-					"uom": row.uom,
-					"stock_uom": row.stock_uom,
-					"conversion_factor": row.conversion_factor,
-					"qty":so_data[0].get("picked_qty"),
-					"rate": row.rate,
-					"warehouse": so_data[0].get("warehouse"),
-					"batch_no": so_data[0].get("batch_no"),
-					"against_sales_order": sales_order
-				})
+			if row.item_code == item:
+				for itm in so_data:
+					doc.append("items", {
+						"item_code": row.item_code,
+						"item_name": row.item_name,
+						"description": row.description,
+						"uom": row.uom,
+						"stock_uom": row.stock_uom,
+						"conversion_factor": row.conversion_factor,
+						"qty": itm.get("picked_qty"),
+						"rate": row.rate,
+						"warehouse": itm.get("warehouse"),
+						"batch_no": itm.get("batch_no"),
+						"against_sales_order": sales_order
+					})
 
 		for row in so_doc.taxes:
 			doc.append("taxes", {
