@@ -984,7 +984,10 @@ def create_stock_entry(work_order, consolidated_pick_list):
 		work_order_doc = frappe.get_doc("Work Order",work_order)
 		pick_list_doc = frappe.get_doc("Consolidated Pick List",consolidated_pick_list)
 		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':consolidated_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
-		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict =1)
+		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict =1, debug=1)
+
+		print("=====data======", data)
+
 		if len(data) > 0:
 			stock_entry = frappe.new_doc("Stock Entry")
 			if stock_entry:
@@ -1042,7 +1045,7 @@ def create_stock_entry(work_order, consolidated_pick_list):
 					stock_entry.save()
 				return stock_entry.name
 		else:
-			frappe.throw("Please Pick Quantity For Atleast One Item")
+			frappe.throw("Please Pick Quantity For Atleast One Itemsssss")
 
 def wo_filter_condition(filters):
 	conditions = "1=1"
