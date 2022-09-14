@@ -609,9 +609,9 @@ class ConsolidatedPickList(Document):
 						percent_stock = (ohs.get(row.get("item_code"))/row.get("pending_qty")*100)
 						qty_will_be_produced = 0
 						qty_will_be_produced_list.append(qty_will_be_produced)
-				
+					
 				row['qty_will_be_produced'] =min(qty_will_be_produced_list) if qty_will_be_produced_list else 0
-
+				qty_will_be_produced_list = []
 				if row.get("pending_qty") > 0:
 					self.append('pick_list_sales_order_table',{
 						'sales_order':row.get('name'),
@@ -625,8 +625,8 @@ class ConsolidatedPickList(Document):
 	#Get FG Purchase Orders
 	@frappe.whitelist()
 	def get_fg_purchase_orders(self):
-		filters={"start_date":self.start_date, "end_date":self.end_date, "supplier":self.supplier}
-		self.sales_order_table = ''
+		filters={"start_date":self.start_date, "end_date":self.end_date, "supplier":self.supplier, "purchase_order": self.purchase_order}
+		self.purchase_order_table = ''
 		self.purpose == "Material Transfer for Subcontracted Goods"
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
@@ -986,8 +986,6 @@ def create_stock_entry(work_order, consolidated_pick_list):
 		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':consolidated_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
 		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict =1, debug=1)
 
-		print("=====data======", data)
-
 		if len(data) > 0:
 			stock_entry = frappe.new_doc("Stock Entry")
 			if stock_entry:
@@ -1080,6 +1078,8 @@ def po_filter_condition(filters):
 	conditions = "1=1"
 	if filters.get("supplier"):
 		conditions += " and po.supplier = '{0}'".format(filters.get("supplier"))
+	if filters.get("purchase_order"):
+		conditions += " and po.name = '{0}'".format(filters.get("purchase_order"))
 	if filters.get("start_date"):
 		conditions += " and po.schedule_date >= '{0}'".format(filters.get('start_date'))
 	if filters.get("end_date"):
