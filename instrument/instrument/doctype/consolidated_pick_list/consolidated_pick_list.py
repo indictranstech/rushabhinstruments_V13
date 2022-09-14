@@ -1459,7 +1459,7 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 					"serial_no": row.get("serial_no")
 				})	
 		doc.save()
-		doc.submit()
+		# doc.submit()
 		status = "Submitted" if doc.docstatus==1 else "Draft" 
 		frappe.msgprint("Stock Entries created {0}".format(doc.name))
 		return {"name":doc.name, 'status':status}
@@ -1501,7 +1501,8 @@ def create_dn_for_so(sales_order, item, row_name, name):
 						"rate": row.rate,
 						"warehouse": itm.get("warehouse"),
 						"batch_no": itm.get("batch_no"),
-						"against_sales_order": sales_order
+						"against_sales_order": sales_order,
+						"serial_no": itm.get("serial_no")
 					})
 
 		for row in so_doc.taxes:
@@ -1512,7 +1513,7 @@ def create_dn_for_so(sales_order, item, row_name, name):
 				"rate": row.rate
 			})
 		doc.save()
-		doc.submit()
+		# doc.submit()
 
 		if doc.name:
 			status = "To Bill" if doc.docstatus==1 else "Draft" 
