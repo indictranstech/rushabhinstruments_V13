@@ -77,8 +77,8 @@ def on_submit(doc,method):
 		frappe.db.set_value("Final Work Orders", {'item':d.production_item, 'sales_order':d.sales_order}, "wo_status", d.get_status())
 		frappe.db.commit()
 
-	if doc.work_order_pick_list:
-		pick_list_doc = frappe.get_doc("Work Order Pick List",doc.work_order_pick_list)
+	if doc.consolidated_pick_list:
+		pick_list_doc = frappe.get_doc("Work Order Pick List",doc.consolidated_pick_list)
 		if pick_list_doc :
 			for item in pick_list_doc.work_orders:
 				if item.work_order == doc.work_order:

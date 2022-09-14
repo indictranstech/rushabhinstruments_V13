@@ -1066,7 +1066,7 @@ def so_filter_condition(filters):
 	if filters.get("customer"):
 		conditions += " and so.customer = '{0}'".format(filters.get("customer"))
 	if filters.get("customer_po_number"):
-		conditions += " and so.customer_po_number = '{0}'".format(filters.get('customer_po_number'))
+		conditions += " and so.po_no = '{0}'".format(filters.get('customer_po_number'))
 	if filters.get("delivery_start_date"):
 		conditions += " and so.delivery_date >= '{0}'".format(filters.get('delivery_start_date'))
 	if filters.get("delivery_end_date"):
