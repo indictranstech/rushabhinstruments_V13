@@ -246,7 +246,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.purpose==\"Material Transfer for Subcontracted Goods\"",
    "fieldname": "sales_order_table",
    "fieldtype": "Table",
    "label": "Sales Order Table",
@@ -358,7 +357,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-13 11:28:06.231180",
+ "modified": "2022-09-14 01:01:40.236705",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
