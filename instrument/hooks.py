@@ -37,7 +37,6 @@ doctype_js = {
 	"Production Plan" : "instrument/custom_instrument/production_plan/production_plan.js",
 	"Task" : "instrument/custom_instrument/task/task.js",
 	"BOM Update Tool" : "instrument/custom_instrument/bom_update_tool/bom_update_tool.js"
- 
 }
 
 # include js, css files in header of desk.html
@@ -182,6 +181,9 @@ doc_events = {
  	"validate":"instrument.instrument.custom_instrument.payment_entry.payment_entry.validate",
  	"after_insert":"instrument.instrument.custom_instrument.payment_entry.payment_entry.after_insert",
  	"on_submit":"instrument.instrument.custom_instrument.payment_entry.payment_entry.create_pdf_for_check_and_attached"
+ 	},
+ 	"BOM Update Log":{
+ 	"validate":"instrument.instrument.custom_instrument.bom_update_log.bom_update_log.validate"
  	}
 }
 
@@ -247,6 +249,11 @@ override_doctype_class = {
 # ---------------
 
 scheduler_events = {
+	"cron": {
+		"* * * * *": [
+			"instrument.instrument.custom_instrument.bom.bom.update_bom_status"
+		]
+	},
 # 	"all": [
 # 		"instrument.tasks.all"
 # 	],
