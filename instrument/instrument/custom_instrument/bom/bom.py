@@ -135,3 +135,18 @@ def disable_old_boms(doc, method):
 						bom_doc.to_be_disabled = 1
 					bom_doc.save()
 					bom_doc.submit()
+
+
+
+@frappe.whitelist()
+def update_bom_status():
+	bom_list = frappe.db.sql("""SELECT name FROM `tabBOM` where name='BOM-13440-002' """, as_dict=1)
+
+	for row in bom_list:
+		bom_log = frappe.db.sql("""SELECT name, status, new_bom, current_bom FROM `tabBOM Update Log` where update_type='Replace BOM' and new_bom='{0}' order by name desc limit 1""".format(row.get("name")), as_dict=1)
+		if bom_log:
+			frappe.db.set_value("BOM", {"name":row.get("name")}, "update_status", bom_log[0].get("status"))
+			frappe.db.commit()
+
+
+

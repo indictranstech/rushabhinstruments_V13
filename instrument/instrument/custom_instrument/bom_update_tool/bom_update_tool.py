@@ -14,7 +14,6 @@ from six import string_types
 from erpnext.manufacturing.doctype.bom.bom import get_boms_in_bottom_up_order
 
 def replacee_bom(self):
-	print("=====new_bomnew_bomnew_bom====", self.new_bom)
 	self.validate_bom()
 
 	unit_cost = get_new_bom_unit_cost(self.new_bom)
@@ -128,4 +127,7 @@ def update_cost():
 def update_mapped_bom_item(current_bom, new_bom):
 	frappe.db.sql("""update `tabMapped BOM Item` set bom_no=%s where bom_no = %s and parenttype='Mapped BOM'""",
 		(new_bom, current_bom), debug=1)
-	frappe.db.commit()
+
+	# # frappe.db.set_value("BOM", new_bom, "update_status", "Completed")
+
+	# frappe.db.commit()
