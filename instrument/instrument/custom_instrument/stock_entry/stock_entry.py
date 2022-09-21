@@ -152,8 +152,8 @@ def label_img(doc,method):
 		for filedoc in fname:
 			if "label" in filedoc.file_name:
 				lnum = re.search("label(.*).png",filedoc.file_name)
-				count = int(lnum.group(1))+1
 				frappe.delete_doc('File',filedoc.name)
+				count = lnum.group(1)
 	namestr = doc.name + "-label{0}".format(count) + ".png"
 	imgfile = frappe.get_doc({'doctype':'File','file_name':namestr,'attached_to_doctype':"Stock Entry",'attached_to_name':doc.name,"content":b64str,"decode":1})
 	imgfile.insert()
