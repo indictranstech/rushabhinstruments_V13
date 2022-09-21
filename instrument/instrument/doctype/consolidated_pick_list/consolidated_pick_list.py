@@ -728,7 +728,7 @@ class ConsolidatedPickList(Document):
 			for item in self.pick_list_purchase_order_table:
 				# Get all the avaialble locations for required items
 				if self.purpose == 'Material Transfer for Subcontracted Goods':
-					final_raw_item_list.append({'item_code':item.item, 'required_qty':item.qty, 'purchase_order':item.purchase_order})
+					# final_raw_item_list.append({'item_code':item.item, 'required_qty':item.qty, 'purchase_order':item.purchase_order})
 					po_raw_data = frappe.db.sql("""SELECT main_item_code, rm_item_code as item_code, required_qty, parent as purchase_order from `tabPurchase Order Item Supplied` where parent='{0}' and main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1)
 					final_raw_item_list.extend(po_raw_data)
 
