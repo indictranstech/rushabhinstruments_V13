@@ -503,3 +503,9 @@ def get_standard_item_code(doctype, txt, searchfield, start, page_len, filters):
 				'txt': '%' + txt + '%',
 				'start': start, 'page_len': page_len
 			})
+@frappe.whitelist()
+def check_recent_version_of_BCT(standard_item_code):
+	if standard_item_code:
+		check_BCT = frappe.db.sql("""SELECT b.name from `tabBOM Creation Tool` b where b.standard_item_code = '{0}' order by b.name desc""".format(standard_item_code),as_dict=1)
+		if check_BCT:
+			return check_BCT[0].get('name')
