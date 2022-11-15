@@ -49,12 +49,14 @@
    "read_only": 1
   },
   {
+   "bold": 1,
    "columns": 2,
    "fieldname": "standard_item_code",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Std Item Code",
-   "options": "Item"
+   "options": "Item",
+   "reqd": 1
   },
   {
    "columns": 1,
@@ -84,7 +86,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2021-12-29 06:34:16.616331",
+ "modified": "2022-10-10 04:53:21.259487",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Review Item Mapping",

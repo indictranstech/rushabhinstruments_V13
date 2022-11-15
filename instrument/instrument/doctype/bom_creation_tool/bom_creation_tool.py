@@ -5,7 +5,17 @@ import frappe
 from frappe.model.document import Document
 from erpnext.stock.doctype.item.item import get_item_defaults
 from frappe.model.naming import make_autoname
-
+from frappe.utils import (
+	add_days,
+	ceil,
+	cint,
+	comma_and,
+	flt,
+	get_link_to_form,
+	getdate,
+	now_datetime,
+	nowdate,
+)
 
 # BOM Creation tool working
 # 1) Create mapped item
@@ -340,6 +350,7 @@ class BOMCreationTool(Document):
 									std_bom.append('items',line)
 							std_bom.save(ignore_permissions = True)
 							std_bom.submit()
+			doc.status = 'Completed'
 		else:
 			frappe.throw("Please Check Review Item Mapping")
 
@@ -389,6 +400,7 @@ def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
 			item_list.append({'item_code':mapped_bom_doc.item,'parent':bom,'attribute_list':main_item})
 		for row in item_list:
 			mapped_bom_list = [item.get("parent") for item in item_list if item.get("item_code") == row.get("item_code")]
+			mapped_bom_list = [get_link_to_form(mapped_bom_doc.doctype, p) for p in mapped_bom_list]
 			if row.get("item_code") not in check_items:
 				row['mapped_boms'] = str(mapped_bom_list)
 				final_item_list.append(row)
@@ -503,3 +515,9 @@ def get_standard_item_code(doctype, txt, searchfield, start, page_len, filters):
 				'txt': '%' + txt + '%',
 				'start': start, 'page_len': page_len
 			})
+@frappe.whitelist()
+def check_recent_version_of_BCT(standard_item_code):
+	if standard_item_code:
+		check_BCT = frappe.db.sql("""SELECT b.name from `tabBOM Creation Tool` b where b.standard_item_code = '{0}' order by b.name desc""".format(standard_item_code),as_dict=1)
+		if check_BCT:
+			return check_BCT[0].get('name')

@@ -141,6 +141,19 @@ frappe.ui.form.on('BOM Creation Tool', {
 		// }
 	},
 	standard_item_code:function(frm){
+		frappe.call({
+			"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.check_recent_version_of_BCT",
+			"args":{
+				standard_item_code : frm.doc.standard_item_code
+			},
+			callback:function(r){
+				if(r.message){
+					console.log("==============",r.message)
+					frappe.msgprint('Item Mapping' + ' ' + frm.doc.standard_item_code +' '+ 'Used In ' + r.message)
+
+				}
+			}
+		})
 		frm.trigger('mapped_bom')
 
 	},
