@@ -27,7 +27,25 @@ frappe.ui.form.on('Item Mapping', {
 				filters:{ 'attribute': row.attribute }
 			}
 		});
+		frm.set_query("attribute", "attribute_table", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.item_mapping.item_mapping.get_attribute_in_table",
+				filters:{ 'mapped_item': frm.doc.mapped_item }
+			}
+		});
+		if(frm.doc.propogate_updates_to_affected_boms_status == "Need To Run"){
+			frm.add_custom_button(__('Propogate Updates to Affected BOMs'), function() {
+				frappe.call({
+					method: "instrument.instrument.doctype.item_mapping.item_mapping.propogate_updates_to_affected_boms",
+					freeze: true,
+					args: {
+						doc : frm.doc
+						}
+					});
+				}, __("Menu"));
 
+			}	
 	},
 	mapped_item:function(frm){
 		if(frm.doc.mapped_item){
@@ -46,6 +64,14 @@ frappe.ui.form.on('Item Mapping', {
 					}
 				}
 			})
+		}
+	},
+	item_code:function(frm){
+		if(!frm.doc.__islocal){
+			if(!frm.doc.old_standrad_item_code){
+				frappe.throw("Please Enter Old Standard Item Code")
+
+			}
 		}
 	}
 });

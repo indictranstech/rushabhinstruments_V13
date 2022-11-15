@@ -4,7 +4,7 @@
 import frappe
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
-
+import json
 class ItemMapping(Document):
 	def autoname(self):
 		attribute_values = []
@@ -20,7 +20,67 @@ class ItemMapping(Document):
 			attribute_set = set(attribute_list)
 			if len(attribute_set) != len(attribute_list):
 				frappe.throw("Duplicate Attribute Not Allowed")
+		if self.get("__islocal"):
+			data_dict = dict()
+			data_dict['item_code'] = self.item_code
+			attribute_value_dict = {item.attribute:item.value for item in self.attribute_table}
+			data_dict['attribute_value_data']=attribute_value_dict
+			self.data_for_compare = frappe.as_json(data_dict)
+			self.propogate_updates_to_affected_boms_status = "Need To Run"
+		else:
+			data_dict = json.loads(self.data_for_compare)
+			d1 = data_dict.get('attribute_value_data')
+			d2 = {item.attribute:item.value for item in self.attribute_table}
+			if self.item_code != data_dict.get('item_code') or not(all((d2.get(k) == v for k, v in d1.items()))):
+				self.propogate_updates_to_affected_boms_status = "Need To Run"
+			else:
+				self.propogate_updates_to_affected_boms_status = "Propogation Not Needed"
 
+
+@frappe.whitelist()
+def propogate_updates_to_affected_boms(doc):
+	doc = json.loads(doc)
+	old_data = json.loads(doc.get('data_for_compare'))
+	old_standrad_item_code = old_data.get('item_code')
+	find_BCT_for_main = frappe.db.sql("""SELECT bct.name from `tabBOM Creation Tool` bct join `tabReview Item Mapping` rim on rim.parent = bct.name where  bct.standard_item_code = '{0}' order by bct.name desc""".format(old_standrad_item_code),as_dict=1)
+	find_BCT_for_table = frappe.db.sql("""SELECT bct.name from `tabBOM Creation Tool` bct join `tabReview Item Mapping` rim on rim.parent = bct.name where  rim.standard_item_code = '{0}' order by bct.name desc""".format(old_standrad_item_code),as_dict=1)
+
+	if find_BCT_for_main != []:
+		get_bct = frappe.get_doc("BOM Creation Tool",find_BCT_for_main[0].get('name'))
+		if get_bct:
+			if get_bct.docstatus == 1:
+				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=False)
+				new_doc.standard_item_code = doc.get('item_code')
+				new_doc.save()
+			else:
+				mapped_bom = get_bct.mapped_bom
+				get_bct.mapped_bom = ''
+				get_bct.mapped_bom = mapped_bom
+				get_bct.save()
+	elif find_BCT_for_table != []:
+		get_bct = frappe.get_doc("BOM Creation Tool",find_BCT_for_table[0].get('name'))
+		if get_bct:
+			if get_bct.docstatus == 1:
+				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=False)
+				# new_doc.standard_item_code = doc.get('item_code')
+				new_doc.save()
+			else:
+				mapped_bom = get_bct.mapped_bom
+				get_bct.mapped_bom = ''
+				get_bct.mapped_bom = mapped_bom
+				get_bct.save()
+	item_mapping_doc = frappe.get_doc("Item Mapping",doc.get('name'))
+	
+	if  item_mapping_doc:
+		data_dict = dict()
+		data_dict['item_code'] = item_mapping_doc.item_code
+		attribute_value_dict = {item.attribute:item.value for item in item_mapping_doc.attribute_table}
+		data_dict['attribute_value_data']=attribute_value_dict
+		item_mapping_doc.data_for_compare = frappe.as_json(data_dict)
+		item_mapping_doc.propogate_updates_to_affected_boms_status = 'Completed'
+		item_mapping_doc.save()
+		frappe.msgprint("Propogation Completed")
+			
 
 @frappe.whitelist()
 def get_attribute_value(attribute):
@@ -32,3 +92,24 @@ def get_attributes(mapped_item):
 	attribute_list = frappe.db.sql("""SELECT attribute from `tabItem Attribute Table` where parent = '{0}'""".format(mapped_item),as_dict=1)
 	if attribute_list != []:
 		return attribute_list
+
+# Filter attributes
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_attribute_in_table(doctype, txt, searchfield, start, page_len, filters):
+	# return frappe.db.sql("""SELECT name from `tabCustom Item Attribute Value` where item_attribute = '{0}' and name like %(txt)s """.format(filters.get("attribute")),as_list=1,debug=1)
+	return frappe.db.sql("""
+		SELECT attribute
+		FROM `tabItem Attribute Table` 
+		WHERE parent = %(attribute)s
+			
+			AND name LIKE %(txt)s
+		ORDER BY name DESC
+		LIMIT %(offset)s, %(limit)s
+		""".format(searchfield), dict(
+				attribute=filters.get("mapped_item"),
+				txt="%{0}%".format(txt),
+				offset=start,
+				limit=page_len
+			)
+		)

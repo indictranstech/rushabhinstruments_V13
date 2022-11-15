@@ -9,9 +9,12 @@
   "mapped_item",
   "item_code",
   "do_not_override_existing_bom",
+  "propogate_updates_to_affected_boms_status",
   "attribute_table",
   "override_mapped_bom_operation_table",
-  "bom_operations"
+  "bom_operations",
+  "old_standrad_item_code",
+  "data_for_compare"
  ],
  "fields": [
   {
@@ -56,11 +59,28 @@
    "fieldtype": "Table",
    "label": "BOM Operations",
    "options": "Item Operation"
+  },
+  {
+   "fieldname": "old_standrad_item_code",
+   "fieldtype": "Link",
+   "label": "Old Standrad Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "propogate_updates_to_affected_boms_status",
+   "fieldtype": "Select",
+   "label": "Propogate Updates To Affected BOMs Status",
+   "options": "\nPropogation Not Needed\nNeed To Run\nIn Process\nCompleted"
+  },
+  {
+   "fieldname": "data_for_compare",
+   "fieldtype": "Small Text",
+   "label": "Data For Compare"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-08-22 01:02:34.979539",
+ "modified": "2022-11-14 05:40:02.674432",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Item Mapping",
