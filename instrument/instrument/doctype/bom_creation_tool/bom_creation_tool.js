@@ -49,6 +49,13 @@ frappe.ui.form.on('BOM Creation Tool', {
 				filters:{ 'standard_item_code': row.standard_item_code }
 			}
 		});
+		frm.set_query("standard_item_code", "review_item_mapping", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_standard_item_code",
+				filters:{ 'mapped_item': row.mapped_item }
+			}
+		});
 		cur_frm.fields_dict['mapped_item'].get_query = function(doc, cdt, cdn) {
 			return {
 				filters: [
@@ -64,6 +71,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 				}
 			};
 		});
+
 	  //   cur_frm.fields_dict['standard_item_code'].get_query = function(doc, cdt, cdn) {
 			// return {
 			// 	filters: [
@@ -95,6 +103,10 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 	},
 	onload:function(frm){
+		if(frm.doc.docstatus==0 && frm.doc.review_item_mapping == ''){
+			frm.trigger('mapped_bom')
+			frm.save()
+		}
 		// if(frm.doc.__islocal){
 		// 	// Fetch all the attributes for mapped item
 		// 	if(frm.doc.mapped_bom){
@@ -148,7 +160,6 @@ frappe.ui.form.on('BOM Creation Tool', {
 			},
 			callback:function(r){
 				if(r.message){
-					console.log("==============",r.message)
 					frappe.msgprint('Item Mapping' + ' ' + frm.doc.standard_item_code +' '+ 'Used In ' + r.message)
 
 				}

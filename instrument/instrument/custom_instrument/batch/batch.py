@@ -9,7 +9,7 @@ import pyqrcode
 import requests
 import textwrap
 import re
-
+import xlsxwriter
 def autoname(doc, method):
 	if doc.item:
 		now = datetime.now()
@@ -156,3 +156,42 @@ def validate(doc,method):
 	"content": pdf_data.get('fcontent')
 	})
 	_file.save()
+
+
+@frappe.whitelist()
+def print_label(batch_name,part_no):
+	print_label_file = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_doctype = 'Label Print' and file_name = 'batch_travller.xls'""",as_dict=1)
+	if print_label_file:
+		pass
+	else:
+		fname = 'batch_travller.xls'
+		file = frappe.utils.get_site_path("public")+"/"+ fname
+		book = Workbook()
+	    sheet = book.active
+
+
+	    heading_col1 = {'subject': 'Record No'}
+	    heading_col2 = {'subject': 'Part Number'}
+	    heading_col3 = {'subject': 'Part Description'}
+	    heading_col4 = {'subject': 'Total Qty'}
+	    heading_col5 = {'subject': 'Batch'}
+
+	    header_list = []
+	    header_list.insert(0, heading_col1)
+	    header_list.insert(1, heading_col2)
+	    header_list.insert(2, heading_col3)
+	    header_list.insert(3, heading_col4)
+	    header_list.insert(4, heading_col5)
+
+	   
+	    book.save(file)
+
+	    
+
+	    return fname
+
+
+
+
+	
+ 
