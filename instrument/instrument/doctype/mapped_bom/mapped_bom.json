@@ -19,6 +19,7 @@
   "project",
   "quantity",
   "old_reference_bom",
+  "propogate_update_to_descendent_bom_status",
   "update_status",
   "image",
   "currency_detail",
@@ -570,13 +571,19 @@
    "fieldtype": "Data",
    "label": "Update Status",
    "read_only": 1
+  },
+  {
+   "fieldname": "propogate_update_to_descendent_bom_status",
+   "fieldtype": "Select",
+   "label": "Propogate Update To Descendent BOM Status",
+   "options": "Propogation Not Needed\nNeed To Run Propogate Update To Descendent BOMs\nIn Process\nCompleted"
   }
  ],
  "icon": "fa fa-sitemap",
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2022-01-24 02:07:09.150101",
+ "modified": "2022-12-21 02:02:18.802906",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",

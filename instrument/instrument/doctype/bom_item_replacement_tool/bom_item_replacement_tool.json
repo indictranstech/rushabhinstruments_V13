@@ -9,6 +9,7 @@
   "old_item_number",
   "old_item_name",
   "old_bom_number",
+  "status",
   "column_break_4",
   "new_item_number",
   "new_item_name",
@@ -69,12 +70,18 @@
    "fieldtype": "Link",
    "label": "Old BOM Number",
    "options": "BOM"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nIn Process\nCompleted"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-06-13 01:00:02.627618",
+ "modified": "2022-12-21 05:08:19.786389",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Item Replacement Tool",

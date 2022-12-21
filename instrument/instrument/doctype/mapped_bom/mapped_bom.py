@@ -955,6 +955,8 @@ def propogate_update_to_descendent(current_bom,new_bom):
 			create_bom_creation_tool(current_bom,new_bom)
 		else:
 			create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
+		frappe.db.set_value("Mapped BOM",new_bom,'propogate_update_to_descendent_bom_status','Completed')
+		frappe.db.commit()
 
 def create_bom_creation_tool(current_bom,bom):
 	if current_bom:
@@ -1166,7 +1168,40 @@ def get_children(doctype, parent=None, is_root=False, **filters):
 				bom_item.image = frappe.db.escape(bom_item.image)
 		return bom_items
 @frappe.whitelist()
-def check_bc_doc(mapped_bom):
-	check_bc_doc = frappe.db.get_all("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':0})
-	if len(check_bc_doc) > 0 :
-		return True
+def check_bc_doc(mapped_bom,mapped_item):
+	if mapped_item and mapped_bom:
+		item_mappings = frappe.db.sql("""SELECT item_code from `tabItem Mapping` where mapped_item = '{0}'""".format(mapped_item),as_dict=1)
+		item_mappings_list = [row.item_code for row in item_mappings]
+		check_existing = frappe.db.sql("""SELECT standard_item_code from `tabBOM Creation Tool` where mapped_bom = '{0}' and mapped_item = '{1}'""".format(mapped_bom,mapped_item),as_dict=1)
+		if len(check_existing) > 0:
+			for row in check_existing:
+				if row.standard_item_code in item_mappings_list:
+					item_mappings_list.remove(row.standard_item_code)
+		if len(item_mappings_list) == 0:
+			return True
+	# check_bc_doc = frappe.db.get_all("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':0})
+	# if len(check_bc_doc) > 0 :
+	# 	return True
+
+@frappe.whitelist()
+def create_bom_tree_for_item_mapping(mapped_item,mapped_bom):
+	bct_doc_list = []
+	if mapped_item and mapped_bom:
+		item_mappings = frappe.db.sql("""SELECT item_code from `tabItem Mapping` where mapped_item = '{0}'""".format(mapped_item),as_dict=1)
+		item_mappings_list = [row.item_code for row in item_mappings]
+		check_existing = frappe.db.sql("""SELECT standard_item_code from `tabBOM Creation Tool` where mapped_bom = '{0}' and mapped_item = '{1}'""".format(mapped_bom,mapped_item),as_dict=1)
+		if len(check_existing) > 0:
+			for row in check_existing:
+				if row.standard_item_code in item_mappings_list:
+					item_mappings_list.remove(row.standard_item_code)
+
+		if len(item_mappings_list) > 0:
+			for row in item_mappings_list:
+				bc_doc = frappe.new_doc("BOM Creation Tool")
+				if bc_doc:
+					bc_doc.mapped_item = mapped_item
+					bc_doc.standard_item_code = row
+					bc_doc.mapped_bom = mapped_bom
+					bc_doc.save()
+					frappe.msgprint("BOM Creation Tool Created For Item Mapping<b>{0}</b>".format(row))
+

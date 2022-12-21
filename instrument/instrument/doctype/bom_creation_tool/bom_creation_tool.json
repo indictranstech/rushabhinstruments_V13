@@ -15,6 +15,7 @@
   "override_existing_bom",
   "standard_item_code",
   "standard_bom",
+  "version_of_bom_released",
   "section_break_5",
   "item_assignment_table_for_mapped_item",
   "attribute_table",
@@ -112,8 +113,7 @@
    "fieldname": "difference_between_previous_and_current_review_item_mappings",
    "fieldtype": "Table",
    "label": "Difference Between Previous and Current Review Item Mappings",
-   "options": "Difference In Review Item Mappings Table",
-   "read_only": 1
+   "options": "Difference In Review Item Mappings Table"
   },
   {
    "fieldname": "section_break_2",
@@ -124,12 +124,19 @@
    "fieldtype": "Select",
    "label": "Status",
    "options": "\nIn process\nCompleted"
+  },
+  {
+   "fieldname": "version_of_bom_released",
+   "fieldtype": "Link",
+   "label": "Version Of BOM Released",
+   "options": "BOM",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-10-10 04:01:59.315033",
+ "modified": "2022-12-21 00:48:08.708208",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
