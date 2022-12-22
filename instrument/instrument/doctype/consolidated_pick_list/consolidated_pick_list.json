@@ -54,6 +54,7 @@
   "section_break_40",
   "get_po_items",
   "purchase_order_pick_list_item",
+  "section_break_49",
   "amended_from"
  ],
  "fields": [
@@ -352,12 +353,16 @@
    "fieldname": "get_purchase_orders",
    "fieldtype": "Button",
    "label": "Get Purchase Orders"
+  },
+  {
+   "fieldname": "section_break_49",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-09-14 01:01:40.236705",
+ "modified": "2022-12-22 13:52:39.610348",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

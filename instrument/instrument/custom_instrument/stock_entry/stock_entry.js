@@ -90,5 +90,12 @@ frappe.ui.form.on("Stock Entry", {
 		// 		}
 		// 	})
 		// }
+	},
+
+	on_submit: function(frm){
+		if (frm.doc.consolidated_pick_list){
+			history.back()
+		}
+		// window.open(window.history.previous.href, "_self");
 	}
 })
