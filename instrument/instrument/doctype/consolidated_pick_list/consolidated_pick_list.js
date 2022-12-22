@@ -326,6 +326,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 				if (r.message) {
 					cur_frm.clear_table("purchase_order_pick_list_item");
 					$.each(r.message, function(idx, item_row){
+						console.log("======item_row=====", item_row)
 						var row = frappe.model.add_child(frm.doc, "Purchase Order Pick List Item", "purchase_order_pick_list_item");
 						row.main_item = item_row.main_item
 						row.item_code = item_row.item_code
@@ -346,7 +347,25 @@ frappe.ui.form.on('Consolidated Pick List', {
 				}
 			}
 		})
-	}
+	},
+
+	pick_list_purchase_order_table_on_form_rendered:function(frm,cdt,cdn){
+		var d = locals[cdt][cdn]
+		var stock_entry = frm.open_grid_row().get_field('stock_entry').value
+		if (stock_entry){
+			frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', 1)
+		}
+		frm.refresh_field('pick_list_purchase_order_table');
+	},
+
+	work_orders_on_form_rendered:function(frm,cdt,cdn){
+		var d = locals[cdt][cdn]
+		var stock_entry = frm.open_grid_row().get_field('stock_entry').value
+		if (stock_entry){
+			frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', 1)
+		}
+		frm.refresh_field('work_orders');
+	},
 
 });
 frappe.ui.form.on('Pick Orders', {
@@ -382,7 +401,8 @@ frappe.ui.form.on('Pick Orders', {
 				"method":"instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.check_stock_entries",
 				"args" : {
 					work_order : row.work_order,
-					consolidated_pick_list : frm.doc.name
+					consolidated_pick_list : frm.doc.name,
+					row_name: row.name
 				},
 				callback:function(r){
 					if(r.message){
@@ -390,7 +410,8 @@ frappe.ui.form.on('Pick Orders', {
 							"method":"instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_stock_entry",
 							"args" : {
 								work_order : row.work_order,
-								consolidated_pick_list : frm.doc.name
+								consolidated_pick_list : frm.doc.name,
+								row_name: row.name
 							},
 							callback:function(r){
 								if(r.message){
@@ -399,7 +420,7 @@ frappe.ui.form.on('Pick Orders', {
 									var old_link = window.location.href
 									var split_data = old_link.split("/app")
 									var link =  split_data[0]+"/app/stock-entry/"+r.message
-									window.open(link);
+									window.open(link, "_self");
 																			}
 
 							}
@@ -408,7 +429,6 @@ frappe.ui.form.on('Pick Orders', {
 				}
 			})
 			frm.save()
-			frm.submit()
 		}else{
 			frappe.msgprint("Please pick quanity for atleast one item and submit the form")
 		}
@@ -497,6 +517,10 @@ frappe.ui.form.on('Pick List Purchase Order Table', {
 					frm.save()
 					// frm.submit()
 					frm.refresh_field("pick_list_purchase_order_table");
+					var old_link = window.location.href
+					var split_data = old_link.split("/app")
+					var link =  split_data[0]+"/app/stock-entry/"+data.name
+					window.open(link, "_self");
 				}
 
 			}
@@ -522,6 +546,10 @@ frappe.ui.form.on('Pick List Sales Order Table', {
 					frappe.model.set_value(row.doctype, row.name, 'delivery_note_status', data.status);
 					frm.save()
 					frm.refresh_field("pick_list_sales_order_table");
+					var old_link = window.location.href
+					var split_data = old_link.split("/app")
+					var link =  split_data[0]+"/app/delivery-note/"+data.name
+					window.open(link, "_self");
 				}
 			}
 		})
