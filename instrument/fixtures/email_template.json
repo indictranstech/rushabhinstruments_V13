@@ -2,6 +2,32 @@
  {
   "docstatus": 0,
   "doctype": "Email Template",
+  "modified": "2021-10-21 01:02:02.550669",
+  "name": "Interview Reminder",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "response": "<h1>Interview Reminder</h1>\n\n<p>\n\tInterview: {{name}} is scheduled on {{scheduled_on}} from {{from_time}} to {{to_time}}\n</p>\n",
+  "response_html": null,
+  "subject": "Interview Reminder",
+  "use_html": 0
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Email Template",
+  "modified": "2021-10-21 01:02:03.020938",
+  "name": "Interview Feedback Reminder",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "response": "<h1>Interview Feedback Reminder</h1>\n\n<p>\n\tInterview Feedback for Interview {{ name }} is not submitted yet. Please submit your feedback. Thank you, good day!\n</p>\n",
+  "response_html": null,
+  "subject": "Interview Feedback Reminder",
+  "use_html": 0
+ },
+ {
+  "docstatus": 0,
+  "doctype": "Email Template",
   "modified": "2021-05-25 02:58:52.878837",
   "name": "Leave Approval Notification",
   "parent": null,

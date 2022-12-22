@@ -9,9 +9,11 @@ class BOMItemReplacementTool(Document):
 	@frappe.whitelist()
 	def replace(self):
 		frappe.msgprint(_("Queued for replacing the BOM.Please Wait.. It may take a few minutes."))
+		self.status = 'In Process'
 		self.update_item_mapping()
 		self.update_boms()
 		self.update_mapped_boms()
+		self.status = 'Completed'
 		return True
 	def update_item_mapping(self):
 		return frappe.db.sql("""UPDATE `tabItem Mapping` set item_code = '{0}' where item_code = '{1}'""".format(self.new_item_number,self.old_item_number),debug=1)

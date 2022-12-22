@@ -36,7 +36,8 @@ doctype_js = {
 	"Material Request" : "instrument/custom_instrument/material_request/material_request.js",
 	"Production Plan" : "instrument/custom_instrument/production_plan/production_plan.js",
 	"Task" : "instrument/custom_instrument/task/task.js",
-	"BOM Update Tool" : "instrument/custom_instrument/bom_update_tool/bom_update_tool.js"
+	"BOM Update Tool" : "instrument/custom_instrument/bom_update_tool/bom_update_tool.js",
+	"Batch":"instrument/custom_instrument/batch/batch.js"
 }
 
 # include js, css files in header of desk.html

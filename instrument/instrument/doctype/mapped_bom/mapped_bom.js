@@ -3,19 +3,29 @@
 
 frappe.ui.form.on('Mapped BOM', {
 	refresh: function(frm) {
-		
+		if(frm.doc.docstatus==0){
+			frm.doc.status = ''
+		}
 		// Add button Create BOM Tree on Mapped BOM
 		if(frm.doc.docstatus == 1){
 			frm.add_custom_button(__('Create BOM Tree For Item Mappings'), function() {
-				frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
-				frappe.route_options = {"mapped_bom": frm.doc.name,"mapped_item":frm.doc.item}
+				frappe.call({
+					method:"instrument.instrument.doctype.mapped_bom.mapped_bom.create_bom_tree_for_item_mapping",
+					args:{
+						mapped_item:frm.doc.item,
+						mapped_bom:frm.doc.name
+					}
+				})
+				// frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
+				// frappe.route_options = {"mapped_bom": frm.doc.name,"mapped_item":frm.doc.item}
 				
 			}, __("Menu"));
 			frappe.call({
 				method: "instrument.instrument.doctype.mapped_bom.mapped_bom.check_bc_doc",
 				// freeze: true,
 				args: {
-					"mapped_bom": frm.doc.name
+					"mapped_bom": frm.doc.name,
+					"mapped_item":frm.doc.item
 				},
 				callback:function(r){
 					if(r.message == true){
@@ -51,6 +61,7 @@ frappe.ui.form.on('Mapped BOM', {
 					});
 					
 				}, __("Menu"));
+				frm.doc.propogate_update_to_descendent_bom_status= 'Need To Run Propogate Update To Descendent BOMs'
 				// cur_frm.add_custom_button(__('Propogate Updates to Descendent BOMs'),function(){
 				// 	frappe.call({
 				// 		method: "instrument.instrument.doctype.mapped_bom.mapped_bom.propogate_update_to_descendent",
