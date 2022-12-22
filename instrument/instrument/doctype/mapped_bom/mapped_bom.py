@@ -768,6 +768,9 @@ class MappedBOM(WebsiteGenerator):
 			if old_item_dict or len(new_item_list)>0:
 				frappe.db.set_value("Mapped BOM",{'name':self.name},'check_propogation_to_descendent_bom',1)
 				frappe.db.commit()
+				if self.propogate_to_descendent_bom ==0:
+					frappe.db.set_value("Mapped BOM",{'name':self.name},'propogate_update_to_descendent_bom_status','Need To Run Propogate Update To Descendent BOMs')
+					frappe.db.commit()
 				self.reload()
 
 def get_new_bom_unit_cost(bom):

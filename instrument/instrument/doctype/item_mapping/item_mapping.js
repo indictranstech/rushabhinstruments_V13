@@ -34,6 +34,18 @@ frappe.ui.form.on('Item Mapping', {
 				filters:{ 'mapped_item': frm.doc.mapped_item }
 			}
 		});
+		if(!frm.doc.__islocal){
+			frappe.call({
+				method : "instrument.instrument.doctype.item_mapping.item_mapping.check_propogation_for_item_mapping",
+				args:{
+					doc : frm.doc
+				},
+				callback:function(r){
+
+				}
+
+			})
+		}
 		if(frm.doc.propogate_updates_to_affected_boms_status == "Need To Run"){
 			frm.add_custom_button(__('Propogate Updates to Affected BOMs'), function() {
 				frappe.call({
