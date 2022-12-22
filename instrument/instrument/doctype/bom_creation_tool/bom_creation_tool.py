@@ -422,7 +422,7 @@ def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
 				row['mapped_boms'] = str(mapped_bom_list)
 				final_item_list.append(row)
 				check_items.append(row.get("item_code"))
-		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1,'mapped_item':mapped_item,'standard_item_code':standard_item_code},'name')
+		check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'mapped_item':mapped_item,'standard_item_code':standard_item_code},'name')
 		if check_bom_creation_doc:
 			b_doc = frappe.get_doc("BOM Creation Tool",check_bom_creation_doc)
 			data_dict = {(row.mapped_item,row.attribute):row for row in b_doc.attribute_table}

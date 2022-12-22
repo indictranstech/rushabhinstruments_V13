@@ -26,7 +26,7 @@ class ItemMapping(Document):
 			attribute_value_dict = {item.attribute:item.value for item in self.attribute_table}
 			data_dict['attribute_value_data']=attribute_value_dict
 			self.data_for_compare = frappe.as_json(data_dict)
-			self.propogate_updates_to_affected_boms_status = "Need To Run"
+			self.propogate_updates_to_affected_boms_status = ""
 		else:
 			data_dict = json.loads(self.data_for_compare)
 			d1 = data_dict.get('attribute_value_data')
@@ -113,3 +113,6 @@ def get_attribute_in_table(doctype, txt, searchfield, start, page_len, filters):
 				limit=page_len
 			)
 		)
+@frappe.whitelist()
+def check_propogation_for_item_mapping(doc):
+	pass

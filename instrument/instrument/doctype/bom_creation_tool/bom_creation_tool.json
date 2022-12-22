@@ -123,6 +123,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "label": "Status",
+   "no_copy": 1,
    "options": "\nIn process\nCompleted"
   },
   {
@@ -136,7 +137,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-21 00:48:08.708208",
+ "modified": "2022-12-22 05:45:22.743467",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",

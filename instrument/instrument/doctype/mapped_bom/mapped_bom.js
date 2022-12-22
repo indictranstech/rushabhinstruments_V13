@@ -3,7 +3,9 @@
 
 frappe.ui.form.on('Mapped BOM', {
 	refresh: function(frm) {
-		
+		if(frm.doc.docstatus==0){
+			frm.doc.status = ''
+		}
 		// Add button Create BOM Tree on Mapped BOM
 		if(frm.doc.docstatus == 1){
 			frm.add_custom_button(__('Create BOM Tree For Item Mappings'), function() {

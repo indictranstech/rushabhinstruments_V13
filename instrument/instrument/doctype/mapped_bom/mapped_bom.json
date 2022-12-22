@@ -570,12 +570,15 @@
    "fieldname": "update_status",
    "fieldtype": "Data",
    "label": "Update Status",
+   "no_copy": 1,
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "propogate_update_to_descendent_bom_status",
    "fieldtype": "Select",
    "label": "Propogate Update To Descendent BOM Status",
+   "no_copy": 1,
    "options": "Propogation Not Needed\nNeed To Run Propogate Update To Descendent BOMs\nIn Process\nCompleted"
   }
  ],
@@ -583,7 +586,7 @@
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-21 02:02:18.802906",
+ "modified": "2022-12-22 05:12:00.719455",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",
