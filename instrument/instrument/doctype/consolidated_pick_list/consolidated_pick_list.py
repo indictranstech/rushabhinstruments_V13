@@ -832,6 +832,70 @@ class ConsolidatedPickList(Document):
 		print("=====new_list======", new_list)
 		return new_list
 
+	@frappe.whitelist()
+	def new_create_dn_for_so(self):
+		# customer = frappe.db.get_value("Sales Order", sales_order, "customer")
+
+		doc = frappe.new_doc("Delivery Note")
+		for so in self.pick_list_sales_order_table:
+			dn_entry = frappe.db.sql("""SELECT name From `tabDelivery Note Item` where against_sales_order='{0}' and item_code='{1}'""".format(so.sales_order, so.item), as_dict=1)
+			
+			if so.select_item_for_delivery and len(dn_entry)==0:
+				so_data = frappe.db.sql("""SELECT item_code, warehouse, sales_order, picked_qty, batch_no, serial_no from `tabSales Order Pick List Item` where sales_order='{0}' and item_code='{1}' and parent='{2}' """.format(so.sales_order, so.item, so.parent), as_dict=1)
+
+				so_doc = frappe.get_doc("Sales Order", so.sales_order)
+				doc.naming_series = "MAT-DN-.YYYY.-"
+				doc.customer = so_doc.customer
+				doc.woocommerce_order_id = so_doc.woocommerce_order_id
+				doc.woocommerce_order_id = so_doc.woocommerce_order_id
+				doc.currency = so_doc.currency
+				doc.selling_price_list = so_doc.selling_price_list
+				doc.selling_price_list = so_doc.selling_price_list
+				doc.taxes_and_charges = "US ST 6% - RI"
+				doc.tc_name = so_doc.tc_name
+				doc.terms = so_doc.terms
+				for row in so_doc.items:
+					if row.item_code == so.item:
+						for itm in so_data:
+							doc.append("items", {
+								"item_code": row.item_code,
+								"item_name": row.item_name,
+								"description": row.description,
+								"uom": row.uom,
+								"stock_uom": row.stock_uom,
+								"conversion_factor": row.conversion_factor,
+								"qty": itm.get("picked_qty"),
+								"rate": row.rate,
+								"warehouse": itm.get("warehouse"),
+								"batch_no": itm.get("batch_no"),
+								"against_sales_order": so.sales_order,
+								"serial_no": itm.get("serial_no")
+							})
+
+				if not so_doc.taxes:
+					for row in so_doc.taxes:
+						doc.append("taxes", {
+							"charge_type": row.charge_type,
+							"account_head": row.account_head,	
+							"description": row.account_head,
+							"rate": row.rate
+						})
+			else:
+				frappe.msgprint("Delivery Note already created for Sales Order {0}".format(so.sales_order))
+		doc.save()
+		# doc.submit()
+
+		if doc.name:
+			status = "To Bill" if doc.docstatus==1 else "Draft"
+			for row in doc.items: 
+				frappe.msgprint("Delivery Note created {0}".format(doc.name))
+				frappe.db.set_value("Pick List Sales Order Table", {"sales_order":row.against_sales_order,"item":row.item_code}, {"delivery_note":doc.name, "delivery_note_status":status})
+				frappe.db.commit()
+			# return {"name":doc.name, 'status':status}
+			return {"name":doc.name}
+
+	
+
 def calculate_remaining_batch_qty(row):
 	used_qty = frappe.db.sql("""SELECT item_code, sum(picked_qty) as picked_qty From `tabWork Order Pick List Item` where batch_no='{0}' and item_code='{1}' and docstatus=1""".format(row.name, row.item), as_dict=1)
 	if used_qty:
