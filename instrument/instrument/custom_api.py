@@ -118,7 +118,7 @@ def customer_api():
 
 @frappe.whitelist()
 def item_wise_stock_api():
-    return frappe.db.sql(f""" select warehouse,modified as date,item_code,actual_qty,stock_uom,valuation_rate,stock_value from `tabBin` """, as_dict=True)
+    return frappe.db.sql(f""" select warehouse, modified as date,item_code, sum(actual_qty), stock_uom,valuation_rate,stock_value from `tabBin` """, as_dict=True)
 
 @frappe.whitelist()
 def item_wise_production_api():
