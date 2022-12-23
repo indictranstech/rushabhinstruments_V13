@@ -367,6 +367,35 @@ frappe.ui.form.on('Consolidated Pick List', {
 		frm.refresh_field('work_orders');
 	},
 
+	pick_list_sales_order_table_on_form_rendered:function(frm,cdt,cdn){
+		var d = locals[cdt][cdn]
+		var stock_entry = frm.open_grid_row().get_field('delivery_note').value
+		if (stock_entry){
+			frm.open_grid_row().set_field_property("select_item_for_delivery", 'hidden', 1)
+		}
+		frm.refresh_field('pick_list_sales_order_table');
+	},
+
+	create_delivery_note:function(frm){
+		frm.call({
+			method: "new_create_dn_for_so",
+			doc: frm.doc,
+			callback:function(r){
+				if(r.message){
+					var data = r.message
+					// frappe.model.set_value(row.doctype, row.name, 'delivery_note', data.name);
+					// frappe.model.set_value(row.doctype, row.name, 'delivery_note_status', data.status);
+					// frm.save()
+					frm.refresh_field("pick_list_sales_order_table");
+					var old_link = window.location.href
+					var split_data = old_link.split("/app")
+					var link =  split_data[0]+"/app/delivery-note/"+data.name
+					window.open(link, "_self");
+				}
+			}
+		})
+	}
+
 });
 frappe.ui.form.on('Pick Orders', {
 	work_order:function(frm,cdt,cdn){

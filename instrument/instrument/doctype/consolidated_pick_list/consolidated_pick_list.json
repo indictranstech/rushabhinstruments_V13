@@ -42,6 +42,7 @@
   "section_break_34",
   "get_sales_orders",
   "pick_list_sales_order_table",
+  "create_delivery_note",
   "section_break_32",
   "get_so_items",
   "sales_order_pick_list_item",
@@ -357,12 +358,18 @@
   {
    "fieldname": "section_break_49",
    "fieldtype": "Section Break"
+  },
+  {
+   "depends_on": "eval:doc.purpose==\"Sales Order Fulfillment\"",
+   "fieldname": "create_delivery_note",
+   "fieldtype": "Button",
+   "label": "Create Delivery Note"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-22 13:52:39.610348",
+ "modified": "2022-12-22 23:17:28.754461",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
