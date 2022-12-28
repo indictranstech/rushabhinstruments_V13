@@ -9,7 +9,30 @@ import pyqrcode
 import requests
 import textwrap
 import re
-import xlsxwriter
+
+import json
+from frappe.utils.xlsxutils import make_xlsx
+import openpyxl
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Color, Fill, PatternFill, Alignment
+from openpyxl.drawing.image import Image
+from openpyxl import Workbook
+from six import StringIO, string_types
+import sys
+from openpyxl import Workbook
+from openpyxl.styles import Alignment
+from openpyxl.utils.cell import get_column_letter
+
+
+import os
+from frappe.utils import get_files_path
+from pathlib import Path
+from frappe.utils import getdate,time
+import glob
+from pathlib import Path
+import pandas as pd
+from frappe.utils import flt, cstr, nowdate, nowtime
+# import xlsxwriter
 def autoname(doc, method):
 	if doc.item:
 		now = datetime.now()
@@ -159,39 +182,166 @@ def validate(doc,method):
 
 
 @frappe.whitelist()
-def print_label(batch_name,part_no):
+def print_label(data,doc):
+	print("99999999999999999999",data)
+	data = json.loads(data)
+	data1 = json.loads(doc)
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Batch'},'url')
+	print("------------------url",url)
+	public_file_path = url.split('app')
+	public_file_path = public_file_path[0] + 'files/batch_traveller.xlsx'
+	print("5555555555555public_file_path",public_file_path)
+	final_url = url + data1.get('name')
+	print("*****************data1",data1)
 	print_label_file = frappe.db.sql("""SELECT file_name from `tabFile` where attached_to_doctype = 'Label Print' and file_name = 'batch_travller.xls'""",as_dict=1)
-	if print_label_file:
-		pass
+	file_path = os.path.realpath(get_files_path(is_private=0))
+	file = file_path + '/' + 'batch_traveller.xlsx'
+	print("5555555555555555555",file)
+	print("00000000000000000000000000",os.path.exists(file))
+	if os.path.exists(file):
+		wb = openpyxl.load_workbook(filename=file)
+		ws = wb['Sheet']
+		row = ws.max_row +1
+		# row = ws.get_highest_row() + 1
+		col = 1
+		# ws.cell(row=row, column=col, value=entry)
+		cell = ws.cell(row=row,column=col)
+		cell.value = ws.max_row -1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+1)
+		cell.value = data1.get('item') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+2)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+3)
+		cell.value = data1.get('batch_qty') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+4)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+5)
+		cell.value = data1.get('batch_id') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+6)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+7)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = ws.cell(row=row,column=col+8)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = ws.cell(row=row,column=col+9)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		# for col, entry in enumerate(new_row, start=1):
+		# 	ws.cell(row=row, column=col, value=entry)
+		wb.save(file)
+		frappe.msgprint("Batch Traveller Updated,You can download it from here {0}".format(public_file_path))
+		return public_file_path
+
 	else:
-		fname = 'batch_travller.xls'
-		file = frappe.utils.get_site_path("public")+"/"+ fname
+		print("*****************")
+		header = ['Record ID','Part Number','Part Description','Total Qty','Batch','Batch Name','Locations','Number of Copies','Printer','URL']
 		book = Workbook()
-	    sheet = book.active
+		sheet = book.active
+		row = 1
+		col = 1
+		for item in header:
+			cell = sheet.cell(row=row,column=col)
+			cell.value = item
+			cell.font = cell.font.copy(bold=True)
+			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+			cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')
+			
+			col+=1
+		row =2
+		col =1
+
+		cell = sheet.cell(row=row,column=col)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+1)
+		cell.value = data1.get('item')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
 
 
-	    heading_col1 = {'subject': 'Record No'}
-	    heading_col2 = {'subject': 'Part Number'}
-	    heading_col3 = {'subject': 'Part Description'}
-	    heading_col4 = {'subject': 'Total Qty'}
-	    heading_col5 = {'subject': 'Batch'}
-
-	    header_list = []
-	    header_list.insert(0, heading_col1)
-	    header_list.insert(1, heading_col2)
-	    header_list.insert(2, heading_col3)
-	    header_list.insert(3, heading_col4)
-	    header_list.insert(4, heading_col5)
-
-	   
-	    book.save(file)
-
-	    
-
-	    return fname
+		cell = sheet.cell(row=row,column=col+2)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
 
 
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = data1.get('batch_qty')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
 
+
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = sheet.cell(row=row,column=col+5)
+		cell.value = data1.get('batch_id') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = sheet.cell(row=row,column=col+6)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = sheet.cell(row=row,column=col+7)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = sheet.cell(row=row,column=col+8)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+9)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		# sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
 
 	
+		# file_path = frappe.utils.get_site_path("public")
+		file = frappe.utils.get_site_path("public")
+		print("------------file",file)
+		fname = file_path+'/' + 'batch_traveller'+'.xlsx'
+		print("777777777777777",fname)
+		book.save(fname)
+		frappe.msgprint("Batch Traveller Created,You can download it from here {0}".format(public_file_path))
+		return public_file_path
+
+
+
+
  
