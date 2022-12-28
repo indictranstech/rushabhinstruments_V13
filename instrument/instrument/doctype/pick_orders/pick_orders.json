@@ -16,7 +16,7 @@
  ],
  "fields": [
   {
-   "columns": 2,
+   "columns": 1,
    "fieldname": "work_order",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -55,16 +55,15 @@
    "label": "Qty of Finished Goods to Pull"
   },
   {
-   "allow_on_submit": 1,
    "columns": 1,
    "default": "Not Created",
    "fieldname": "stock_entry_status",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Stock Entry Status",
    "options": "Not Created\nDraft\nSubmitted"
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "stock_entry",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -75,7 +74,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-05-11 04:04:05.653001",
+ "modified": "2022-12-22 23:45:41.602196",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Pick Orders",

@@ -69,6 +69,7 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+
 @frappe.whitelist()
 def on_submit(doc,method):
 	#update wo_status on Production Planning With Lead Time
@@ -77,16 +78,14 @@ def on_submit(doc,method):
 		frappe.db.set_value("Final Work Orders", {'item':d.production_item, 'sales_order':d.sales_order}, "wo_status", d.get_status())
 		frappe.db.commit()
 
-	if doc.consolidated_pick_list:
-		pick_list_doc = frappe.get_doc("Work Order Pick List",doc.consolidated_pick_list)
-		if pick_list_doc :
-			for item in pick_list_doc.work_orders:
-				if item.work_order == doc.work_order:
-					item.stock_entry_status = "Submitted"
-					item.stock_entry = doc.name
-			pick_list_doc.save()
-			pick_list_doc.submit()
+	if doc.work_order:
+		frappe.db.set_value("Pick Orders", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
+		frappe.db.commit()
 	
+	if doc.purchase_order:
+		frappe.db.set_value("Pick List Purchase Order Table", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
+		frappe.db.commit()
+
 	# frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
 	# frappe.db.commit()
 
