@@ -37,7 +37,8 @@ doctype_js = {
 	"Production Plan" : "instrument/custom_instrument/production_plan/production_plan.js",
 	"Task" : "instrument/custom_instrument/task/task.js",
 	"BOM Update Tool" : "instrument/custom_instrument/bom_update_tool/bom_update_tool.js",
-	"Batch":"instrument/custom_instrument/batch/batch.js"
+	"Batch":"instrument/custom_instrument/batch/batch.js",
+	"Pick List":"instrument/custom_instrument/pick_list/pick_list.js"
 }
 
 # include js, css files in header of desk.html
@@ -135,7 +136,7 @@ doc_events = {
 	"on_trash":"instrument.instrument.custom_instrument.work_order.work_order.on_trash"
 	},
 	"Item" : {
-	"validate" :["instrument.instrument.custom_instrument.item.item.validate","instrument.instrument.custom_instrument.item.item.label_img"],
+	"validate" :["instrument.instrument.custom_instrument.item.item.validate"],
 	"on_update":"instrument.instrument.custom_instrument.item.item.disable_old_boms",
 	"after_insert":"instrument.instrument.custom_instrument.item.item.after_insert"
 	},
@@ -151,7 +152,7 @@ doc_events = {
 	"after_insert":["instrument.instrument.custom_instrument.batch.batch.after_insert"]
 	},
 	"Stock Entry" : {
-	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate","instrument.instrument.custom_instrument.stock_entry.stock_entry.label_img"],
+	"validate" : ["instrument.instrument.custom_instrument.stock_entry.stock_entry.validate"],
 	"on_submit":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_submit"],
 	"on_cancel":["instrument.instrument.custom_instrument.stock_entry.stock_entry.on_cancel"],
 	"after_insert":"instrument.instrument.custom_instrument.stock_entry.stock_entry.after_insert"
@@ -172,7 +173,7 @@ doc_events = {
  	"after_insert":"instrument.instrument.custom_instrument.job_card.job_card.after_insert"
  	},
  	"Pick List":{
- 	"validate":["instrument.instrument.custom_instrument.pick_list.pick_list.label_img","instrument.instrument.custom_instrument.pick_list.pick_list.validate"],
+ 	"validate":["instrument.instrument.custom_instrument.pick_list.pick_list.validate"],
  	"after_insert":"instrument.instrument.custom_instrument.pick_list.pick_list.after_insert"
  	},
  	"Work Order Pick List":{

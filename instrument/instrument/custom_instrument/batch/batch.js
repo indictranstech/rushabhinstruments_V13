@@ -14,7 +14,8 @@ frappe.ui.form.on("Batch", {
 				{
 					"label": "Printer Name",
 					"fieldname": "printer_name",
-					"fieldtype": "Data",
+					"fieldtype": "Link",
+					"options":"Printer",
 					"reqd": 1
 				}
 				],
@@ -26,16 +27,6 @@ frappe.ui.form.on("Batch", {
 					dialog.hide()
 				});
 				dialog.show();
-			// frappe.call({
-			// 	'method':'instrument.instrument.custom_instrument.batch.batch.print_label',
-			// 	'args':{
-			// 		batch_name:frm.doc.name,
-			// 		part_no : frm.doc.item
-			// 	},
-			// 	callback:function(r){
-					
-			// 	}
-			// })
 		})
 
 	}
@@ -51,7 +42,6 @@ var create_label_print = function(frm,dialog){
 		callback: (r) => {
 			if(r.message)
 			{
-				console.log("===================",r.message)
 				frappe.msgprint("Batch Travller Created. You can open it through" + r.message)
 
 			}
