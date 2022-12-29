@@ -158,10 +158,11 @@ def print_label(data,doc):
 	data = json.loads(data)
 	data1 = json.loads(doc)
 	item_locations = [item.get('warehouse') for item in data1.get('warehouses')]
-	# if item_locations != []:
-	# 	locations = item_locations[0]
-	# 	if len(item_locations) > 1:
-	# 		locations.concat()
+	warehouse_list = ''
+	if len(item_locations) >0:
+		for i in item_locations:
+			warehouse_list += i
+			warehouse_list += ','
 	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Item'},'url')
 	public_file_path = url.split('app')
 	public_file_path = public_file_path[0] + 'files/item_traveler.xlsx'
@@ -192,7 +193,7 @@ def print_label(data,doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = ws.cell(row=row,column=col+4)
-		cell.value = item_locations[0] if len(item_locations) > 0 else ''
+		cell.value = warehouse_list
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 
@@ -247,7 +248,7 @@ def print_label(data,doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 		
 		cell = sheet.cell(row=row,column=col+4)
-		cell.value = item_locations[0] if len(item_locations) > 0 else ''
+		cell.value = warehouse_list
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+5)

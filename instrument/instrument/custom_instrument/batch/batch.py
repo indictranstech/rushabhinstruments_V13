@@ -185,6 +185,14 @@ def validate(doc,method):
 def print_label(data,doc):
 	data = json.loads(data)
 	data1 = json.loads(doc)
+	warehouses = frappe.db.sql("""SELECT warehouse from `tabStock Ledger Entry` where batch_no = '{0}'""".format(data1.get('name')),as_dict=1)
+	warehouse_list = [item.warehouse for item in warehouses]
+	locations = ''
+	if len(warehouse_list)> 0:
+		for i in warehouse_list:
+			locations += i
+			locations+= ','
+
 	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Batch'},'url')
 	public_file_path = url.split('app')
 	public_file_path = public_file_path[0] + 'files/batch_traveller.xlsx'
@@ -221,7 +229,7 @@ def print_label(data,doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = ws.cell(row=row,column=col+6)
-		cell.value = 1 
+		cell.value = locations
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 
@@ -284,7 +292,7 @@ def print_label(data,doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+6)
-		cell.value = 1 
+		cell.value = locations 
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+7)

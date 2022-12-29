@@ -949,9 +949,14 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 def print_label(data,doc):
 	data = json.loads(data)
 	data1 = json.loads(doc)
-	print("================data1",data1)
 	work_order_list = [item.get('work_order') for item in data1.get('work_order_table')]
 	total_work_orders = len(work_order_list)
+	wo_string = ''
+	if len(work_order_list)>0:
+		for i in work_order_list:
+			wo_string += i
+			wo_string +=','
+
 	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Work Order Pick List'},'url')
 	public_file_path = url.split('app')
 	public_file_path = public_file_path[0] + 'files/work_order_pick_list.xlsx'
@@ -978,7 +983,7 @@ def print_label(data,doc):
 
 
 		cell = ws.cell(row=row,column=col+3)
-		cell.value =  ''
+		cell.value =  wo_string
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = ws.cell(row=row,column=col+4)
@@ -1028,7 +1033,7 @@ def print_label(data,doc):
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 
 		cell = sheet.cell(row=row,column=col+3)
-		cell.value =  ''
+		cell.value = wo_string
 		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 		
 		cell = sheet.cell(row=row,column=col+4)

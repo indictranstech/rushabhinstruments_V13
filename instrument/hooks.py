@@ -148,7 +148,7 @@ doc_events = {
 	},
 	"Batch" : {
 	"autoname" : "instrument.instrument.custom_instrument.batch.batch.autoname",
-	"validate" : ["instrument.instrument.custom_instrument.batch.batch.label_img","instrument.instrument.custom_instrument.batch.batch.validate"],
+	"validate" : ["instrument.instrument.custom_instrument.batch.batch.validate"],
 	"after_insert":["instrument.instrument.custom_instrument.batch.batch.after_insert"]
 	},
 	"Stock Entry" : {
