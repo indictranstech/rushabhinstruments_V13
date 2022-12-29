@@ -29,8 +29,18 @@ from frappe.utils import nowdate,nowtime, today, flt
 from datetime import timedelta,date
 import datetime
 import calendar
-import json
 import time
+
+
+
+import os
+from frappe.utils import get_files_path
+from pathlib import Path
+from frappe.utils import getdate,time
+import glob
+from pathlib import Path
+import pandas as pd
+from frappe.utils import flt, cstr, nowdate, nowtime
 class WorkOrderPickList(Document):
 	@frappe.whitelist()
 	def get_fg_work_orders(self):
@@ -935,3 +945,111 @@ def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
 
 			if d.value:
 				get_sub_assembly_items(d.value, bom_data, stock_qty, indent=indent+1)
+@frappe.whitelist()
+def print_label(data,doc):
+	data = json.loads(data)
+	data1 = json.loads(doc)
+	work_order_list = [item.get('work_order') for item in data1.get('work_order_table')]
+	total_work_orders = len(work_order_list)
+	wo_string = ''
+	if len(work_order_list)>0:
+		for i in work_order_list:
+			wo_string += i
+			wo_string +=','
+
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Work Order Pick List'},'url')
+	public_file_path = url.split('app')
+	public_file_path = public_file_path[0] + 'files/work_order_pick_list.xlsx'
+	final_url = url + data1.get('name')
+	file_path = os.path.realpath(get_files_path(is_private=0))
+	file = file_path + '/' + 'work_order_pick_list.xlsx'
+	if os.path.exists(file):
+		wb = openpyxl.load_workbook(filename=file)
+		ws = wb['Sheet']
+		row = ws.max_row +1
+		# row = ws.get_highest_row() + 1
+		col = 1
+		cell = ws.cell(row=row,column=col)
+		cell.value = ws.max_row -1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+1)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+2)
+		cell.value = total_work_orders
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+3)
+		cell.value =  wo_string
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+4)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = ws.cell(row=row,column=col+5)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+6)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		wb.save(file)
+		frappe.msgprint(f''' Work Order Pick List Traveller Updated,You can download it from here
+                        <a href = {public_file_path}><b>{public_file_path}</b></a>''')
+		return public_file_path
+
+	else:
+		header = ['Record ID','Work Order Pick List Name','Work Orders Total','Work Orders','Number of Copies','Printer','URL']
+		book = Workbook()
+		sheet = book.active
+		row = 1
+		col = 1
+		for item in header:
+			cell = sheet.cell(row=row,column=col)
+			cell.value = item
+			cell.font = cell.font.copy(bold=True)
+			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+			cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')
+			
+			col+=1
+		row =2
+		col =1
+
+		cell = sheet.cell(row=row,column=col)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+1)
+		cell.value = data1.get('name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+2)
+		cell.value = total_work_orders
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = wo_string
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+5)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+6)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+	
+		file = frappe.utils.get_site_path("public")
+		fname = file_path+'/' + 'work_order_pick_list'+'.xlsx'
+		book.save(fname)
+		frappe.msgprint("Work Order Pick Traveler Created,You can download it from here {0}".format(public_file_path))
+		return public_file_path

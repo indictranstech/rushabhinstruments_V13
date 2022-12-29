@@ -13,7 +13,28 @@ import os, shutil
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
 from zipfile import ZipFile
 
+import json
+from frappe.utils.xlsxutils import make_xlsx
+import openpyxl
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Color, Fill, PatternFill, Alignment
+from openpyxl.drawing.image import Image
+from openpyxl import Workbook
+from six import StringIO, string_types
+import sys
+from openpyxl import Workbook
+from openpyxl.styles import Alignment
+from openpyxl.utils.cell import get_column_letter
 
+
+import os
+from frappe.utils import get_files_path
+from pathlib import Path
+from frappe.utils import getdate,time
+import glob
+from pathlib import Path
+import pandas as pd
+from frappe.utils import flt, cstr, nowdate, nowtime
 @frappe.whitelist()
 def check_stock(doc,method):
 	frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
@@ -387,3 +408,142 @@ def make_consolidated_pick_list(source_name, target_doc=None):
 			}
 		})
 	return target_doc
+
+
+@frappe.whitelist()
+def print_label(data,doc):
+	data = json.loads(data)
+	data1 = json.loads(doc)
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Work Order'},'url')
+	public_file_path = url.split('app')
+	public_file_path = public_file_path[0] + 'files/work_order.xlsx'
+	final_url = url + data1.get('name')
+	file_path = os.path.realpath(get_files_path(is_private=0))
+	file = file_path + '/' + 'work_order.xlsx'
+	if os.path.exists(file):
+		wb = openpyxl.load_workbook(filename=file)
+		ws = wb['Sheet']
+		row = ws.max_row +1
+		# row = ws.get_highest_row() + 1
+		col = 1
+		cell = ws.cell(row=row,column=col)
+		cell.value = ws.max_row -1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+1)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+2)
+		cell.value = data1.get('production_item') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+3)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+4)
+		cell.value = data1.get('qty')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+5)
+		cell.value = data1.get('sales_order')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+6)
+		cell.value = data1.get('wip_warehouse')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+7)
+		cell.value = data1.get('fg_warehouse')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+8)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = ws.cell(row=row,column=col+9)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+10)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		wb.save(file)
+		frappe.msgprint(f'''Work Order Traveller Updated,You can download it from here
+                        <a href = {public_file_path}><b>{public_file_path}</b></a>''')
+		return public_file_path
+
+	else:
+		header = ['Record ID','Work Order Name','Item to Manufacture','Item Name','Qty To Manufacture','Sales Order','WIP Warehouse','Target Warehouse','Number of Copies','Printer','URL']
+		book = Workbook()
+		sheet = book.active
+		row = 1
+		col = 1
+		for item in header:
+			cell = sheet.cell(row=row,column=col)
+			cell.value = item
+			cell.font = cell.font.copy(bold=True)
+			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+			cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')
+			
+			col+=1
+		row =2
+		col =1
+
+		cell = sheet.cell(row=row,column=col)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+1)
+		cell.value = data1.get('name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+2)
+		cell.value = data1.get('production_item') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = data1.get('qty')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		cell = sheet.cell(row=row,column=col+5)
+		cell.value = data1.get('sales_order')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+6)
+		cell.value = data1.get('wip_warehouse')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+7)
+		cell.value = data1.get('fg_warehouse')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+8)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+9)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+10)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+	
+		file = frappe.utils.get_site_path("public")
+		fname = file_path+'/' + 'work_order'+'.xlsx'
+		book.save(fname)
+		frappe.msgprint("Work Order Traveller Created,You can download it from here {0}".format(public_file_path))
+		return public_file_path
+
+
+
+
+ 
