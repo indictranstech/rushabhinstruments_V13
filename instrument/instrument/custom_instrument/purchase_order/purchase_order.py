@@ -22,15 +22,24 @@ def on_submit(doc, method = None):
 			attachment_list = {'fname':row.file_name,'fcontent':content}
 			file_att.append(attachment_list)
 
+	file_url_email = frappe.db.get_value("File",{'file_name':attachments[0].get('file_name')},'file_url')
 	sender = frappe.db.get_value("Email Setting",{"email_name": "Purchase Order Email"},"email_id")
 	recipient = doc.contact_email
+	rushabh_sett = frappe.get_single("Rushabh Settings")
 	if recipient:
+		message = "Purchase Order : " + rushabh_sett.url + '/app/purchase-order/{0}'.format(doc.name) + " " + "You can check attachments here" + " " 
+		for row in attachments:
+			file_url_email = frappe.db.get_value("File",{'file_name':row.get('file_name')},'file_url')
+			message+= rushabh_sett.url + file_url_email
+			message+= " " + ","
+
 		frappe.sendmail(
 			sender = sender,
 			recipients = recipient,
 			subject = "Purchase Order : {0}".format(doc.name),
-			message = "Purchase Order : " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-order/{0}".format(doc.name),
-			attachments = file_att,
+			message = message
+			# message = "Purchase Order : " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-order/{0}".format(doc.name) +" "+ "URL :"+ "localhost:8000{0}".format(file_url_email),
+			# attachments = file_att,
 			)
 	
 
@@ -51,6 +60,16 @@ def after_insert(doc,method):
 	"content": pdf_data.get('fcontent')
 	})
 	_file.save()
+
+	p_file = frappe.get_doc({
+	"doctype": "File",
+	"file_name": pdf_data.get('fname'),
+	# "attached_to_doctype": "Purchase Order",
+	# "attached_to_name": doc.name,
+	"is_private": 0,
+	"content": pdf_data.get('fcontent')
+	})
+	p_file.save()
 def validate(doc,method):
 	if doc.items:
 		for item in doc.items:
@@ -72,6 +91,16 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+
+		p_file = frappe.get_doc({
+		"doctype": "File",
+		"file_name": pdf_data.get('fname'),
+		# "attached_to_doctype": "Purchase Order",
+		# "attached_to_name": doc.name,
+		"is_private": 0,
+		"content": pdf_data.get('fcontent')
+		})
+		p_file.save()
 
 # def attach_purchasing_docs(doc, method):
 # 	for row in doc.items:
@@ -231,6 +260,16 @@ def create_zip_file(row, all_files):
 	file_doc.attached_to_name = row.parent
 	file_doc.file_url = file_url
 	file_doc.insert(ignore_permissions=True)
+	frappe.db.commit()
+
+	p_file_doc = frappe.new_doc("File")
+	p_file_doc.file_name =file_name
+	p_file_doc.is_private =0
+	# p_file_doc.folder = "Home/Attachments"
+	# p_file_doc.attached_to_doctype = row.parenttype
+	# p_file_doc.attached_to_name = row.parent
+	# p_file_doc.file_url = file_url
+	p_file_doc.insert(ignore_permissions=True)
 	frappe.db.commit()
 
 

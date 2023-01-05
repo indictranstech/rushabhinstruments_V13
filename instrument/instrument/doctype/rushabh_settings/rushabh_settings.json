@@ -13,7 +13,8 @@
   "rm_readiness_days",
   "section_break_5",
   "warehouse_table",
-  "table_for_item_group"
+  "table_for_item_group",
+  "url"
  ],
  "fields": [
   {
@@ -56,12 +57,17 @@
    "fieldtype": "Table",
    "label": "Table For Item Group",
    "options": "Table For Item Group"
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "URL"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-04-12 01:22:33.991544",
+ "modified": "2023-01-05 12:12:58.800418",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Rushabh Settings",
