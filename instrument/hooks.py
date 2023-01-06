@@ -261,7 +261,7 @@ scheduler_events = {
 # 		"instrument.tasks.all"
 # 	],
 	"daily": [
-		"instrument.instrument.custom_instrument.blanket_order.blanket_order.generate_po_against_blanket_order_reminder"
+		"instrument.instrument.custom_instrument.blanket_order.blanket_order.generate_po_against_blanket_order_reminder","instrument.instrument.custom_instrument.purchase_order.purchase_order.log_for_email_expiry"
 	],
 # 	"hourly": [
 # 		"instrument.tasks.hourly"

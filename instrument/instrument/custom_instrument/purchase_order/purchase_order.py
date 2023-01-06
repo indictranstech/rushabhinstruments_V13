@@ -5,7 +5,30 @@ from frappe.desk.form.load import get_attachments
 from zipfile import ZipFile
 import os, shutil
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
-
+from frappe.utils import (
+	add_days,
+	ceil,
+	cint,
+	comma_and,
+	flt,
+	get_link_to_form,
+	getdate,
+	now_datetime,
+	nowdate,today,formatdate, get_first_day, get_last_day 
+)
+from dateutil.relativedelta import relativedelta
+from frappe.utils import (
+	cint,
+	date_diff,
+	flt,
+	get_datetime,
+	get_link_to_form,
+	getdate,
+	nowdate,
+	time_diff_in_hours,
+)
+import datetime
+from datetime import date,timedelta
 def on_submit(doc, method = None):
 	prepare_zip_attachment_for_po(doc, method)
 	file_att = []
@@ -21,8 +44,6 @@ def on_submit(doc, method = None):
 				return
 			attachment_list = {'fname':row.file_name,'fcontent':content}
 			file_att.append(attachment_list)
-
-	file_url_email = frappe.db.get_value("File",{'file_name':attachments[0].get('file_name')},'file_url')
 	sender = frappe.db.get_value("Email Setting",{"email_name": "Purchase Order Email"},"email_id")
 	recipient = doc.contact_email
 	rushabh_sett = frappe.get_single("Rushabh Settings")
@@ -67,7 +88,8 @@ def after_insert(doc,method):
 	# "attached_to_doctype": "Purchase Order",
 	# "attached_to_name": doc.name,
 	"is_private": 0,
-	"content": pdf_data.get('fcontent')
+	"content": pdf_data.get('fcontent'),
+	"email_log_check":1
 	})
 	p_file.save()
 def validate(doc,method):
@@ -98,7 +120,8 @@ def validate(doc,method):
 		# "attached_to_doctype": "Purchase Order",
 		# "attached_to_name": doc.name,
 		"is_private": 0,
-		"content": pdf_data.get('fcontent')
+		"content": pdf_data.get('fcontent'),
+		"email_log_check":1
 		})
 		p_file.save()
 
@@ -265,6 +288,7 @@ def create_zip_file(row, all_files):
 	p_file_doc = frappe.new_doc("File")
 	p_file_doc.file_name =file_name
 	p_file_doc.is_private =0
+	p_file_doc.email_log_check=1
 	# p_file_doc.folder = "Home/Attachments"
 	# p_file_doc.attached_to_doctype = row.parenttype
 	# p_file_doc.attached_to_name = row.parent
@@ -1036,3 +1060,19 @@ def make_consolidated_pick_list(source_name, target_doc=None):
 			}
 		})
 	return target_doc
+
+
+@frappe.whitelist()
+def log_for_email_expiry():
+	rushabh_sett = frappe.get_single("Rushabh Settings")
+	if rushabh_sett.expiry_days:
+		p_files = frappe.db.sql("""SELECT name from `tabFile` where email_log_check =1""",as_dict=1)
+		if p_files:
+			for row in p_files:
+				file_doc =frappe.get_doc("File",row.get('name'))
+				if file_doc:
+					today_date = date.today()
+					file_creation_date = file_doc.creation
+					expir_days = (today_date - file_creation_date.date())
+					if expir_days.days > rushabh_sett.expiry_days:
+						frappe.db.sql("""delete from `tabFile` where name=%s""",(row.get('name')))
