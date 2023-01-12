@@ -268,6 +268,7 @@ def create_zip_file(row, all_files):
 	zip_full_path = file_path+ "/"+row.engineering_revision+"_"+row.parent+".zip"
 	file_name = row.engineering_revision+"_"+row.parent+".zip"
 	file_url = '/private/files/'+file_name
+	p_file_url = '/files/' + file_name
 
 	with ZipFile(zip_full_path,'w') as zip:
 		for full_path in all_files:
@@ -285,16 +286,28 @@ def create_zip_file(row, all_files):
 	file_doc.insert(ignore_permissions=True)
 	frappe.db.commit()
 
-	p_file_doc = frappe.new_doc("File")
-	p_file_doc.file_name =file_name
-	p_file_doc.is_private =0
-	p_file_doc.email_log_check=1
-	# p_file_doc.folder = "Home/Attachments"
-	# p_file_doc.attached_to_doctype = row.parenttype
-	# p_file_doc.attached_to_name = row.parent
-	# p_file_doc.file_url = file_url
+	p_file_doc = frappe.copy_doc(file_doc)
+	p_file_doc.is_private = 0
+	p_file_doc.attached_to_doctype = ''
+	p_file_doc.attached_to_name = ''
+	p_file_doc.email_log_check = 1
 	p_file_doc.insert(ignore_permissions=True)
 	frappe.db.commit()
+
+	update_to_p_file = frappe.get_doc("File",p_file_doc.name)
+	update_to_p_file.is_private = 0
+	update_to_p_file.save(ignore_permissions=1)
+
+	# p_file_doc = frappe.new_doc("File")
+	# p_file_doc.file_name =file_name
+	# p_file_doc.is_private =0
+	# p_file_doc.email_log_check=1
+	# p_file_doc.folder = "Home/Attachments"
+	# # p_file_doc.attached_to_doctype = row.parenttype
+	# # p_file_doc.attached_to_name = row.parent
+	# # p_file_doc.file_url = p_file_url
+	# p_file_doc.insert(ignore_permissions=True)
+	# frappe.db.commit()
 
 
 
