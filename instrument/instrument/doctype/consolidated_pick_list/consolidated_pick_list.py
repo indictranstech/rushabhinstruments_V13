@@ -53,7 +53,7 @@ class ConsolidatedPickList(Document):
 		if fg_item_groups:
 			if self.purpose == "Material Transfer for Manufacture":
 				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.material_transferred_for_manufacturing) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in {0} and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and {2}""".format(tuple(fg_item_groups),todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
-
+				print("====fg_work_orders====", fg_work_orders)
 				if fg_work_orders:
 					for row in fg_work_orders:
 						doc = frappe.get_doc("Work Order",row.get("name"))
@@ -83,8 +83,9 @@ class ConsolidatedPickList(Document):
 							'qty_of_finished_goods_already_completed':row.get('produced_qty')
 							})
 			else:
-				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in {0} and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and {2}""".format(tuple(fg_item_groups),todays_date, wo_filter_condition(self.work_order)),as_dict=1,debug=1)
-				fg_work_orders_2 = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in {0} and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and {2}""".format(tuple(fg_item_groups),todays_date, wo_filter_condition(self.work_order)),as_dict=1,debug=1)
+				filters={"work_order":self.work_order}
+				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in {0} and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and {2}""".format(tuple(fg_item_groups),todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
+				fg_work_orders_2 = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in {0} and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and {2}""".format(tuple(fg_item_groups),todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
 				if fg_work_orders_2:
 					for item in fg_work_orders_2:
 						fg_work_orders.append(item)
@@ -271,7 +272,7 @@ class ConsolidatedPickList(Document):
 								# 	if batch_qty >= (flt(raw_materials.get(row).get("qty"))-flt(transferred_qty)) :
 								# 		i['picked_qty'] = (flt(raw_materials.get(row).get("qty"))-flt(transferred_qty)) 
 								# 	else:
-								# 		i['picked_qty'] = batch_qty	
+								# 		i['picked_qty'] = batch_qty
 					final_data[item.work_order] = item_locations_dict
 			# add items in item_locations
 			work_order_list = [item.work_order for item in self.work_orders]
@@ -337,7 +338,7 @@ class ConsolidatedPickList(Document):
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 
 		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=0)
-
+		print("======ssssss=====", batch_data)
 		for row in batch_data:
 			calculate_remaining_batch_qty(row)
 
@@ -520,7 +521,16 @@ class ConsolidatedPickList(Document):
 				allocated_batch_list.append(row.idx)
 		# if len(allocated_batch_list) > 0:
 		# 	frappe.throw("Kindly Review batches for rows {0}".format(allocated_batch_list))
+		self.update_status()
 
+	def update_status(self):
+		status = []
+		if self.purpose == "Material Transfer for Manufacture" or "Manufacture":
+			for row in self.work_orders:
+				if row.qty_of_finished_goods>0 and not status:
+					row.stock_entry_status="Not Created"
+					status.append("Not Created")
+					frappe.db.commit()
 
 	@frappe.whitelist()
 	def get_fg_sales_orders(self):
@@ -1058,7 +1068,6 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 		pick_list_doc = frappe.get_doc("Consolidated Pick List",consolidated_pick_list)
 		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':consolidated_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
 		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict=1, debug=0)
-
 		if len(data) > 0:
 			stock_entry = frappe.new_doc("Stock Entry")
 			if stock_entry:
@@ -1087,7 +1096,7 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 					stock_entry.stock_entry_type = 'Manufacture'
 					stock_entry.company = work_order_doc.company
 					stock_entry.work_order = work_order
-					stock_entry.work_order_pick_list = consolidated_pick_list
+					stock_entry.consolidated_pick_list = consolidated_pick_list
 					stock_entry.from_bom = 1
 					stock_entry.bom_no = work_order_doc.bom_no
 					stock_entry.fg_completed_qty = qty_of_finish_good

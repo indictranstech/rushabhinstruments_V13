@@ -86,6 +86,21 @@ def on_submit(doc,method):
 		frappe.db.set_value("Pick List Purchase Order Table", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
 		frappe.db.commit()
 
+	status = []
+	doc_status = []
+	if doc.consolidated_pick_list:
+		con_doc = frappe.get_doc("Consolidated Pick List", doc.consolidated_pick_list) 
+		for row in con_doc.work_orders:
+			if row.qty_of_finished_goods>0 and not row.stock_entry and not status:
+				frappe.db.set_value("Pick Orders", row.name, "stock_entry_status", "Not Created")
+				status.append("Not Created")
+				frappe.db.commit()
+
+		po_orders_count=frappe.db.get_list('Pick Orders', filters={'qty_of_finished_goods': ['>', 0], 'parent':doc.consolidated_pick_list}, fields=['count(name) as count'])
+		po_orders_status=frappe.db.get_list('Pick Orders', filters={'qty_of_finished_goods': ['>', 0], "stock_entry_status":"Submitted", 'parent':doc.consolidated_pick_list}, fields=['count(name) as count'])
+		if po_orders_count and po_orders_status and po_orders_count[0].get("count")==po_orders_status[0].get("count"):
+			frappe.db.set_value("Consolidated Pick List", doc.consolidated_pick_list, "status", "Completed")
+
 	# frappe.db.set_value("Final Work Orders", {'item':doc.production_item, 'sales_order':doc.sales_order}, "wo_status", doc.status)
 	# frappe.db.commit()
 

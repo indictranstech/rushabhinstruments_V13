@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "status",
   "naming_series",
   "company",
   "section_break_4",
@@ -364,12 +365,20 @@
    "fieldname": "create_delivery_note",
    "fieldtype": "Button",
    "label": "Create Delivery Note"
+  },
+  {
+   "default": "Submitted",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nCompleted\nCancelled"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-22 23:17:28.754461",
+ "modified": "2023-01-15 08:31:57.212304",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
