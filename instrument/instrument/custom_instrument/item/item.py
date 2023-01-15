@@ -9,6 +9,28 @@ import requests
 import textwrap
 import re
 
+import json
+from frappe.utils.xlsxutils import make_xlsx
+import openpyxl
+from openpyxl import load_workbook
+from openpyxl.styles import Font, Color, Fill, PatternFill, Alignment
+from openpyxl.drawing.image import Image
+from openpyxl import Workbook
+from six import StringIO, string_types
+import sys
+from openpyxl import Workbook
+from openpyxl.styles import Alignment
+from openpyxl.utils.cell import get_column_letter
+
+
+import os
+from frappe.utils import get_files_path
+from pathlib import Path
+from frappe.utils import getdate,time
+import glob
+from pathlib import Path
+import pandas as pd
+from frappe.utils import flt, cstr, nowdate, nowtime
 def after_insert(doc,method):
 	start_string = doc.name 
 	end_string = '.png'
@@ -130,3 +152,124 @@ def get_label_details(template_name):
 	if template_name:
 		data = frappe.db.sql("""SELECT a.label from `tabItem Additional Label Info Template Table` a join `tabItem Additional Label Info Template` b on b.name =a.parent where b.template_name = '{0}' order by a.idx""".format(template_name),as_dict=1)
 		return data
+
+@frappe.whitelist()
+def print_label(data,doc):
+	data = json.loads(data)
+	data1 = json.loads(doc)
+	item_locations = [item.get('warehouse') for item in data1.get('warehouses')]
+	warehouse_list = ''
+	if len(item_locations) >0:
+		for i in item_locations:
+			warehouse_list += i
+			warehouse_list += ','
+	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Item'},'url')
+	public_file_path = url.split('app')
+	public_file_path = public_file_path[0] + 'files/item_traveler.xlsx'
+	final_url = url + data1.get('name')
+	file_path = os.path.realpath(get_files_path(is_private=0))
+	file = file_path + '/' + 'item_traveler.xlsx'
+	if os.path.exists(file):
+		wb = openpyxl.load_workbook(filename=file)
+		ws = wb['Sheet']
+		row = ws.max_row +1
+		# row = ws.get_highest_row() + 1
+		col = 1
+		cell = ws.cell(row=row,column=col)
+		cell.value = ws.max_row -1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+1)
+		cell.value = data1.get('item_code') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+2)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+3)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+4)
+		cell.value = warehouse_list
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+
+		cell = ws.cell(row=row,column=col+5)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = ws.cell(row=row,column=col+6)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = ws.cell(row=row,column=col+7)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		wb.save(file)
+		frappe.msgprint(f'''Item Traveller Updated,You can download it from here
+                        <a href = {public_file_path}><b>{public_file_path}</b></a>''')
+		return public_file_path
+
+	else:
+		header = ['Record ID','Part Number','Part Description','Item Code','Locations','Number of Copies','Printer','URL']
+		book = Workbook()
+		sheet = book.active
+		row = 1
+		col = 1
+		for item in header:
+			cell = sheet.cell(row=row,column=col)
+			cell.value = item
+			cell.font = cell.font.copy(bold=True)
+			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+			cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')
+			
+			col+=1
+		row =2
+		col =1
+
+		cell = sheet.cell(row=row,column=col)
+		cell.value = 1 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+1)
+		cell.value = data1.get('item_code')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+2)
+		cell.value = data1.get('item_name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = data1.get('name') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = warehouse_list
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+5)
+		cell.value = data.get('no_of_copies') 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+
+		cell = sheet.cell(row=row,column=col+6)
+		cell.value = data.get('printer_name')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		
+		cell = sheet.cell(row=row,column=col+7)
+		cell.value = final_url 
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+	
+		file = frappe.utils.get_site_path("public")
+		fname = file_path+'/' + 'item_traveler'+'.xlsx'
+		book.save(fname)
+		frappe.msgprint("Item Traveller Created,You can download it from here {0}".format(public_file_path))
+		return public_file_path
+
+
+
+
+ 

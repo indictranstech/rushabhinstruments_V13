@@ -13,7 +13,9 @@
   "rm_readiness_days",
   "section_break_5",
   "warehouse_table",
-  "table_for_item_group"
+  "table_for_item_group",
+  "url",
+  "expiry_days"
  ],
  "fields": [
   {
@@ -56,12 +58,22 @@
    "fieldtype": "Table",
    "label": "Table For Item Group",
    "options": "Table For Item Group"
+  },
+  {
+   "fieldname": "url",
+   "fieldtype": "Data",
+   "label": "URL"
+  },
+  {
+   "fieldname": "expiry_days",
+   "fieldtype": "Int",
+   "label": "Expiry Days"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2022-04-12 01:22:33.991544",
+ "modified": "2023-01-06 00:26:38.869807",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Rushabh Settings",

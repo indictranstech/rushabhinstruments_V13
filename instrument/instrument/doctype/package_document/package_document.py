@@ -30,6 +30,9 @@ def copy_doc_to_other_doc(item_list,package_type,item_code,revision,docname,pack
 	doc = frappe.get_doc("Package Document",package_document)
 	if doc:
 		for col in item_list:
+			doc.append('attachment',{
+				'attachment':col.get('attachment')
+				})
 			_file = frappe.get_doc({
 				"doctype": "File",
 				"file_url":col.get("attachment") ,
@@ -38,6 +41,7 @@ def copy_doc_to_other_doc(item_list,package_type,item_code,revision,docname,pack
 				"is_private": 1
 				})
 			_file.save()
+		doc.save()
 	
 	frappe.msgprint("Documents Copied Successfully")
 

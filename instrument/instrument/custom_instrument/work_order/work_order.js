@@ -1,6 +1,35 @@
 frappe.ui.form.on('Work Order', {
 	refresh: function(frm) {
-		
+			if (!frm.doc.__islocal) {
+				cur_frm.add_custom_button(__('Print Label'),function(){
+					var dialog = new frappe.ui.Dialog({
+						title: __('Work Order Traveler Details'),
+						keep_open: true,
+						fields: [
+						{
+							"label": "Enter No of Copies",
+							"fieldname": "no_of_copies",
+							"fieldtype": "Data",
+							"reqd": 1
+						},
+						{
+							"label": "Printer Name",
+							"fieldname": "printer_name",
+							"fieldtype": "Link",
+							"options":"Printer",
+							"reqd": 1
+						}
+						],
+						onhide: () => {
+						}
+						});
+						dialog.set_primary_action(__('Submit'), () => {
+							create_label_print(frm,dialog);
+							dialog.hide()
+						});
+						dialog.show();
+				})
+		}
 		setTimeout(() => {
 			frm.remove_custom_button((__('Create Pick List')));
 		}, 10)
@@ -111,3 +140,21 @@ frappe.ui.form.on('Work Order', {
 		})
 	}						
 });
+var create_label_print = function(frm,dialog){
+	frappe.call({
+		method: 'instrument.instrument.custom_instrument.work_order.work_order.print_label',
+		// async: false,
+		args: {
+            "data": dialog.get_values(),
+            "doc": frm.doc
+        },
+		callback: (r) => {
+			if(r.message)
+			{
+				frappe.msgprint("Work Order Traveler Created. You can open it through" + r.message)
+
+			}
+		}
+	});
+};
+
