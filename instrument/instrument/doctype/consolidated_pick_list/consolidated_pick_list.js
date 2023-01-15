@@ -86,8 +86,14 @@ frappe.ui.form.on('Consolidated Pick List', {
 		}
 	},
 
+	// validate: function(frm) {
+	// 	if (frm.doc.docstatus==1){
+	// 		frm.set_value("status", "Submitted")
+	// 	}
+	// },
+
 	purpose: (frm) => {
-		if ((frm.doc.purpose == 'Material Transfer for Manufacture') && (frm.doc.purpose == 'Manufacture')){
+		if ((frm.doc.purpose == 'Material Transfer for Manufacture') || (frm.doc.purpose == 'Manufacture')){
 			frm.set_value("naming_series", "WO-PICK-.YYYY.-")
 		} else if (frm.doc.purpose == 'Sales Order Fulfillment') {
 			frm.set_value("naming_series", "SO-PICK-.YYYY.-")
@@ -326,7 +332,6 @@ frappe.ui.form.on('Consolidated Pick List', {
 				if (r.message) {
 					cur_frm.clear_table("purchase_order_pick_list_item");
 					$.each(r.message, function(idx, item_row){
-						console.log("======item_row=====", item_row)
 						var row = frappe.model.add_child(frm.doc, "Purchase Order Pick List Item", "purchase_order_pick_list_item");
 						row.main_item = item_row.main_item
 						row.item_code = item_row.item_code
@@ -358,14 +363,14 @@ frappe.ui.form.on('Consolidated Pick List', {
 		frm.refresh_field('pick_list_purchase_order_table');
 	},
 
-	work_orders_on_form_rendered:function(frm,cdt,cdn){
-		var d = locals[cdt][cdn]
-		var stock_entry = frm.open_grid_row().get_field('stock_entry').value
-		if (stock_entry){
-			frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', 1)
-		}
-		frm.refresh_field('work_orders');
-	},
+	// work_orders_on_form_rendered:function(frm,cdt,cdn){
+	// 	var d = locals[cdt][cdn]
+	// 	var stock_entry = frm.open_grid_row().get_field('stock_entry').value
+	// 	if (stock_entry){
+	// 		frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', 1)
+	// 	}
+	// 	frm.refresh_field('work_orders');
+	// },
 
 	pick_list_sales_order_table_on_form_rendered:function(frm,cdt,cdn){
 		var d = locals[cdt][cdn]
@@ -394,6 +399,16 @@ frappe.ui.form.on('Consolidated Pick List', {
 				}
 			}
 		})
+	},
+
+	work_orders_on_form_rendered:function(frm,cdt,cdn){
+		var row = locals[cdt][cdn]
+		var stock_entry_status = frm.open_grid_row().get_field('stock_entry_status').value
+		if(stock_entry_status=="Not Created"){
+			frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', false)
+		} else {
+			frm.open_grid_row().set_field_property("create_stock_entry", 'hidden', true)
+		}
 	}
 
 });
