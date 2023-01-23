@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2023-01-23 02:05:40.531996",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "standard_item",
+  "previous_standard_bom",
+  "new_standard_bom",
+  "bom_level"
+ ],
+ "fields": [
+  {
+   "fieldname": "standard_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Standard Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "previous_standard_bom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Previous Standard BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "new_standard_bom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "New Standard BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "bom_level",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "BOM Level"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-01-23 02:05:40.531996",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Table of Standard BOMs Produced",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

@@ -14,6 +14,15 @@ frappe.ui.form.on('Mapped BOM', {
 					args:{
 						mapped_item:frm.doc.item,
 						mapped_bom:frm.doc.name
+					},
+					callback:function(r){
+						if(r.message== true){
+							frappe.set_route("List","BOM Creation Tool");
+
+						}else{
+							frappe.set_route("Form","BOM Creation Tool",r.message);
+
+						}
 					}
 				})
 				// frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");

@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import frappe
 
 def validate(doc,method):
+	set_bom_level(doc)
 	# Sort bom items according to s item_code
 	final_item_list = []
 	for row in doc.items:
@@ -87,7 +88,19 @@ def validate(doc,method):
 		doc.append("exploded_items",row)
 		cont = cont + 1
 
+def set_bom_level(doc, update=False):
+		levels = []
 
+		doc.bom_level = 0
+		for row in doc.items:
+			if row.bom_no:
+				levels.append(frappe.get_cached_value("BOM", row.bom_no, "bom_level") or 0)
+
+		if levels:
+			doc.bom_level = max(levels) + 1
+
+		if update:
+			doc.db_set("bom_level", doc.bom_level)
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):

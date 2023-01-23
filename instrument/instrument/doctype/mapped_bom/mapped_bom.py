@@ -1198,13 +1198,20 @@ def create_bom_tree_for_item_mapping(mapped_item,mapped_bom):
 				if row.standard_item_code in item_mappings_list:
 					item_mappings_list.remove(row.standard_item_code)
 
+		bct_doc_list=[]
 		if len(item_mappings_list) > 0:
 			for row in item_mappings_list:
 				bc_doc = frappe.new_doc("BOM Creation Tool")
 				if bc_doc:
+					item_mapping = frappe.db.get_value("Item Mapping",{'mapped_item':mapped_item,'item_code':row},'name')
 					bc_doc.mapped_item = mapped_item
 					bc_doc.standard_item_code = row
 					bc_doc.mapped_bom = mapped_bom
+					bc_doc.item_mapping = item_mapping
 					bc_doc.save()
+					bct_doc_list.append(bc_doc.name)
 					frappe.msgprint("BOM Creation Tool Created For Item Mapping<b>{0}</b>".format(row))
-
+		if len(bct_doc_list) > 1:
+			return True
+		else :
+			return bct_doc_list[0]

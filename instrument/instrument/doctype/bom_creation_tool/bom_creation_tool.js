@@ -63,6 +63,13 @@ frappe.ui.form.on('BOM Creation Tool', {
 				]
 			}
 	    }
+	    cur_frm.fields_dict['item_mapping'].get_query = function(doc, cdt, cdn) {
+			return {
+				filters: [
+					['Item Mapping','mapped_item', '=', frm.doc.mapped_item],
+				]
+			}
+	    }
 	    frm.set_query("standard_item_code", function() {
 			return {
 				query: "instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_standard_item_code",
@@ -103,7 +110,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 	},
 	onload:function(frm){
-		if(frm.doc.docstatus==0 && frm.doc.review_item_mapping == ''){
+		if(frm.doc.attribute_table == ''){
 			frm.trigger('mapped_bom')
 			frm.save()
 		}
