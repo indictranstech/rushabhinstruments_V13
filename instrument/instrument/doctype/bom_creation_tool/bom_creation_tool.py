@@ -88,7 +88,7 @@ class BOMCreationTool(Document):
 						item_name = frappe.db.get_value("Item",{'name':parent_std_item_list[0]},'item_name')
 						item_details = frappe.db.get_values("Item",{'name':parent_std_item_list[0]},['item_name','default_bom'],as_dict=1)
 						override_bom = frappe.db.get_value("Item Mapping",{'item_code':parent_std_item_list[0],'mapped_item':bom_doc.item},'do_not_override_existing_bom')
-						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1},'name')
+						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1,'mapped_bom':bom.get('name')},'name')
 						if not bom_for_item:
 							bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1},'name')
 						if bom_doc.item not in final_items_review:
@@ -281,7 +281,7 @@ class BOMCreationTool(Document):
 						frappe.throw("Standard Item Code Not found for {0}".format(bom_doc.item))
 					item_details = frappe.db.get_values("Item",{'name':std_item},['item_name','default_bom'],as_dict=1)
 					override_bom = frappe.db.get_value("Item Mapping",{'item_code':std_item,'mapped_item':bom_doc.item},'do_not_override_existing_bom')
-					bom_for_item = frappe.db.get_value("BOM",{'item':std_item,'is_active':1},'name')
+					bom_for_item = frappe.db.get_value("BOM",{'item':std_item,'is_active':1,'mapped_bom':bom_doc.get('name')},'name')
 					# last_doc = frappe.get_last_doc("BOM",filters={'item':std_item})
 					if not bom_for_item or not override_bom:
 						std_bom = frappe.new_doc("BOM")

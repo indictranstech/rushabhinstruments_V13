@@ -74,6 +74,21 @@ frappe.ui.form.on("BOM", {
 				if (frm.doc.name && frm.doc.old_reference_bom) {
 					frm.set_value("update_status",'In Process')
 					frappe.call({
+						method: "instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.update_mapped_bom_item",
+						freeze: true,
+						args: {
+								"current_bom": frm.doc.old_reference_bom,
+								"new_bom": frm.doc.name,
+								"current_doc" : frm.doc.name
+						},
+						callback: result => {
+							if (result && result.message && !result.exc) {
+								// frm.events.confirm_job_start(frm, result.message);
+							}
+						}
+
+					})
+					frappe.call({
 						method: "erpnext.manufacturing.doctype.bom_update_tool.bom_update_tool.enqueue_replace_bom",
 						freeze: true,
 						args: {
@@ -88,16 +103,7 @@ frappe.ui.form.on("BOM", {
 							}
 						}
 					});
-					// frappe.call({
-					// 	method: "instrument.instrument.custom_instrument.bom_update_tool.bom_update_tool.enqueue_replace_bom",
-					// 	freeze: true,
-					// 	args: {
-					// 		args: {
-					// 			"current_bom": frm.doc.old_reference_bom,
-					// 			"new_bom": frm.doc.name
-					// 		}
-					// 	}
-					// });
+				
 				}else{
 					frappe.msgprint("Please Enter Old Reference BOM")
 				}

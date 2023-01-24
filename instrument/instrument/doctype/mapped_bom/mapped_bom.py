@@ -139,6 +139,7 @@ class MappedBOM(WebsiteGenerator):
 	def on_submit(self):
 		self.manage_default_bom()
 		self.check_propogation()
+		# self.update_propogation_on_parent()
 	def validate(self):
 		self.route = frappe.scrub(self.name).replace('_', '-')
 		if self.get("__islocal"):
@@ -165,6 +166,21 @@ class MappedBOM(WebsiteGenerator):
 		self.update_cost(update_parent=False, from_child_bom=True, update_hour_rate = False, save=False)
 		self.set_bom_level()
 		self.check_deleted_items()
+		
+	def update_propogation_on_parent(self):
+		print("============self",self.name)
+		if self.check_propogation_to_descendent_bom ==1 and self.propogate_update_to_descendent_bom_status == 'Need To Run Propogate Update To Descendent BOMs':
+			find_parent_list = frappe.db.sql("""SELECT m.name from `tabMapped BOM`m join `tabMapped BOM Item` mi on mi.parent = m.name where mi.mapped_bom = '{0}'""".format(self.name),as_dict=1,debug=1)
+			find_parent_list = [i.name for i in find_parent_list]
+			print("=========find_parent_list",find_parent_list)
+			if len(find_parent_list) > 1:
+				for row in find_parent_list:
+					m_bom_doc = frappe.get_doc("Mapped BOM",row)
+					m_bom_doc.check_propogation_to_descendent_bom = 1
+					m_bom_doc.propogate_update_to_descendent_bom_status = 'Need To Run Propogate Update To Descendent BOMs'
+					# m_bom_doc.flags.ignore_permissions=1
+					m_bom_doc.save()
+					m_bom_doc.submit()
 
 	def check_deleted_items(self):
 		if self.items and self.old_reference_bom:
@@ -768,10 +784,59 @@ class MappedBOM(WebsiteGenerator):
 			if old_item_dict or len(new_item_list)>0:
 				frappe.db.set_value("Mapped BOM",{'name':self.name},'check_propogation_to_descendent_bom',1)
 				frappe.db.commit()
+				m_bom_list = frappe.db.sql("""SELECT m.name from `tabMapped BOM`m join `tabMapped BOM Item` mi on mi.parent = m.name where mi.mapped_bom = '{0}'""".format(self.old_reference_bom),as_dict=1)
+				override_bom_child = [] 
+				m_bom_list = [i.name for i in m_bom_list]
+				for row in m_bom_list:
+					m_bom_doc = frappe.get_doc("Mapped BOM",row)
+					if m_bom_doc:
+						m_bom_doc.check_propogation_to_descendent_bom = 1
+						m_bom_doc.flags.ignore_permissions =1
+						m_bom_doc.save()
+						m_bom_doc.submit()
+						override_bom_child_dict = override_bom_list(row,override_bom_child)
+				print("888888888888888888888",override_bom_child)
+
 				if self.propogate_to_descendent_bom ==0:
 					frappe.db.set_value("Mapped BOM",{'name':self.name},'propogate_update_to_descendent_bom_status','Need To Run Propogate Update To Descendent BOMs')
 					frappe.db.commit()
+					for row in m_bom_list:
+						m_bom_doc = frappe.get_doc("Mapped BOM",row)
+						if m_bom_doc:
+							m_bom_doc.propogate_update_to_descendent_bom_status = 'Need To Run Propogate Update To Descendent BOMs'
+							m_bom_doc.flags.ignore_permissions =1
+							m_bom_doc.save()
+							m_bom_doc.submit()
+				find_parent_list = [i.parent for i in override_bom_child]
+				if len(find_parent_list) > 1:
+					frappe.db.sql("""UPDATE  `tabMapped BOM` set propogate_update_to_descendent_bom_status = 'Need To Run Propogate Update To Descendent BOMs' where name in {0}""".format(tuple(find_parent_list)))
+					frappe.db.commit()
+					frappe.db.sql("""UPDATE  `tabMapped BOM` set check_propogation_to_descendent_bom = 1 where name in {0}""".format(tuple(find_parent_list)))
+					frappe.db.commit()
+
+				elif len(find_parent_list) == 1:
+					frappe.db.sql("""UPDATE  `tabMapped BOM` set propogate_update_to_descendent_bom_status = "Need To Run Propogate Update To Descendent BOMs" where name = '{0}'""".format(find_parent_list[0],debug=1))
+					frappe.db.commit()
+					frappe.db.sql("""UPDATE  `tabMapped BOM` set check_propogation_to_descendent_bom = 1 where name = '{0}' """.format(find_parent_list[0]),debug=1)
+					frappe.db.commit()
+
+
+					
 				self.reload()
+def override_bom_list(mapped_bom,override_bom_child):
+	print("******************mapped_bom",mapped_bom)
+	if mapped_bom:
+		# childs = frappe.db.sql("""SELECT mapped_bom from `tabMapped BOM Item` where parent = '{0}' and mapped_bom is not null and override_existing_bom = 1 """.format(mapped_bom),as_dict=1)
+		childs = frappe.db.sql("""SELECT m.parent from `tabMapped BOM Item` m  where m.mapped_bom = '{0}'""".format(mapped_bom),as_dict=1)
+
+		override_bom_child += childs
+
+		if len(childs)>0:
+			for c in childs:
+				override_bom_list(c.get('mapped_bom'),override_bom_child)
+		print("========================",override_bom_child)
+		return override_bom_child
+
 
 def get_new_bom_unit_cost(bom):
 		new_bom_unitcost = frappe.db.sql("""SELECT `total_cost`/`quantity`
@@ -920,53 +985,55 @@ def replace_bom(args):
 	frappe.db.auto_commit_on_many_writes = 0
 
 @frappe.whitelist()
-def propogate_update_to_descendent(current_bom,new_bom):
-	if current_bom and new_bom:
-		old_bom_data = get_bom_data(current_bom)
-		old_item_dict = {row.get("item_code"):row for row in old_bom_data}
-		new_bom_data = get_bom_data(new_bom)
-		new_item_dict = {row.get("item_code") for row in new_bom_data}
-		final_dict = dict()
-		new_item_list = list()
-		flag = 0
-		for line in new_bom_data:
-			if line.is_map_item:
-				if line.item_code in old_item_dict:
-					if line.qty == old_item_dict.get(line.item_code).get("qty"):
-						final_dict.update(line)
-						old_item_dict.pop(line.item_code)
-					else:
-						final_dict.update(line)
-						flag=1
-						old_item_dict.pop(line.item_code)
-				else:
-					final_dict.update(line)
-					flag=1
-			else :
-				if line.item_code in old_item_dict:
-					if line.qty == old_item_dict.get(line.item_code).get('qty'):
-						old_item_dict.pop(line.item_code)
-					else:
-						new_item_list.append(line)
-						old_item_dict.pop(line.item_code)
-				else:
-					new_item_list.append(line)
-		for row in old_item_dict:
-			if old_item_dict.get(row).get("is_map_item"):
-				flag =1
-		if flag ==1 :
-			create_bom_creation_tool(current_bom,new_bom)
-		else:
-			create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
-		frappe.db.set_value("Mapped BOM",new_bom,'propogate_update_to_descendent_bom_status','Completed')
-		frappe.db.commit()
+def propogate_update_to_descendent(new_bom):
+	# if current_bom and new_bom:
+	# 	old_bom_data = get_bom_data(current_bom)
+	# 	old_item_dict = {row.get("item_code"):row for row in old_bom_data}
+	# 	new_bom_data = get_bom_data(new_bom)
+	# 	new_item_dict = {row.get("item_code") for row in new_bom_data}
+	# 	final_dict = dict()
+	# 	new_item_list = list()
+	# 	flag = 0
+	# 	for line in new_bom_data:
+	# 		if line.is_map_item:
+	# 			if line.item_code in old_item_dict:
+	# 				if line.qty == old_item_dict.get(line.item_code).get("qty"):
+	# 					final_dict.update(line)
+	# 					old_item_dict.pop(line.item_code)
+	# 				else:
+	# 					final_dict.update(line)
+	# 					flag=1
+	# 					old_item_dict.pop(line.item_code)
+	# 			else:
+	# 				final_dict.update(line)
+	# 				flag=1
+	# 		else :
+	# 			if line.item_code in old_item_dict:
+	# 				if line.qty == old_item_dict.get(line.item_code).get('qty'):
+	# 					old_item_dict.pop(line.item_code)
+	# 				else:
+	# 					new_item_list.append(line)
+	# 					old_item_dict.pop(line.item_code)
+	# 			else:
+	# 				new_item_list.append(line)
+	# 	for row in old_item_dict:
+	# 		if old_item_dict.get(row).get("is_map_item"):
+	# 			flag =1
+	# 	if flag ==1 :
+	# 		create_bom_creation_tool(current_bom,new_bom)
+	# 	else:
+	# 		create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
 
-def create_bom_creation_tool(current_bom,bom):
-	if current_bom:
-		bom_creation_docs = frappe.get_all("BOM Creation Tool",{'mapped_bom':current_bom})
+	create_bom_creation_tool(new_bom)
+	frappe.db.set_value("Mapped BOM",new_bom,'propogate_update_to_descendent_bom_status','Completed')
+	frappe.db.commit()
+
+def create_bom_creation_tool(bom):
+	if bom:
+		bom_creation_docs = frappe.get_all("BOM Creation Tool",{'mapped_bom':bom})
 		
 		if len(bom_creation_docs) == 0 :
-			frappe.throw("BOM Creation Tool is not Found for Mapped BOM {0}".format(current_bom))
+			frappe.throw("BOM Creation Tool is not Found for Mapped BOM {0}".format(bom))
 		else:
 			for d in bom_creation_docs:
 				old_doc = frappe.get_doc("BOM Creation Tool",d.get("name"))
@@ -974,6 +1041,8 @@ def create_bom_creation_tool(current_bom,bom):
 					new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
 					new_doc.mapped_bom = bom
 					new_doc.review_item_mapping = ''
+					new_doc.table_of_standard_boms_produced = ''
+					new_doc.difference_between_previous_and_current_review_item_mappings = ''
 					new_doc.save()
 					frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
 					frappe.db.commit()

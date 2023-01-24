@@ -110,9 +110,8 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 	},
 	onload:function(frm){
-		if(frm.doc.attribute_table == ''){
+		if(frm.doc.docstatus == 0){
 			frm.trigger('mapped_bom')
-			frm.save()
 		}
 		// if(frm.doc.__islocal){
 		// 	// Fetch all the attributes for mapped item

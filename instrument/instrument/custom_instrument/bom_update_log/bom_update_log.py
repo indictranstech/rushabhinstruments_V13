@@ -6,6 +6,6 @@ import json
 
 
 def validate(doc, method=None):
-	frappe.db.set_value("BOM", new_bom, "update_status", doc.status)
+	frappe.db.set_value("BOM", doc.new_bom, "update_status", doc.status)
 	frappe.db.commit()
 
