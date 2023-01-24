@@ -49,25 +49,48 @@ def propogate_updates_to_affected_boms(doc):
 		get_bct = frappe.get_doc("BOM Creation Tool",find_BCT_for_main[0].get('name'))
 		if get_bct:
 			if get_bct.docstatus == 1:
-				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=False)
-				new_doc.standard_item_code = doc.get('item_code')
+				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=True)
+				if new_doc.standard_item_code == old_standrad_item_code:
+					new_doc.standard_item_code = doc.get('item_code')
+				for item in new_doc.review_item_mapping:
+					if item.standard_item_code == old_standrad_item_code:
+						item.standard_item_code = doc.get('item_code')
+						item.item_mapping_retrived = doc.get('name')
 				new_doc.save()
 			else:
-				mapped_bom = get_bct.mapped_bom
-				get_bct.mapped_bom = ''
-				get_bct.mapped_bom = mapped_bom
+				if get_bct.standard_item_code == old_standrad_item_code:
+					get_bct.standard_item_code = doc.get('item_code')
+				for item in get_bct.review_item_mapping:
+					if item.standard_item_code == old_standrad_item_code:
+						item.standard_item_code = doc.get('item_code')
+						item.item_mapping_retrived = doc.get('name')
 				get_bct.save()
+				# mapped_bom = get_bct.mapped_bom
+				# get_bct.mapped_bom = ''
+				# get_bct.mapped_bom = mapped_bom
+				# get_bct.save()
 	elif find_BCT_for_table != []:
 		get_bct = frappe.get_doc("BOM Creation Tool",find_BCT_for_table[0].get('name'))
 		if get_bct:
 			if get_bct.docstatus == 1:
-				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=False)
+				new_doc = frappe.copy_doc(get_bct, ignore_no_copy=True)
+				if new_doc.standard_item_code == old_standrad_item_code:
+					new_doc.standard_item_code = doc.get('item_code')
+				for item in new_doc.review_item_mapping:
+					if item.standard_item_code == old_standrad_item_code:
+						item.standard_item_code = doc.get('item_code')
+						item.item_mapping_retrived = doc.get('name')
 				# new_doc.standard_item_code = doc.get('item_code')
+				new_doc.table_of_standard_boms_produced = ''
+				new_doc.difference_between_previous_and_current_review_item_mappings = ''
 				new_doc.save()
 			else:
-				mapped_bom = get_bct.mapped_bom
-				get_bct.mapped_bom = ''
-				get_bct.mapped_bom = mapped_bom
+				if get_bct.standard_item_code == old_standrad_item_code:
+					get_bct.standard_item_code = doc.get('item_code')
+				for item in get_bct.review_item_mapping:
+					if item.standard_item_code == old_standrad_item_code:
+						item.standard_item_code = doc.get('item_code')
+						item.item_mapping_retrived = doc.get('name')
 				get_bct.save()
 	item_mapping_doc = frappe.get_doc("Item Mapping",doc.get('name'))
 	

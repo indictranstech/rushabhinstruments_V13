@@ -160,8 +160,13 @@ class BOMCreationTool(Document):
 	def difference_table_data(doc):
 		if doc.mapped_item and doc.mapped_bom and doc.standard_item_code:
 			bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_item':doc.mapped_item,'standard_item_code':doc.standard_item_code,'docstatus':1},'name')
+
 			if bom_creation_doc:
 				previous_mapping = frappe.db.sql("""SELECT * from `tabReview Item Mapping` where parent = '{0}'""".format(bom_creation_doc),as_dict=1)
+				for i in doc.review_item_mapping:
+					if i not in previous_mapping:
+						doc.append('difference_between_previous_and_current_review_item_mappings',i)
+				
 				# current_dict = {row.mapped_item:row for row in doc.review_item_mapping}
 				# print("=-====",current_dict)
 				previous_mapping_dict = dict()
@@ -550,3 +555,7 @@ def check_recent_version_of_BCT(standard_item_code):
 		check_BCT = frappe.db.sql("""SELECT b.name from `tabBOM Creation Tool` b where b.standard_item_code = '{0}' order by b.name desc""".format(standard_item_code),as_dict=1)
 		if check_BCT:
 			return check_BCT[0].get('name')
+
+@frappe.whitelist()
+def review_item_mapping_for_affected(new_doc):
+	review_item_mappings(new_doc)
