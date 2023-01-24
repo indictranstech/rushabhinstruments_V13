@@ -13,6 +13,7 @@
   "status",
   "column_break_3",
   "override_existing_bom",
+  "item_mapping",
   "standard_item_code",
   "standard_bom",
   "version_of_bom_released",
@@ -21,6 +22,7 @@
   "attribute_table",
   "review_item_mappings",
   "review_item_mapping",
+  "table_of_standard_boms_produced",
   "difference_between_previous_and_current_review_item_mappings",
   "amended_from"
  ],
@@ -51,6 +53,7 @@
   {
    "fieldname": "mapped_bom",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Mapped BOM",
    "options": "Mapped BOM",
    "reqd": 1
@@ -82,6 +85,7 @@
   {
    "fieldname": "mapped_item",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Mapped Item",
    "options": "Item",
    "reqd": 1
@@ -89,10 +93,10 @@
   {
    "fieldname": "standard_item_code",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Item Mapping",
+   "in_standard_filter": 1,
+   "label": "Standard Item Code",
    "options": "Item",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "item_assignment_table_for_mapped_item",
@@ -132,12 +136,24 @@
    "label": "Version Of BOM Released",
    "options": "BOM",
    "read_only": 1
+  },
+  {
+   "fieldname": "item_mapping",
+   "fieldtype": "Link",
+   "label": "Item Mapping",
+   "options": "Item Mapping"
+  },
+  {
+   "fieldname": "table_of_standard_boms_produced",
+   "fieldtype": "Table",
+   "label": "Table of Standard BOMs Produced",
+   "options": "Table of Standard BOMs Produced"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-22 05:45:22.743467",
+ "modified": "2023-01-24 05:35:26.843155",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",

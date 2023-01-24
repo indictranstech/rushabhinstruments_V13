@@ -14,6 +14,15 @@ frappe.ui.form.on('Mapped BOM', {
 					args:{
 						mapped_item:frm.doc.item,
 						mapped_bom:frm.doc.name
+					},
+					callback:function(r){
+						if(r.message== true){
+							frappe.set_route("List","BOM Creation Tool");
+
+						}else{
+							frappe.set_route("Form","BOM Creation Tool",r.message);
+
+						}
 					}
 				})
 				// frappe.set_route("Form","BOM Creation Tool", "new bom creation tool");
@@ -54,7 +63,7 @@ frappe.ui.form.on('Mapped BOM', {
 						freeze: true,
 						args: {
 						
-							"current_bom": frm.doc.old_reference_bom,
+							// "current_bom": frm.doc.old_reference_bom,
 							"new_bom": frm.doc.name
 						
 						}
@@ -294,7 +303,20 @@ frappe.ui.form.on('Mapped BOM', {
 			})
 		}
 			
-	}
+	},
+	// propogate_update_to_descendent_bom_status:function(frm){
+	// 	if(frm.doc.propogate_update_to_descendent_bom_status == 'Need To Run Propogate Update To Descendent BOMs' && frm.doc.check_propogation_to_descendent_bom == 1){
+	// 		frappe.call({
+	// 			method:"instrument.instrument.doctype.mapped_bom.mapped_bom.update_propogation_on_parent",
+	// 			args:{
+	// 				'doc_name':frm.doc.name
+	// 			},
+	// 			callback:function(r){
+					
+	// 			}
+	// 		})
+	// 	}
+	// }
 		
 });
 frappe.ui.form.on('Mapped BOM Item', {

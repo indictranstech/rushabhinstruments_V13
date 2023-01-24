@@ -80,14 +80,15 @@ class BOMCreationTool(Document):
 								'standard_item_code': '',
 								'standard_item_name':'',
 								'standard_bom': '',
-								'attribute_value':str(attribute_value_dict)
+								'attribute_value':str(attribute_value_dict),
+								'item_mapping_retrived':parent_map_item_doc.name
 								})
 							final_items_review.append(bom_doc.item)
 					else:
 						item_name = frappe.db.get_value("Item",{'name':parent_std_item_list[0]},'item_name')
 						item_details = frappe.db.get_values("Item",{'name':parent_std_item_list[0]},['item_name','default_bom'],as_dict=1)
 						override_bom = frappe.db.get_value("Item Mapping",{'item_code':parent_std_item_list[0],'mapped_item':bom_doc.item},'do_not_override_existing_bom')
-						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1},'name')
+						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1,'mapped_bom':bom.get('name')},'name')
 						if not bom_for_item:
 							bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1},'name')
 						if bom_doc.item not in final_items_review:
@@ -97,7 +98,8 @@ class BOMCreationTool(Document):
 								'standard_item_code': parent_std_item_list[0],
 								'standard_item_name':item_name,
 								'standard_bom': bom_for_item if override_bom else '',
-								'attribute_value':str(attribute_value_dict)
+								'attribute_value':str(attribute_value_dict),
+								'item_mapping_retrived':parent_map_item_doc.name
 								})
 							final_items_review.append(bom_doc.item)
 						for line in bom_doc.items:
@@ -130,7 +132,8 @@ class BOMCreationTool(Document):
 											'standard_item_code': '',
 											'standard_item_name':'',
 											'standard_bom': '',
-											'attribute_value':str(raw_attribute_value_dict)
+											'attribute_value':str(raw_attribute_value_dict),
+											'item_mapping_retrived':map_item_doc.name
 											})
 										final_items_review.append(line.item_code)
 								else:
@@ -147,7 +150,8 @@ class BOMCreationTool(Document):
 											'standard_item_code': raw_std_item_list[0],
 											'standard_item_name':raw_item_name,
 											'standard_bom': bom_for_raw_item if raw_override_bom else '',
-											'attribute_value':str(raw_attribute_value_dict)
+											'attribute_value':str(raw_attribute_value_dict),
+											'item_mapping_retrived':map_item_doc.name
 											})
 										final_items_review.append(line.item_code)
 			doc.difference_table_data()
@@ -266,6 +270,7 @@ class BOMCreationTool(Document):
 				'mapped_bom' : doc.mapped_bom
 				})
 			final_bom_list = get_all_boms_in_order(bom_child_list)
+			std_bom_list_for_bct = []
 			for bom in final_bom_list:
 				bom_doc = frappe.get_doc("Mapped BOM",bom.get('name'))
 				if bom_doc:
@@ -276,7 +281,8 @@ class BOMCreationTool(Document):
 						frappe.throw("Standard Item Code Not found for {0}".format(bom_doc.item))
 					item_details = frappe.db.get_values("Item",{'name':std_item},['item_name','default_bom'],as_dict=1)
 					override_bom = frappe.db.get_value("Item Mapping",{'item_code':std_item,'mapped_item':bom_doc.item},'do_not_override_existing_bom')
-					bom_for_item = frappe.db.get_value("BOM",{'item':std_item,'is_active':1},'name')
+					bom_for_item = frappe.db.get_value("BOM",{'item':std_item,'is_active':1,'mapped_bom':bom_doc.get('name')},'name')
+					# last_doc = frappe.get_last_doc("BOM",filters={'item':std_item})
 					if not bom_for_item or not override_bom:
 						std_bom = frappe.new_doc("BOM")
 						if std_bom:
@@ -367,6 +373,12 @@ class BOMCreationTool(Document):
 							std_bom.bom_creation_tool = doc.name
 							std_bom.save(ignore_permissions = True)
 							std_bom.submit()
+							doc.append('table_of_standard_boms_produced',{
+								'standard_item':std_item,
+								# 'previous_standard_bom':last_doc if last_doc else '',
+								'new_standard_bom':std_bom.name,
+								'bom_level':std_bom.bom_level
+								})
 			doc.status = 'Completed'
 		else:
 			frappe.throw("Please Check Review Item Mapping")
