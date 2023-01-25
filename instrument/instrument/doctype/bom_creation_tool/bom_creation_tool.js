@@ -110,9 +110,23 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 	},
 	onload:function(frm){
-		if(frm.doc.docstatus == 0){
-			frm.trigger('mapped_bom')
-		}
+		// if(frm.doc.docstatus == 0){
+		// 	frm.trigger('mapped_bom')
+		// 	if(frm.doc.attribute_table){
+		// 		return frm.call({
+		// 		doc: frm.doc,
+		// 		method: "copy_to_all_rows",
+		// 		freeze: true,
+		// 		callback: function(r) {
+		// 			if(r.message == true){
+		// 				frappe.msgprint("Copied Successfully");
+		// 			}
+		// 		}
+		// 	});
+		// 	}
+		// 	frm.trigger('review_item_mappings')
+
+		// }
 		// if(frm.doc.__islocal){
 		// 	// Fetch all the attributes for mapped item
 		// 	if(frm.doc.mapped_bom){

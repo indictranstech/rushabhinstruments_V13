@@ -53,6 +53,11 @@ frappe.ui.form.on('Item Mapping', {
 					freeze: true,
 					args: {
 						doc : frm.doc
+						},
+						callback:function(r){
+							if(r.message){
+								frappe.set_route("List","BOM Creation Tool")
+							}
 						}
 					});
 				}, __("Menu"));
