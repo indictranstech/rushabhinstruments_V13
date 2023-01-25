@@ -166,7 +166,7 @@ class BOMCreationTool(Document):
 				for i in doc.review_item_mapping:
 					if i not in previous_mapping:
 						doc.append('difference_between_previous_and_current_review_item_mappings',i)
-				
+
 				# current_dict = {row.mapped_item:row for row in doc.review_item_mapping}
 				# print("=-====",current_dict)
 				previous_mapping_dict = dict()
@@ -446,7 +446,10 @@ def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
 			for row in final_item_list:
 				if (row.attribute_list[0].get('mapped_item'),row.attribute_list[0].get('attribute')) in data_dict:
 					for item in row.attribute_list:
-						item['value'] = data_dict.get((item.get('mapped_item'),item.get('attribute'))).get("value")
+						if (item.get('mapped_item'),item.get('attribute')) in data_dict:
+							item['value'] = data_dict.get((item.get('mapped_item'),item.get('attribute'))).get("value")
+						else:
+							item['value'] = ''
 		return final_item_list,False
 
 # Get all child mapped_bom
