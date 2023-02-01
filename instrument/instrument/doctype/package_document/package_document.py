@@ -6,7 +6,16 @@ from frappe.model.document import Document
 import json
 
 class PackageDocument(Document):
+	@frappe.whitelist()
+	def copy_attachments(self):
+		documents = frappe.db.sql("""SELECT file_url from `tabFile` where attached_to_doctype = 'Package Document' and attached_to_name = '{0}'""".format(self.name),as_dict=1)
+		if documents:
+			for i in documents:
+				self.append("attachment",{
+					'attachment':i.get('file_url')
 
+					})
+		self.save()
 	def validate(self):
 		engineering_revision = frappe.db.get_value("Engineering Revision",{'item_code':self.item_code,'revision':self.revision},'name')
 		if self.package_type == 'Purchasing_Package':
