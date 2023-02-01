@@ -4,6 +4,20 @@
 frappe.ui.form.on('Package Document', {
 	refresh: function(frm) {
 		frm.add_custom_button(__('Copy Rows'),() => frm.events.copy(frm));
+		frm.add_custom_button(__('Copy Attachments From Side Bar'),() => frm.events.copy_attachments(frm));
+	},
+	copy_attachments:function(frm){
+		return frm.call({
+					doc: frm.doc,
+					method: "copy_attachments",
+					freeze: true,
+					callback: function(r) {
+						if(r.message){
+							refresh_field('attachment')
+						}
+					}
+				});
+
 	},
 	copy:function(frm){
 		let selected_rows_from_attachment = []
