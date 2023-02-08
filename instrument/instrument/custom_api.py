@@ -126,8 +126,8 @@ def item_wise_production_api():
 `tabWork Order`.wip_warehouse,`tabWork Order`.fg_warehouse,`tabWork Order`.planned_start_date,`tabWork Order`.planned_end_date,`tabWork Order`.actual_start_date,`tabWork Order`.actual_end_date,`tabItem`.lead_time_days
  from `tabWork Order` LEFT JOIN `tabItem` ON `tabWork Order`.production_item=`tabItem`.item_code where `tabWork Order`.docstatus=1; """, as_dict=True)
 
-@frappe.whitelist()
-def customer_list(allow_guest=True):
+@frappe.whitelist(allow_guest=True)
+def customer_list():
     return frappe.db.sql(f""" Select name as customer_code, customer_name,customer_group,territory,mobile_no from `tabCustomer` """, as_dict=True)
 
 #Get all delivery notes by a particular date, date arguement format is yyyy-mm-dd
