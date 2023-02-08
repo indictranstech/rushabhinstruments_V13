@@ -71,7 +71,7 @@ def sales_order_api():
     from `tabSales Order` a left join `tabSales Order Item` b
     ON a.name = b.parent """, as_dict=True)
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def sales_invoice_api():
     return frappe.db.sql(f""" select a.name,a.customer,a.company,a.posting_date,a.posting_time,a.due_date,a.woocommerce_order_id,a.currency,a.selling_price_list,a.debit_to,a.base_net_total,a.base_grand_total,a.grand_total,
     b.parenttype,b.item_code,b.item_name,b.uom,b.qty,b.rate,b.amount,b.description,b.conversion_factor,b.income_account,b.base_rate,b.base_amount,
@@ -105,7 +105,7 @@ def get_deliver_note(data=None):
     else:
         return {"status":200, "data":""}
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def customer_api():
     return frappe.db.sql(f""" Select a.name,a.customer_name,a.creation,a.modified,a.woocommerce_customer_id,a.customer_group,a.territory,a.tax_id,d.address_line1,d.address_line2,d.city,d.state,d.country,d.county,d.pincode,d.email_id,d.phone from
     (Select * from `tabCustomer`)a
@@ -116,18 +116,18 @@ def customer_api():
     (Select parent,link_name,link_doctype From `tabDynamic Link` where link_doctype="Customer" and parenttype="Address")c
     ON b.name=c.parent))d ON a.name=d.link_name""", as_dict=True)
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def item_wise_stock_api():
     return frappe.db.sql(f""" select warehouse, modified as date,item_code, sum(actual_qty), stock_uom,valuation_rate,stock_value from `tabBin` """, as_dict=True)
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def item_wise_production_api():
     return frappe.db.sql(f""" select `tabWork Order`.name as work_order,`tabWork Order`.status,production_item,`tabWork Order`.item_name,`tabWork Order`.qty as qty_for_manufacture,`tabWork Order`.material_transferred_for_manufacturing,`tabWork Order`.produced_qty,`tabWork Order`.sales_order,
 `tabWork Order`.wip_warehouse,`tabWork Order`.fg_warehouse,`tabWork Order`.planned_start_date,`tabWork Order`.planned_end_date,`tabWork Order`.actual_start_date,`tabWork Order`.actual_end_date,`tabItem`.lead_time_days
  from `tabWork Order` LEFT JOIN `tabItem` ON `tabWork Order`.production_item=`tabItem`.item_code where `tabWork Order`.docstatus=1; """, as_dict=True)
 
 @frappe.whitelist()
-def customer_list():
+def customer_list(allow_guest=True):
     return frappe.db.sql(f""" Select name as customer_code, customer_name,customer_group,territory,mobile_no from `tabCustomer` """, as_dict=True)
 
 #Get all delivery notes by a particular date, date arguement format is yyyy-mm-dd
