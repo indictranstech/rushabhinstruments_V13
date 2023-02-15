@@ -27,8 +27,8 @@ def on_submit(doc, method = None):
 			attachments = file_att,
 			)
 	custom_api(doc)
-	frappe.db.set_value("Pick List Sales Order Table", {"name":row_name}, {"delivery_note":doc.name, "delivery_note_status":doc.status})
-	frappe.db.commit()
+	# frappe.db.set_value("Pick List Sales Order Table", {"name":row_name}, {"delivery_note":doc.name, "delivery_note_status":doc.status})
+	# frappe.db.commit()
 
 def custom_api(doc, event=None):
 	items = []
