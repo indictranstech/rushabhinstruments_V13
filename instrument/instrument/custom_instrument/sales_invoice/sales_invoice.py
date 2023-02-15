@@ -9,7 +9,7 @@ def on_submit(doc, method = None):
 		so_name.append(row.sales_order)
 		dn_name.append(row.delivery_note)
 
-	if delivery_note:
+	if dn_name:
 		rounded_total = frappe.db.get_value("Delivery Note", dn_name[0], "rounded_total")
 		per_billed = (flt(doc.rounded_total)/flt(rounded_total))*100
 
