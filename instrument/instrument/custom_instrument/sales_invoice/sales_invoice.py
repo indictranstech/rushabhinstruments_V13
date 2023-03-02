@@ -3,34 +3,34 @@ import frappe
 from frappe.model.document import Document
 
 def on_submit(doc, method = None):
-	so_name = []
-	dn_name = []
-	for row in doc.items:
-		so_name.append(row.sales_order)
-		dn_name.append(row.delivery_note)
+	# so_name = []
+	# dn_name = []
+	# for row in doc.items:
+	# 	so_name.append(row.sales_order)
+	# 	dn_name.append(row.delivery_note)
 
-	if dn_name:
-		rounded_total = frappe.db.get_value("Delivery Note", dn_name[0], "rounded_total")
-		per_billed = (flt(doc.rounded_total)/flt(rounded_total))*100
+	# if dn_name:
+	# 	rounded_total = frappe.db.get_value("Delivery Note", dn_name[0], "rounded_total")
+	# 	per_billed = (flt(doc.rounded_total)/flt(rounded_total))*100
 
-		if per_billed==100:
-			frappe.db.set_value("Delivery Note", dn_name[0], "per_billed", per_billed)
-			frappe.db.set_value("Delivery Note", dn_name[0], "status", "Completed")
+	# 	if per_billed==100:
+	# 		frappe.db.set_value("Delivery Note", dn_name[0], "per_billed", per_billed)
+	# 		frappe.db.set_value("Delivery Note", dn_name[0], "status", "Completed")
 
-		if so_name:
-			so_rounded_total = frappe.db.get_value("Sales Order", so_name[0], "rounded_total")
+	# 	if so_name:
+	# 		so_rounded_total = frappe.db.get_value("Sales Order", so_name[0], "rounded_total")
 
-			so_per_billed = (flt(doc.rounded_total)/flt(so_rounded_total))*100
-			if so_per_billed==100:
-				print("====so_per_billed==",so_per_billed)
-				frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
-				frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
-			else:
-				_billed = frappe.db.get_value("Sales Order", so_name[0], "per_billed")
-				so_per_billed=flt(so_per_billed)+flt(_billed)
-				if so_per_billed==100:
-					frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
-				frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
+	# 		so_per_billed = (flt(doc.rounded_total)/flt(so_rounded_total))*100
+	# 		if so_per_billed==100:
+	# 			print("====so_per_billed==",so_per_billed)
+	# 			frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
+	# 			frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
+	# 		else:
+	# 			_billed = frappe.db.get_value("Sales Order", so_name[0], "per_billed")
+	# 			so_per_billed=flt(so_per_billed)+flt(_billed)
+	# 			if so_per_billed==100:
+	# 				frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
+	# 			frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
 
 	
 	file_att = []
