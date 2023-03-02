@@ -66,6 +66,26 @@ def validate(doc,method):
 		})
 		_file.save()
 
+	so_name = []
+	for row in doc.items:
+		if row.sales_order and not so_name:
+			so_name.append(row.sales_order)
+
+	if so_name:
+		advances=frappe.db.get_values("Payment Entry Reference", {"reference_name":so_name[0]}, ["allocated_amount", "parent", "exchange_rate", "name"], as_dict=1)
+		doc.allocate_advances_automatically=1
+		if not doc.advances and advances:
+			doc.append("advances", {
+				"reference_type":"Payment Entry",
+				"reference_name":advances[0].get("parent"),
+				"remarks": frappe.db.get_value("Payment Entry", advances[0].get("parent"), "remarks"),
+				"advance_amount":advances[0].get("allocated_amount"),
+				"allocated_amount":doc.rounded_total,
+				"exchange_rate": advances[0].get("exchange_rate"),
+				"reference_row": advances[0].get("name")
+			})
+			doc.outstanding_amount=0
+
 def after_insert(doc,method):
 	frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Sales Invoice' and attached_to_name=%s""",
 			(doc.name))
@@ -86,18 +106,6 @@ def after_insert(doc,method):
 		row.so_detail = name	
 		frappe.db.set_value("Sales Invoice Item", row.name, "so_detail", name)
 		frappe.db.commit()
-
-	if doc.allocate_advances_automatically:
-		for row in doc.advances:
-			row.allocated_amount = doc.rounded_total
-			# frappe.db.set_value("Sales Invoice Advance", row.name, "allocated_amount", doc.rounded_total)
-			# frappe.db.commit()
-		doc.allocate_advances_automatically = 0
-		# frappe.db.set_value("Sales Invoice", doc.name, "allocate_advances_automatically", 0)
-		doc.save()
-		frappe.db.commit()
-
-
 
 
 """=======Class Override====="""
