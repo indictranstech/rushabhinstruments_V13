@@ -20,14 +20,14 @@ def on_submit(doc, method = None):
 		if so_name:
 			so_rounded_total = frappe.db.get_value("Sales Order", so_name[0], "rounded_total")
 
-			so_per_billed = (flt(rounded_total)/flt(so_rounded_total))*100
-
+			so_per_billed = (flt(doc.rounded_total)/flt(so_rounded_total))*100
 			if so_per_billed==100:
-				frappe.db.set_value("Sales Order", so_name[0], "per_billed", per_billed)
+				print("====so_per_billed==",so_per_billed)
+				frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
 				frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
 			else:
-				per_billed = frappe.db.get_value("Sales Invoice", so_name[0], "per_billed")
-				so_per_billed=flt(so_per_billed)+flt(per_billed)
+				_billed = frappe.db.get_value("Sales Order", so_name[0], "per_billed")
+				so_per_billed=flt(so_per_billed)+flt(_billed)
 				if so_per_billed==100:
 					frappe.db.set_value("Sales Order", so_name[0], "status", "Completed")
 				frappe.db.set_value("Sales Order", so_name[0], "per_billed", so_per_billed)
