@@ -1270,13 +1270,35 @@ def create_bom_tree_for_item_mapping(mapped_item,mapped_bom):
 		bct_doc_list=[]
 		if len(item_mappings_list) > 0:
 			for row in item_mappings_list:
+				attribute_table_data = get_map_item_attributes(mapped_bom,mapped_item,row)
 				bc_doc = frappe.new_doc("BOM Creation Tool")
 				if bc_doc:
 					item_mapping = frappe.db.get_value("Item Mapping",{'mapped_item':mapped_item,'item_code':row},'name')
+					mapping_doc_data = frappe.db.sql("SELECT attribute,value from `tabAttribute Table` where parent = '{0}'".format(item_mapping),as_dict=1)
+					mapped_attribute_value_dict = {item.attribute:item.value for item in mapping_doc_data}
 					bc_doc.mapped_item = mapped_item
 					bc_doc.standard_item_code = row
 					bc_doc.mapped_bom = mapped_bom
 					bc_doc.item_mapping = item_mapping
+					if attribute_table_data[0] != []:
+						for line in attribute_table_data[0]:
+							if len(line.get('attribute_list')) == 1:
+								bc_doc.append('attribute_table',{
+									'mapped_bom':line.get('parent'),
+									'mapped_boms':line.get('mapped_boms'),
+									'mapped_item':line.get('item_code'),
+									'attribute':line.get('attribute_list')[0].get('attribute'),
+									'value':mapped_attribute_value_dict.get(line.get('attribute_list')[0].get('attribute')) if line.get('attribute_list')[0].get('attribute') in mapped_attribute_value_dict else ''
+									})
+							else:
+								for j in line.get('attribute_list'):
+									bc_doc.append('attribute_table',{
+										'mapped_bom':line.get('parent'),
+										'mapped_boms':line.get('mapped_boms'),
+										'mapped_item':line.get('item_code'),
+										'attribute':j.get('attribute'),
+										'value':mapped_attribute_value_dict.get(j.get('attribute')) if j.get('attribute') in mapped_attribute_value_dict else ''
+										})
 					bc_doc.save()
 					bct_doc_list.append(bc_doc.name)
 					frappe.msgprint("BOM Creation Tool Created For Item Mapping<b>{0}</b>".format(row))
