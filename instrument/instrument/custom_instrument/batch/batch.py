@@ -199,6 +199,41 @@ def print_label(data,doc):
 	final_url = url + data1.get('name')
 	file_path = os.path.realpath(get_files_path(is_private=0))
 	file = file_path + '/' + 'batch_traveller.xlsx'
+
+	barcode_doc = frappe.db.get_value("Barcodes",{'doctype_name':'Batch'},'name')
+	if barcode_doc:
+		barcode_doc = frappe.get_doc("Barcodes",barcode_doc)
+		if barcode_doc:
+			barcode_doc.append('table_for_label_print',{
+				'part_number':data1.get('item') ,
+				'part_description':data1.get('item_name') ,
+				'item_name':data1.get('item_name') ,
+				'total_qty':data1.get('batch_qty') ,
+				'batch_id': data1.get('batch_id') ,
+				'batch_name':data1.get('name'),
+				'locations':locations,
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+			barcode_doc.save()
+	else:
+		b_doc = frappe.new_doc("Barcodes")
+		if b_doc:
+			b_doc.doctype_name = "Batch"
+			b_doc.append('table_for_label_print',{
+				'part_number':data1.get('item') ,
+				'part_description':data1.get('item_name') ,
+				'item_name':data1.get('item_name') ,
+				'total_qty':data1.get('batch_qty') ,
+				'batch_id': data1.get('batch_id') ,
+				'batch_name':data1.get('name'),
+				'locations':locations,
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+		b_doc.save()
 	if os.path.exists(file):
 		wb = openpyxl.load_workbook(filename=file)
 		ws = wb['Sheet']

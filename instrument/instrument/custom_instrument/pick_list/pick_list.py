@@ -116,6 +116,32 @@ def print_label(data,doc):
 	final_url = url + data1.get('name')
 	file_path = os.path.realpath(get_files_path(is_private=0))
 	file = file_path + '/' + 'pick_list.xlsx'
+	barcode_doc = frappe.db.get_value("Barcodes",{'doctype_name':'Pick List'},'name')
+	if barcode_doc:
+		barcode_doc = frappe.get_doc("Barcodes",barcode_doc)
+		if barcode_doc:
+			barcode_doc.append('table_for_label_print',{
+				'pick_list_name':data1.get('name')  ,
+				'qty_of_finish_good_items':data1.get('for_qty'),
+				'work_order':data1.get('work_order'),
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+			barcode_doc.save()
+	else:
+		b_doc = frappe.new_doc("Barcodes")
+		if b_doc:
+			b_doc.doctype_name = "Pick List"
+			b_doc.append('table_for_label_print',{
+				'pick_list_name':data1.get('name')  ,
+				'qty_of_finish_good_items':data1.get('for_qty'),
+				'work_order':data1.get('work_order'),
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+		b_doc.save()
 	if os.path.exists(file):
 		wb = openpyxl.load_workbook(filename=file)
 		ws = wb['Sheet']
