@@ -169,6 +169,35 @@ def print_label(data,doc):
 	final_url = url + data1.get('name')
 	file_path = os.path.realpath(get_files_path(is_private=0))
 	file = file_path + '/' + 'item_traveler.xlsx'
+	barcode_doc = frappe.db.get_value("Barcodes",{'doctype_name':'Item'},'name')
+	if barcode_doc:
+		barcode_doc = frappe.get_doc("Barcodes",barcode_doc)
+		if barcode_doc:
+			barcode_doc.append('table_for_label_print',{
+				'part_number':data1.get('item_code')  ,
+				'part_description':data1.get('item_name')  ,
+				'item_name':data1.get('item_name') ,
+				'locations':warehouse_list,
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+			barcode_doc.save()
+	else:
+		print("")
+		b_doc = frappe.new_doc("Barcodes")
+		if b_doc:
+			b_doc.doctype_name = "Item"
+			b_doc.append('table_for_label_print',{
+				'part_number':data1.get('item_code')  ,
+				'part_description':data1.get('item_name')  ,
+				'item_name':data1.get('item_name') ,
+				'locations':warehouse_list,
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+		b_doc.save()
 	if os.path.exists(file):
 		wb = openpyxl.load_workbook(filename=file)
 		ws = wb['Sheet']

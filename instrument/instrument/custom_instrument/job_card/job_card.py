@@ -131,6 +131,40 @@ def print_label(data,doc):
 	final_url = url + data1.get('name')
 	file_path = os.path.realpath(get_files_path(is_private=0))
 	file = file_path + '/' + 'job_card.xlsx'
+	barcode_doc = frappe.db.get_value("Barcodes",{'doctype_name':'Job Card'},'name')
+	if barcode_doc:
+		barcode_doc = frappe.get_doc("Barcodes",barcode_doc)
+		if barcode_doc:
+			barcode_doc.append('table_for_label_print',{
+				'job_card_name':data1.get('name')   ,
+				'part_number':data1.get('production_item') ,
+				'item_name':data1.get('item_name') ,
+				'qty_to_manufacture':data1.get('for_quantity'),
+				'operation':data1.get('operation'),
+				'workstation':data1.get('workstation'),
+				'work_order':data1.get('work_order'),
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+			barcode_doc.save()
+	else:
+		b_doc = frappe.new_doc("Barcodes")
+		if b_doc:
+			b_doc.doctype_name = "Job Card"
+			b_doc.append('table_for_label_print',{
+				'job_card_name':data1.get('name')   ,
+				'part_number':data1.get('production_item') ,
+				'item_name':data1.get('item_name') ,
+				'qty_to_manufacture':data1.get('for_quantity'),
+				'operation':data1.get('operation'),
+				'workstation':data1.get('workstation'),
+				'work_order':data1.get('work_order'),
+				'no_of_copies':data.get('no_of_copies') ,
+				'printer':data.get('printer_name'),
+				'url':final_url 
+				})
+		b_doc.save()
 	if os.path.exists(file):
 		wb = openpyxl.load_workbook(filename=file)
 		ws = wb['Sheet']
