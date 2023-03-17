@@ -222,7 +222,7 @@ def print_label(data,doc):
 		b_doc = frappe.new_doc("Barcodes")
 		if b_doc:
 			b_doc.doctype_name = "Stock Entry"
-			barcode_doc.append('table_for_label_print',{
+			b_doc.append('table_for_label_print',{
 				'stock_entry':data1.get('name')  ,
 				'stock_entry_type':data1.get('stock_entry_type') ,
 				'target_warehouse':data1.get('to_warehouse'),

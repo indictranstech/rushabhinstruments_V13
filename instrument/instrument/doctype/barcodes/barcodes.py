@@ -446,7 +446,7 @@ def get_barcode_details(doc):
 			col+=1
 
 			cell = sheet.cell(row=row,column=col)
-			cell.value =i.get('job_card')
+			cell.value =i.get('job_card_name')
 			# cell.font = cell.font.copy(bold=True)
 			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
 			# cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')

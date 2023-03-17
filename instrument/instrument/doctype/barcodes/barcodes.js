@@ -4,18 +4,12 @@
 frappe.ui.form.on('Barcodes', {
 	refresh: function(frm) {
 		if(frm.doc.docstatus == 0 || frm.doc.docstatus == 1){
-			cur_frm.add_custom_button(__('Export'),function(){
-				frappe.msgprint("================")
-			})
-		}
-		if(frm.doc.docstatus == 0 || frm.doc.docstatus == 1){
 			frm.add_custom_button(__('Export Excel'), function() {
 				
           		frappe.call({
 					'method':"instrument.instrument.doctype.barcodes.barcodes.get_barcode_details",
 					'args': {doc:frm.doc},
 					callback: function(r) {
-						console.log("==========================",r.message)
 						if(frm.doc.doctype_name == 'Batch'){
 							var w = window.open(
 							frappe.urllib.get_full_url(
