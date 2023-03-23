@@ -562,3 +562,10 @@ def check_recent_version_of_BCT(standard_item_code):
 @frappe.whitelist()
 def review_item_mapping_for_affected(new_doc):
 	review_item_mappings(new_doc)
+
+
+@frappe.whitelist()
+def get_std_item_from_mapping(item_mapping):
+	std_item_code = frappe.db.get_value("Item Mapping",{'name':item_mapping},'item_code')
+	if std_item_code:
+		return std_item_code

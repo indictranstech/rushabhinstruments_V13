@@ -284,6 +284,22 @@ frappe.ui.form.on('BOM Creation Tool', {
 		}
 
 	},
+	item_mapping:function(frm){
+		if(frm.doc.item_mapping){
+			frappe.call({
+				"method":"instrument.instrument.doctype.bom_creation_tool.bom_creation_tool.get_std_item_from_mapping",
+				"args":{
+					item_mapping:frm.doc.item_mapping
+				},
+				callback:function(r){
+					if(r.message){
+						frm.set_value("standard_item_code",r.message)
+					}
+				}
+			})
+		}
+
+	},
 	validate:function(frm){
 		if(frm.doc.__islocal){
 			frm.set_df_property('mapped_item','read_only',1)
