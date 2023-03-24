@@ -53,6 +53,7 @@ frappe.ui.form.on("BOM", {
 						}
 					}
 				})
+			// if(!frm.doc.old_reference_bom && frm.doc.__islocal){
 			if(!frm.doc.old_reference_bom && frm.doc.__islocal){
 				frappe.call({
 					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
@@ -67,7 +68,23 @@ frappe.ui.form.on("BOM", {
 					}
 				})
 			}
+			if (!frm.is_new() && !frm.doc.docstatus == 0) {
+				frappe.call({
+					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
+					args:{
+						item_code : frm.doc.item
+					},
+					callback:function(r){
+						if(r.message){
+							
+								frm.set_value("old_reference_bom",r.message);	
+						}
+					}
+				})
+			
+			}
 		}
+		
 		if(frm.doc.docstatus==1){
 			cur_frm.add_custom_button(__('Update References'),function(){
 				// Fix:Changed current bom and new bom

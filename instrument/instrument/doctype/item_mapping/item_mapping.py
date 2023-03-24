@@ -28,13 +28,20 @@ class ItemMapping(Document):
 			self.data_for_compare = frappe.as_json(data_dict)
 			self.propogate_updates_to_affected_boms_status = ""
 		else:
-			data_dict = json.loads(self.data_for_compare)
-			d1 = data_dict.get('attribute_value_data')
-			d2 = {item.attribute:item.value for item in self.attribute_table}
-			if self.item_code != data_dict.get('item_code') or not(all((d2.get(k) == v for k, v in d1.items()))) or not(all((d1.get(k) == v for k, v in d2.items()))):
-				self.propogate_updates_to_affected_boms_status = "Need To Run"
+			if self.data_for_compare:
+				data_dict = json.loads(self.data_for_compare)
+				d1 = data_dict.get('attribute_value_data')
+				d2 = {item.attribute:item.value for item in self.attribute_table}
+				if self.item_code != data_dict.get('item_code') or not(all((d2.get(k) == v for k, v in d1.items()))) or not(all((d1.get(k) == v for k, v in d2.items()))):
+					self.propogate_updates_to_affected_boms_status = "Need To Run"
+				else:
+					self.propogate_updates_to_affected_boms_status = "Propogation Not Needed"
 			else:
-				self.propogate_updates_to_affected_boms_status = "Propogation Not Needed"
+				data_dict = dict()
+				data_dict['item_code'] = self.item_code
+				attribute_value_dict = {item.attribute:item.value for item in self.attribute_table}
+				data_dict['attribute_value_data']=attribute_value_dict
+				self.data_for_compare = frappe.as_json(data_dict)
 
 
 @frappe.whitelist()
