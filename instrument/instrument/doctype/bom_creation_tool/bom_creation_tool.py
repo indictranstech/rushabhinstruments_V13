@@ -157,7 +157,7 @@ class BOMCreationTool(Document):
 											})
 										final_items_review.append(line.item_code)
 			doc.difference_table_data()
-			# doc.save()
+			doc.save()
 			return True
 	def difference_table_data(doc):
 		if doc.mapped_item and doc.mapped_bom and doc.standard_item_code:
