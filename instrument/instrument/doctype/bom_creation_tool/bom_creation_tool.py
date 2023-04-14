@@ -81,7 +81,7 @@ class BOMCreationTool(Document):
 								'standard_item_name':'',
 								'standard_bom': '',
 								'attribute_value':str(attribute_value_dict),
-								'item_mapping_retrived':parent_map_item_doc.name
+								'item_mapping_retrived':''
 								})
 							final_items_review.append(bom_doc.item)
 					else:
@@ -91,6 +91,7 @@ class BOMCreationTool(Document):
 						bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1,'is_default':1,'mapped_bom':bom.get('name')},'name')
 						if not bom_for_item:
 							bom_for_item = frappe.db.get_value("BOM",{'item':parent_std_item_list[0],'is_active':1},'name')
+						item_mapping_retrived = frappe.db.get_value("Item Mapping",{'mapped_item':bom_doc.item,'item_code':parent_std_item_list[0]},'name')
 						if bom_doc.item not in final_items_review:
 							doc.append('review_item_mapping',{
 								'mapped_bom':bom.get("name"),
@@ -99,7 +100,7 @@ class BOMCreationTool(Document):
 								'standard_item_name':item_name,
 								'standard_bom': bom_for_item if override_bom else '',
 								'attribute_value':str(attribute_value_dict),
-								'item_mapping_retrived':parent_map_item_doc.name
+								'item_mapping_retrived':item_mapping_retrived
 								})
 							final_items_review.append(bom_doc.item)
 						for line in bom_doc.items:
@@ -133,7 +134,7 @@ class BOMCreationTool(Document):
 											'standard_item_name':'',
 											'standard_bom': '',
 											'attribute_value':str(raw_attribute_value_dict),
-											'item_mapping_retrived':map_item_doc.name
+											'item_mapping_retrived':''
 											})
 										final_items_review.append(line.item_code)
 								else:
@@ -143,6 +144,7 @@ class BOMCreationTool(Document):
 									bom_for_raw_item = frappe.db.get_value("BOM",{'item':raw_std_item_list[0],'is_active':1,'is_default':1},'name')
 									if not bom_for_raw_item:
 										bom_for_raw_item = frappe.db.get_value("BOM",{'item':raw_std_item_list[0],'is_active':1},'name')
+									item_mapping_retrived_rm = frappe.db.get_value("Item Mapping",{'mapped_item':line.item_code,'item_code':raw_std_item_list[0]},'name')
 									if line.item_code not in final_items_review:	
 										doc.append('review_item_mapping',{
 											'mapped_bom':bom.get("name"),
@@ -151,11 +153,11 @@ class BOMCreationTool(Document):
 											'standard_item_name':raw_item_name,
 											'standard_bom': bom_for_raw_item if raw_override_bom else '',
 											'attribute_value':str(raw_attribute_value_dict),
-											'item_mapping_retrived':map_item_doc.name
+											'item_mapping_retrived':item_mapping_retrived_rm
 											})
 										final_items_review.append(line.item_code)
 			doc.difference_table_data()
-			# doc.save()
+			doc.save()
 			return True
 	def difference_table_data(doc):
 		if doc.mapped_item and doc.mapped_bom and doc.standard_item_code:
@@ -555,7 +557,7 @@ def get_standard_item_code(doctype, txt, searchfield, start, page_len, filters):
 @frappe.whitelist()
 def check_recent_version_of_BCT(standard_item_code):
 	if standard_item_code:
-		check_BCT = frappe.db.sql("""SELECT b.name from `tabBOM Creation Tool` b where b.standard_item_code = '{0}' order by b.name desc""".format(standard_item_code),as_dict=1)
+		check_BCT = frappe.db.sql("""SELECT b.name from `tabBOM Creation Tool` b where b.standard_item_code = '{0}' and b.status != 'Cancelled' order by b.name desc""".format(standard_item_code),as_dict=1,debug=1)
 		if check_BCT:
 			return check_BCT[0].get('name')
 
