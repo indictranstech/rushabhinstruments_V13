@@ -62,7 +62,6 @@ frappe.ui.form.on("BOM", {
 					},
 					callback:function(r){
 						if(r.message){
-							
 								frm.set_value("old_reference_bom",r.message);	
 						}
 					}
@@ -76,7 +75,9 @@ frappe.ui.form.on("BOM", {
 						bom: frm.doc.name
 					},
 					callback:function(r){
-						if(r.message){	
+						if(r.message){
+							frm.refresh_field("old_reference_bom")
+							console.log("====dddddd======")	
 						}
 					}
 				})
