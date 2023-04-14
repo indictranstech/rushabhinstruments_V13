@@ -118,8 +118,10 @@ def get_bom_query(item_code):
 	return bom_list
 
 @frappe.whitelist()
-def get_default_bom(item_code):
+def get_default_bom(item_code, bom):
 	bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
+	frappe.db.set_value("BOM", bom, "old_reference_bom", bom_no)
+	frappe.db.commit()
 	return bom_no
 
 @frappe.whitelist()
