@@ -13,7 +13,8 @@
   "value",
   "standard_item_code",
   "standard_item_name",
-  "standard_bom"
+  "standard_bom",
+  "std_bom"
  ],
  "fields": [
   {
@@ -89,12 +90,18 @@
    "in_list_view": 1,
    "label": "Item Mapping Retrived",
    "options": "Item Mapping"
+  },
+  {
+   "fieldname": "std_bom",
+   "fieldtype": "Link",
+   "label": "To Be Created Standard BOM",
+   "options": "BOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-01-23 02:02:00.442807",
+ "modified": "2023-04-13 00:32:10.686639",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Review Item Mapping",
