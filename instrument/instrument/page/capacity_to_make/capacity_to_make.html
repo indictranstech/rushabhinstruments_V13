@@ -154,9 +154,11 @@
                <th class=" center ta col6">Days to Expected Delivery Date or Expected Manufacture</th>
                <th class=" center ta col7">Lead Time</th>
                <th class=" center ta col8">Operation Time </th>
-                {% for row in data.date_data %}
-                <th class=" center tdate">{{frappe.utils.formatdate(row,"mm-dd") or ""}}</th>
-                {% endfor %}
+               <th class=" center ta col9">Delivery from Instock</th>
+               <th class="center ta col10"></th>
+                <!-- {% for row in data.date_data %} -->
+                <!-- <th class=" center tdate">{{frappe.utils.formatdate(row,"mm-dd") or ""}}</th> -->
+                <!-- {% endfor %} -->
             </tr>
         </thead>
         <tbody>

@@ -13,7 +13,8 @@
   "value",
   "standard_item_code",
   "standard_item_name",
-  "standard_bom"
+  "standard_bom",
+  "to_be_created_standard_bom"
  ],
  "fields": [
   {
@@ -72,7 +73,6 @@
    "description": "If not fetched according to standard item code ,check 'Do not Override Standard BOM' flag on Item Mapping",
    "fieldname": "standard_bom",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "label": "Standard BOM",
    "options": "BOM"
   },
@@ -89,12 +89,18 @@
    "in_list_view": 1,
    "label": "Item Mapping Retrived",
    "options": "Item Mapping"
+  },
+  {
+   "fieldname": "to_be_created_standard_bom",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "To Be Created Standard BOM"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2023-01-23 02:02:00.442807",
+ "modified": "2023-04-18 05:18:38.044537",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Review Item Mapping",
