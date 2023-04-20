@@ -165,3 +165,19 @@ def update_bom_status():
 
 
 
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_item_table(doctype, txt, searchfield, start, page_len):
+	# return frappe.db.sql("""SELECT name from `tabCustom Item Attribute Value` where item_attribute = '{0}' and name like %(txt)s """.format(filters.get("attribute")),as_list=1,debug=1)
+	return frappe.db.sql("""
+		SELECT name
+		FROM `tabItem` 
+		WHERE  name LIKE %(txt)s
+		ORDER BY name DESC
+		LIMIT %(offset)s, %(limit)s
+		""".format(searchfield), dict(
+				txt="%{0}%".format(txt),
+				offset=start,
+				limit=page_len
+			)
+		)

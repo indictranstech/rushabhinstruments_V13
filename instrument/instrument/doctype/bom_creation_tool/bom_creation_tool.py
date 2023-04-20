@@ -80,6 +80,7 @@ class BOMCreationTool(Document):
 								'standard_item_code': '',
 								'standard_item_name':'',
 								'standard_bom': '',
+								'to_be_created_standard_bom':'To Be Created from Mapped BOM',
 								'attribute_value':str(attribute_value_dict),
 								'item_mapping_retrived':''
 								})
@@ -99,6 +100,7 @@ class BOMCreationTool(Document):
 								'standard_item_code': parent_std_item_list[0],
 								'standard_item_name':item_name,
 								'standard_bom': bom_for_item if override_bom else '',
+								'to_be_created_standard_bom':bom_for_item if override_bom else 'To Be Created from Mapped BOM',
 								'attribute_value':str(attribute_value_dict),
 								'item_mapping_retrived':item_mapping_retrived
 								})
@@ -133,6 +135,7 @@ class BOMCreationTool(Document):
 											'standard_item_code': '',
 											'standard_item_name':'',
 											'standard_bom': '',
+											'to_be_created_standard_bom':'To Be Created from Mapped BOM',
 											'attribute_value':str(raw_attribute_value_dict),
 											'item_mapping_retrived':''
 											})
@@ -152,6 +155,7 @@ class BOMCreationTool(Document):
 											'standard_item_code': raw_std_item_list[0],
 											'standard_item_name':raw_item_name,
 											'standard_bom': bom_for_raw_item if raw_override_bom else '',
+											'to_be_created_standard_bom':bom_for_raw_item if raw_override_bom else 'To Be Created from Mapped BOM',
 											'attribute_value':str(raw_attribute_value_dict),
 											'item_mapping_retrived':item_mapping_retrived_rm
 											})
@@ -403,7 +407,7 @@ def get_map_item_list(item_code):
 	return map_item_list
 # get all the attributes for all mapped items
 @frappe.whitelist()
-def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
+def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code,item_mapping):
 	if mapped_bom:
 		# check_bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_bom':mapped_bom,'docstatus':1,'mapped_item':mapped_item,'standard_item_code':standard_item_code},'name')
 		# if check_bom_creation_doc:
@@ -452,6 +456,14 @@ def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code):
 							item['value'] = data_dict.get((item.get('mapped_item'),item.get('attribute'))).get("value")
 						else:
 							item['value'] = ''
+		else:
+			item_mapping_doc = frappe.get_doc("Item Mapping",item_mapping)
+			attribute_dict = {item.attribute:item.value for item in item_mapping_doc.attribute_table}
+			if item_mapping_doc:
+				for row in final_item_list:
+					for col in row.attribute_list:
+						if col.attribute in attribute_dict:
+							col['value'] = attribute_dict.get(col.attribute)
 		return final_item_list,False
 
 # Get all child mapped_bom
