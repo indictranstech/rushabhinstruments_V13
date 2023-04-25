@@ -8,6 +8,12 @@ frappe.ui.form.on("BOM", {
 				filters:{ 'item_code': row.item_code }
 			}
 		});	
+		frm.set_query("item_code", "items", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.custom_instrument.bom.bom.get_item_table"
+			}
+		});	
 		if(!frm.doc.__islocal){
 			cur_frm.add_custom_button(__('Duplicate to Mapped BOM'),function(){
 				var old_link = window.location.href
@@ -54,20 +60,19 @@ frappe.ui.form.on("BOM", {
 					}
 				})
 			// if(!frm.doc.old_reference_bom && frm.doc.__islocal){
-			if(!frm.doc.old_reference_bom && frm.doc.__islocal){
-				frappe.call({
-					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
-					args:{
-						item_code : frm.doc.item
-					},
-					callback:function(r){
-						if(r.message){
-							
-								frm.set_value("old_reference_bom",r.message);	
-						}
-					}
-				})
-			}
+			// if(!frm.doc.old_reference_bom && frm.doc.__islocal){
+			// 	frappe.call({
+			// 		method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
+			// 		args:{
+			// 			item_code : frm.doc.item
+			// 		},
+			// 		callback:function(r){
+			// 			if(r.message){
+			// 					frm.set_value("old_reference_bom",r.message);	
+			// 			}
+			// 		}
+			// 	})
+			// }
 			if (!frm.is_new() && !frm.doc.docstatus == 0) {
 				frappe.call({
 					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
@@ -76,7 +81,9 @@ frappe.ui.form.on("BOM", {
 						bom: frm.doc.name
 					},
 					callback:function(r){
-						if(r.message){	
+						if(r.message){
+							frm.refresh_field("old_reference_bom")
+							console.log("====dddddd======")	
 						}
 					}
 				})
@@ -142,6 +149,7 @@ frappe.ui.form.on("BOM", {
 				method : "instrument.instrument.custom_instrument.bom.bom.get_bom_query",
 					args:{
 						item_code : frm.doc.item
+
 					},
 					callback:function(r){
 						if(r.message){
@@ -160,7 +168,8 @@ frappe.ui.form.on("BOM", {
 				frappe.call({
 					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
 					args:{
-						item_code : frm.doc.item
+						item_code : frm.doc.item,
+						bom : frm.doc.name
 					},
 					callback:function(r){
 						if(r.message){
