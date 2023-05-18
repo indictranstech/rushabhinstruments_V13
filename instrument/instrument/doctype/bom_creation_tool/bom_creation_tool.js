@@ -236,6 +236,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 								
 								if(r.message[1]==true){
 									$.each(r.message[0], function(idx, item_row){
+										console.log("============================")
 										var row = frappe.model.add_child(frm.doc, "BOM Creation Attribute Table", "attribute_table");
 										frappe.model.set_value(row.doctype, row.name, 'mapped_bom', item_row['mapped_bom']);
 										frappe.model.set_value(row.doctype, row.name, 'mapped_boms', item_row['mapped_boms']);
@@ -268,6 +269,18 @@ frappe.ui.form.on('BOM Creation Tool', {
 								}
 								
 								refresh_field('attribute_table')
+								if(frm.doc.attribute_table){
+											return frm.call({
+											doc: frm.doc,
+											method: "copy_to_all_rows",
+											freeze: true,
+											callback: function(r) {
+												if(r.message == true){
+													// frappe.msgprint("Copied Successfully");
+												}
+											}
+										});
+										}
 							}
 						}
 					})
@@ -367,7 +380,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 					freeze: true,
 					callback: function(r) {
 						if(r.message){
-							frm.save()
+							frm.save
 							refresh_field('review_item_mapping')
 							refresh_field('difference_between_previous_and_current_review_item_mappings')
 
