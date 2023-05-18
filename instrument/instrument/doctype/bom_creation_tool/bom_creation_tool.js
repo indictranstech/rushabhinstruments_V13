@@ -367,6 +367,7 @@ frappe.ui.form.on('BOM Creation Tool', {
 					freeze: true,
 					callback: function(r) {
 						if(r.message){
+							frm.save()
 							refresh_field('review_item_mapping')
 							refresh_field('difference_between_previous_and_current_review_item_mappings')
 
