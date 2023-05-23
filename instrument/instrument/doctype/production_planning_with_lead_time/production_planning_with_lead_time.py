@@ -411,7 +411,10 @@ class ProductionPlanningWithLeadTime(Document):
 		# planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
 		# Get planned qty from production plan for which work order not in place
 		planned_data_dict = dict()
-		planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
+		if self.to_date and self.from_date:
+			planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and pp.docstatus = 1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
+		else:
+			planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name and pp.docstatus =1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""",as_dict=1)
 		# update planned_data_dict
 		if planned_pp:
 			for row in planned_pp:
@@ -422,7 +425,10 @@ class ProductionPlanningWithLeadTime(Document):
 					if row.item_code != None and row.planned_qty != None:
 						planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
 		# Get planned qty from work order
-		planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}'""".format(self.to_date,self.from_date),as_dict=1)
+		if self.to_date and self.from_date:
+			planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}' and wo.docstatus=1""".format(self.to_date,self.from_date),as_dict=1)
+		else:
+			planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo  where wo.docstatus=1""",as_dict=1)
 		# update planned_data_dict
 		if planned_wo:
 			for row in planned_wo:
@@ -465,7 +471,7 @@ class ProductionPlanningWithLeadTime(Document):
 							'qty':row.qty,
 							'uom':item_doc.get("stock_uom"),
 							'stock_uom':item_doc.get("stock_uom"),
-							'warehouse':item_doc.get('item_defaults')[0].get('default_warehouse')
+							'warehouse':item_doc.get('item_defaults')[0].get('default_warehouse') if item_doc.get('item_defaults') else ''
 							})
 				material_request_doc.flags.ignore_permissions = 1
 				material_request_doc.run_method("set_missing_values")

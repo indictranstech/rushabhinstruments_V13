@@ -2,7 +2,7 @@
  {
   "docstatus": 0,
   "doctype": "Email Template",
-  "modified": "2021-10-21 01:02:02.550669",
+  "modified": "2021-10-21 01:16:44.198751",
   "name": "Interview Reminder",
   "parent": null,
   "parentfield": null,
@@ -15,7 +15,7 @@
  {
   "docstatus": 0,
   "doctype": "Email Template",
-  "modified": "2021-10-21 01:02:03.020938",
+  "modified": "2021-10-21 01:16:44.570573",
   "name": "Interview Feedback Reminder",
   "parent": null,
   "parentfield": null,

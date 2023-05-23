@@ -53,6 +53,7 @@ def validate(doc,method):
 
 	exploded_items_list = []
 	for item in doc.exploded_items:
+		default_uom = frappe.db.get_value("Item",{'item_code':item.get("item_code")},'stock_uom')
 		exploded_items_list.append({
 			'name':item.get("name"),
 			'creation':item.get("creation"),
@@ -73,7 +74,7 @@ def validate(doc,method):
 			'stock_qty':item.get("stock_qty"),
 			'rate':item.get("rate"),
 			'qty_consumed_per_unit':item.get("qty_consumed_per_unit"),
-			'stock_uom':item.get("stock_uom"),
+			'stock_uom':default_uom,
 			'amount':item.get("amount"),
 			'include_item_in_manufacturing':item.get("include_item_in_manufacturing"),
 			'sourced_by_supplier':item.get("sourced_by_supplier")
@@ -181,3 +182,17 @@ def get_item_table(doctype, txt, searchfield, start, page_len):
 				limit=page_len
 			)
 		)
+
+
+
+@frappe.whitelist()
+def update_defualt_uom_in_exploded_items():
+	bom_list = frappe.db.sql("SELECT name from `tabBOM`",as_dict=1)
+	if bom_list != []:
+		for item in bom_list:
+			bom_doc = frappe.get_doc("BOM",item.get("name"))
+			if bom_doc.exploded_items:
+				for row in bom_doc.exploded_items:
+					stock_uom = frappe.db.get_value("Item",{'item_code':row.get('item_code')},'stock_uom')
+					frappe.db.set_value("BOM Explosion Item",row.get('name'),'stock_uom',stock_uom)
+					frappe.db.commit()
