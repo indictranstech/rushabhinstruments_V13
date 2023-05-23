@@ -11,19 +11,19 @@
   "enable_raw_printing": 0,
   "font": "Default",
   "font_size": 0.0,
-  "modified": "2022-04-20 06:25:36.284339",
+  "modified": "2022-10-27 11:20:35.914424",
   "name": "Print Settings",
   "parent": null,
   "parentfield": null,
   "parenttype": null,
-  "pdf_page_height": 85.0,
-  "pdf_page_size": "A4",
-  "pdf_page_width": 120.0,
+  "pdf_page_height": 215.0,
+  "pdf_page_size": "Custom",
+  "pdf_page_width": 280.0,
   "print_style": "Modern",
   "print_taxes_with_zero_amount": 0,
   "print_uom_after_quantity": 0,
-  "repeat_header_footer": 1,
+  "repeat_header_footer": 0,
   "send_print_as_pdf": 1,
-  "with_letterhead": 1
+  "with_letterhead": 0
  }
 ]

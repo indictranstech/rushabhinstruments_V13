@@ -1630,5 +1630,29 @@
   "timeline": 0,
   "two_factor_auth": 0,
   "view_switcher": 0
+ },
+ {
+  "bulk_actions": 1,
+  "dashboard": 1,
+  "desk_access": 1,
+  "disabled": 0,
+  "docstatus": 0,
+  "doctype": "Role",
+  "form_sidebar": 1,
+  "home_page": "/app/timesheet",
+  "is_custom": 0,
+  "list_sidebar": 1,
+  "modified": "2022-06-25 22:06:56.005183",
+  "name": "Remote Office Assistant",
+  "notifications": 1,
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "restrict_to_domain": "",
+  "role_name": "Remote Office Assistant",
+  "search_bar": 1,
+  "timeline": 1,
+  "two_factor_auth": 0,
+  "view_switcher": 1
  }
 ]

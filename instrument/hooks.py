@@ -252,11 +252,14 @@ override_doctype_class = {
 # ---------------
 
 scheduler_events = {
-	# "cron": {
+	"cron": {
+		"*/30 * * * *":[
+			"instrument.instrument.custom_instrument.bom.bom.update_defualt_uom_in_exploded_items"
+		]
 	# 	"* * * * *": [
 	# 		"instrument.instrument.custom_instrument.bom.bom.update_bom_status"
 	# 	]
-	# },
+	},
 # 	"all": [
 # 		"instrument.tasks.all"
 # 	],
