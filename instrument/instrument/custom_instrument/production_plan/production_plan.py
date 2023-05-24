@@ -210,11 +210,20 @@ def get_sub_assembly_items(doc, manufacturing_type=None):
 	
 @frappe.whitelist()
 def get_sub_assembly_item(bom_no, bom_data, to_produce_qty, indent=0):
+	ohs = get_current_stock()
 	data = get_children('BOM', parent = bom_no)
 	for d in data:
 		if d.expandable:
 			parent_item_code = frappe.get_cached_value("BOM", bom_no, "item")
 			stock_qty = (d.stock_qty / d.parent_bom_qty) * flt(to_produce_qty)
+			qty = stock_qty
+			original_required_qty = stock_qty
+			available_quantity = ohs.get(d.item_code)
+			calculated_required_quantity = (flt(qty) - flt(ohs.get(d.item_code)) if flt(ohs.get(d.item_code)) < flt(qty) else 0)
+			qty = calculated_required_quantity
+			remaining_qty = flt(ohs.get(d.item_code))-flt(qty) if flt(ohs.get(d.item_code)) > flt(qty) else 0
+			ohs.update({d.item_code:remaining_qty})
+			
 			bom_data.append(frappe._dict({
 				'parent_item_code': parent_item_code,
 				'description': d.description,
@@ -226,11 +235,11 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty, indent=0):
 				'is_sub_contracted_item': d.is_sub_contracted_item,
 				'bom_level': indent,
 				'indent': indent,
-				'stock_qty': stock_qty
+				'stock_qty': qty
 			}))
 
 			if d.value:
-				get_sub_assembly_item(d.value, bom_data, stock_qty, indent=indent+1)
+				get_sub_assembly_item(d.value, bom_data, qty, indent=indent+1)
 
 def set_sub_assembly_items_based_on_level(row, bom_data, final_data,manufacturing_type=None):
 	ohs = get_current_stock()
