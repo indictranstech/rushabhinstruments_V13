@@ -73,22 +73,22 @@ frappe.ui.form.on("BOM", {
 			// 		}
 			// 	})
 			// }
-			if (!frm.is_new() && !frm.doc.docstatus == 0) {
-				frappe.call({
-					method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
-					args:{
-						item_code : frm.doc.item,
-						bom: frm.doc.name
-					},
-					callback:function(r){
-						if(r.message){
-							frm.refresh_field("old_reference_bom")
-							console.log("====dddddd======")	
-						}
-					}
-				})
+			// if (!frm.is_new() && !frm.doc.docstatus == 0) {
+			// 	frappe.call({
+			// 		method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
+			// 		args:{
+			// 			item_code : frm.doc.item,
+			// 			bom: frm.doc.name
+			// 		},
+			// 		callback:function(r){
+			// 			if(r.message){
+			// 				frm.refresh_field("old_reference_bom")
+			// 				console.log("====dddddd======")	
+			// 			}
+			// 		}
+			// 	})
 			
-			}
+			// }
 		}
 		
 		if(frm.doc.docstatus==1){
