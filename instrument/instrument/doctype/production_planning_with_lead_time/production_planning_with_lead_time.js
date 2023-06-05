@@ -104,6 +104,24 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			}
 		});
 	},
+	download_raw_materials:function(frm){
+		if (!(frm.doc.__islocal==1)){
+			console.log('frm.doc.__islocal---', frm.doc.__islocal)
+			frappe.call({
+				method: "download_raw_material",
+				doc: frm.doc,
+				callback: function(r) {
+					if (r.message){
+						var w = window.open(
+							frappe.urllib.get_full_url(
+							"/api/method/instrument.instrument.doctype.production_planning_with_lead_time.production_planning_with_lead_time.download_xlsx?"+"fname="+ encodeURIComponent(r.message)));		
+							if(!w)
+								frappe.msgprint(__("Please enable pop-ups")); return;
+					}	
+				}
+			})
+		}
+	},
 	prepare_final_work_orders:function(frm){
 		frm.doc.final_work_orders = ''
 		frappe.call({
