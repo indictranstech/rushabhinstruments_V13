@@ -582,7 +582,7 @@ class ProductionPlanningWithLeadTime(Document):
 	def validate(self):
 		qty = []
 		count = 1
-		if self.hide_qty == 1 and self.raw_materials_table:
+		if self.hide_zero_qty_item == 1 and self.raw_materials_table:
 			for i in self.raw_materials_table:
 				#Get qty greater than zero  				
 				if i.qty != 0:
