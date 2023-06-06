@@ -28,9 +28,10 @@
   "hide_zero_qty_item",
   "raw_materials_table",
   "download_raw_materials",
-  "section_break_0gajz",
+  "section_break_eif32",
   "prepare_final_work_orders",
-  "final_work_orders"
+  "final_work_orders",
+  "amended_from"
  ],
  "fields": [
   {
@@ -163,25 +164,34 @@
    "label": "Prepare Final Work Orders"
   },
   {
-   "default": "0",
-   "fieldname": "hide_zero_qty_item",
-   "fieldtype": "Check",
-   "label": "Hide Zero Qty Item"
-  },
-  {
    "fieldname": "download_raw_materials",
    "fieldtype": "Button",
    "label": "Download Raw Materials"
   },
   {
-   "fieldname": "section_break_0gajz",
+   "fieldname": "section_break_eif32",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Production Planning With Lead Time",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_zero_qty_item",
+   "fieldtype": "Check",
+   "label": "Hide Zero Qty Item"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-05 03:40:54.327090",
+ "modified": "2023-06-06 00:26:34.114400",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Production Planning With Lead Time",
