@@ -33,6 +33,14 @@ from datetime import date,timedelta
 from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 import datetime
 from erpnext.stock.doctype.item.item import get_item_defaults, get_last_purchase_details
+import openpyxl
+from io import BytesIO
+from openpyxl import Workbook
+from frappe.utils import now
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+from copy import deepcopy
+
 class ProductionPlanningWithLeadTime(Document):
 	def onload(self):
 		mr_doc = frappe.db.get_value("Material Request", {"production_planning_with_lead_time":self.name}, "name")
@@ -489,6 +497,115 @@ class ProductionPlanningWithLeadTime(Document):
 			update_mr_status_in_raw_materials_table(self, mr_doc)
 			mr = get_link_to_form("Material Request",mr_doc)
 			msgprint(_("Material Request {0} is Already Created.").format(mr))
+
+	@frappe.whitelist()
+	def download_raw_material(self):
+		#Add the headers
+		headers = ['Item', 'Qty', 'Original Qty', 'Date To Be Ready', 'Available Stock', 'Shortage', 'Lead Time', 'On Order Stock', 'Order in Days', 'Latest Date Availability', 'Readiness Status', 'MR Status']
+		final_data = []
+		#raw material table is empty then throw the messsage 
+		if not self.raw_materials_table:
+			frappe.throw('Raw Material Table Is Empty')
+		else:
+			for i in self.raw_materials_table:
+				#add the data
+				dep_data = {}
+				dep_data['Item'] = i.item
+				dep_data['Qty'] = i.qty
+				dep_data['Original Qty'] = i.original_qty
+				dep_data['Date To Be Ready'] = i.date_to_be_ready
+				dep_data['Available Stock'] = i.available_stock
+				dep_data['Shortage'] = i.shortage
+				dep_data['Lead Time'] = i.lead_time
+				dep_data['On Order Stock'] = i.on_order_stock
+				dep_data['Order in Days'] = i.order_in_days
+				dep_data['Latest Date Availability'] = i.latest_date_availability
+				dep_data['Readiness Status'] = i.readiness_status
+				dep_data['MR Status'] = i.mr_status
+				final_data.append(dep_data)
+			if final_data:
+				book = Workbook()	     
+				sheet = book.active	
+				row = 1
+				col = 1
+				for item in headers:
+					cell = sheet.cell(row=row,column=col)				
+					cell.font = Font(bold=True, color="FF0000")  
+					cell.value = item
+					col += 1
+				row = 2
+				col = 1
+
+				for item in final_data:            
+					cell = sheet.cell(row=row,column=col)
+					cell.value = item['Item']
+
+					cell = sheet.cell(row=row,column=col+1)
+					cell.value = item['Qty']
+
+					cell = sheet.cell(row=row,column=col+2)
+					cell.value = item['Original Qty']                
+					
+					cell = sheet.cell(row=row,column=col+3)
+					cell.value = item['Date To Be Ready']
+					
+					cell = sheet.cell(row=row,column=col+4)
+					cell.value = item['Available Stock']
+					
+					cell = sheet.cell(row=row,column=col+5)
+					cell.value = item['Shortage']
+					
+					cell = sheet.cell(row=row,column=col+6)
+					cell.value = item['Lead Time']
+					
+					cell = sheet.cell(row=row,column=col+7)
+					cell.value = item['On Order Stock']
+
+					cell = sheet.cell(row=row,column=col+8)
+					cell.value = item['Order in Days']
+
+					cell = sheet.cell(row=row,column=col+9)
+					cell.value = item['Latest Date Availability']
+
+					cell = sheet.cell(row=row,column=col+10)
+					cell.value = item['Readiness Status']
+
+					cell = sheet.cell(row=row,column=col+11)
+					cell.value = item['MR Status']
+					row += 1
+				file_path = frappe.utils.get_site_path("public")
+				fname = self.name + '-' + now() + ".xlsx"
+				# fname = self.name + ".xlsx"
+				book.save(file_path+fname)
+				return fname
+
+	def validate(self):
+		qty = []
+		count = 1
+		if self.hide_zero_qty_item == 1 and self.raw_materials_table:
+			for i in self.raw_materials_table:
+				#Get qty greater than zero  				
+				if i.qty != 0:
+					i.idx = count
+					qty.append(deepcopy(i))
+					count += 1
+			if qty:
+				self.raw_materials_table.clear()
+				self.raw_materials_table = qty
+				self.reload()
+	
+@frappe.whitelist()
+def download_xlsx(fname):
+	file_path = frappe.utils.get_site_path("public")
+	# fname = fname + '-' + now() + ".xlsx"
+	wb = openpyxl.load_workbook(filename=file_path+fname)
+	xlsx_file = BytesIO()
+	wb.save(xlsx_file)
+	frappe.local.response.filecontent=xlsx_file.getvalue()
+
+	frappe.local.response.type = "download"
+	
+	frappe.local.response.filename = fname
 	
 def set_default_warehouses(row, default_warehouses):
 	for field in ["wip_warehouse", "fg_warehouse"]:
@@ -854,5 +971,3 @@ def update_mr_status_in_raw_materials_table(self, mr_doc):
 	for row in doc.items:
 		frappe.db.set_value("Raw Materials Table", {'item':row.item_code}, "mr_status", doc.status)
 		frappe.db.commit()
-
-
