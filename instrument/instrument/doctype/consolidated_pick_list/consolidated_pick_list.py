@@ -355,9 +355,15 @@ class ConsolidatedPickList(Document):
 
 	def batch_assignment_fifo(self):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
+		joined_item_list = "', '".join(item_list)
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 
-		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=0)
+		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
+		batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in {0}  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(tuple(item_list),wip_warehouse),{'today':today()},as_dict=1,debug=1)
+		print("==========================batch_data",batch_data)
+		# batch_data = frappe.db.sql("""SELECT sle.warehouse,sle.batch_no,sum(sle.actual_qty) as qty from `tabStock Ledger Entry` sle join `tabBatch` batch on sle.batch_no = batch.name where sle.item_code in ('{0}') and batch.disabled = 0 and sle.is_cancelled=0 and IFNULL(batch.expiry_date, '2200-01-01') > %(today)s GROUP BY sle.batch_no HAVING `qty` > 0 ORDER BY IFNULL(batch.expiry_date, '2200-01-01'), batch.creation""".format(joined_item_list),{'today':today()},as_dict=1,debug=1)
+		# batch_locations = get_available_item_locations_for_batched_item(item_list)
+		# print("=================================batch_locations",batch_locations)
 		for row in batch_data:
 			calculate_remaining_batch_qty(row)
 
@@ -473,7 +479,7 @@ class ConsolidatedPickList(Document):
 		item_list =  '(' + ','.join("'{}'".format(i) for i in item_list) + ')' if item_list else ()
 
 		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=0)
-
+		
 		for row in batch_data:
 			calculate_remaining_so_batch_qty(row)
 
@@ -926,6 +932,38 @@ class ConsolidatedPickList(Document):
 			return {"name":doc.name}
 
 	
+# def get_available_item_locations_for_batched_item(item_code, from_warehouses, required_qty, company):
+def get_available_item_locations_for_batched_item(item_list):
+	print('-----------------------callled')
+	joined_item_list = "', '".join(item_list)
+
+	# warehouse_condition = "and warehouse in %(warehouses)s" if from_warehouses else ""
+	batch_locations = frappe.db.sql(
+		"""
+		SELECT
+			sle.`warehouse`,
+			sle.`batch_no`,
+			SUM(sle.`actual_qty`) AS `qty`
+		FROM
+			`tabStock Ledger Entry` sle, `tabBatch` batch
+		WHERE
+			sle.batch_no = batch.name
+			and sle.`item_code` in %(('{item_code}'))s
+			and batch.disabled = 0
+			and sle.is_cancelled=0
+			and IFNULL(batch.`expiry_date`, '2200-01-01') > %(today)s
+		GROUP BY
+			sle.`batch_no`
+		HAVING `qty` > 0
+		ORDER BY IFNULL(batch.`expiry_date`, '2200-01-01'), batch.`creation`
+	""",{
+			"today": today(),
+			"item_code":"', '".join(item_list)
+		},
+		as_dict=1,debug=1
+	)
+
+	return batch_locations
 
 def calculate_remaining_batch_qty(row):
 	used_qty = frappe.db.sql("""SELECT item_code, sum(picked_qty) as picked_qty From `tabWork Order Pick List Item` where batch_no='{0}' and item_code='{1}' and docstatus=1""".format(row.name, row.item), as_dict=1)
