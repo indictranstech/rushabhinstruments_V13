@@ -592,7 +592,7 @@ class ProductionPlanningWithLeadTime(Document):
 			if qty:
 				self.raw_materials_table.clear()
 				self.raw_materials_table = qty
-				self.reload()
+				# self.reload()
 	
 @frappe.whitelist()
 def download_xlsx(fname):
