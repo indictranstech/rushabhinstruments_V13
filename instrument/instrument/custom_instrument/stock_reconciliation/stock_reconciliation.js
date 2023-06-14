@@ -2,11 +2,11 @@ frappe.ui.form.on('Stock Reconciliation', {
 	refresh:function(frm){
 		if(frm.doc.docstatus < 1) {
 			frm.add_custom_button(__("Fetch Warehouses for Items"), function() {
-				frm.events.get_itemss(frm);
+				frm.events.get_warehouses_for_item(frm);
 			});
 		}
 	},
-	get_itemss: function(frm) {
+	get_warehouses_for_item: function(frm) {
 		let fields = [
 			{
 				label: "Item Code",
