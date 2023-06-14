@@ -38,7 +38,8 @@ doctype_js = {
 	"Task" : "instrument/custom_instrument/task/task.js",
 	"BOM Update Tool" : "instrument/custom_instrument/bom_update_tool/bom_update_tool.js",
 	"Batch":"instrument/custom_instrument/batch/batch.js",
-	"Pick List":"instrument/custom_instrument/pick_list/pick_list.js"
+	"Pick List":"instrument/custom_instrument/pick_list/pick_list.js",
+	"Stock Reconciliation":"instrument/custom_instrument/stock_reconciliation/stock_reconciliation.js"
 }
 
 # include js, css files in header of desk.html
