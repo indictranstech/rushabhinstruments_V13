@@ -4,7 +4,7 @@ frappe.ui.form.on("Stock Entry", {
 		// 	frm.set_value("apply_putaway_rule",1)
 		// }
 		if(frm.doc.stock_entry_type =="Manufacture"){
-			frm.set_value("to_warehouse",'')
+			// frm.set_value("to_warehouse",'')
 			if(frm.doc.work_order){
 				frappe.call({
 					"method":"instrument.instrument.custom_instrument.stock_entry.stock_entry.get_target_warehouse",

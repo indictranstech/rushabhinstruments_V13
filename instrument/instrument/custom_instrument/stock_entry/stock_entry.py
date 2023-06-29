@@ -55,6 +55,8 @@ def after_insert(doc,method):
 	})
 	_file.save()
 def validate(doc,method):
+	if doc.work_order and doc.stock_entry_type == 'Manufacture':
+		doc.to_warehouse = frappe.db.get_value("Work Order",{'name':doc.work_order},'fg_warehouse')
 	if doc.work_order:
 		if doc.items:
 			for item in doc.items:
@@ -95,6 +97,7 @@ def validate(doc,method):
 
 @frappe.whitelist()
 def on_submit(doc,method):
+
 	#update wo_status on Production Planning With Lead Time
 	if doc.work_order:
 		d = frappe.get_doc("Work Order", doc.work_order)
