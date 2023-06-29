@@ -389,9 +389,14 @@ class ProductionPlanningWithLeadTime(Document):
 		wo = frappe.new_doc("Work Order")
 		wo.update(item)
 		wo.planned_start_date = item.get("planned_start_date") or item.get("schedule_date")
+		# check item group to set default target warehouse
+		item_group = frappe.db.get_value("Item",{'item_code':item.get('production_item')},'item_group')
 
 		if item.get("warehouse"):
 			wo.fg_warehouse = item.get("warehouse")
+		# if item belong to subassembly assign target warehouse as wip warehosue
+		if item_group != 'Product':
+			wo.fg_warehouse = item.get('wip_warehouse')
 
 		wo.set_work_order_operations()
 		wo.set_required_items()
