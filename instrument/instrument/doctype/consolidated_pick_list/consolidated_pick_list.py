@@ -84,7 +84,7 @@ class ConsolidatedPickList(Document):
 							})
 			else:
 				filters={"work_order":self.work_order}
-				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and {2}""".format(joined_fg_list,todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
+				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0  and {2}""".format(joined_fg_list,todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
 				fg_work_orders_2 = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and {2}""".format(joined_fg_list,todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
 				if fg_work_orders_2:
 					for item in fg_work_orders_2:
@@ -258,17 +258,17 @@ class ConsolidatedPickList(Document):
 					# Manipulate in order to show in table
 					for row in raw_materials:
 						engineering_revision = frappe.db.get_value("Work Order Item",{'parent':item.work_order,'item_code':row},'engineering_revision')
-						
-						if row in wip_qty and row not in remaining_wip_qty:
-							qty = abs(wip_qty.get(row) - raw_materials.get(row).get('qty')) if wip_qty.get(row) < raw_materials.get(row).get('qty') else 0
-							rem_qty = abs(wip_qty.get(row) - raw_materials.get(row).get('qty')) if wip_qty.get(row) > raw_materials.get(row).get('qty') else 0
-							raw_materials.get(row).update({'qty':qty})
-							raw_materials.get(row)['wip_stock'] =rem_qty
-						elif row in remaining_wip_qty:
-							raw_materials.get(row).update({'qty' : 0 if remaining_wip_qty.get(row) >= raw_materials.get(row).get('qty') else 0 })
-							
-							remaining_wip_qty.update({row:abs(remaining_wip_qty.get(row)-raw_materials.get(row).get('qty'))})
-							raw_materials.get(row)['wip_stock'] = remaining_wip_qty.get(row)
+						if self.purpose == 'Material Transfer for Manufacture':
+							if row in wip_qty and row not in remaining_wip_qty:
+								qty = abs(wip_qty.get(row) - raw_materials.get(row).get('qty')) if wip_qty.get(row) < raw_materials.get(row).get('qty') else 0
+								rem_qty = abs(wip_qty.get(row) - raw_materials.get(row).get('qty')) if wip_qty.get(row) > raw_materials.get(row).get('qty') else 0
+								raw_materials.get(row).update({'qty':qty})
+								raw_materials.get(row)['wip_stock'] =rem_qty
+							elif row in remaining_wip_qty:
+								raw_materials.get(row).update({'qty' : 0 if remaining_wip_qty.get(row) >= raw_materials.get(row).get('qty') else 0 })
+								
+								remaining_wip_qty.update({row:abs(remaining_wip_qty.get(row)-raw_materials.get(row).get('qty'))})
+								raw_materials.get(row)['wip_stock'] = remaining_wip_qty.get(row)
 			
 
 						if row in item_locations_dict:
@@ -294,6 +294,7 @@ class ConsolidatedPickList(Document):
 					final_data[item.work_order] = item_locations_dict
 			# add items in item_locations
 			work_order_list = [item.work_order for item in self.work_orders]
+			f_item_list = []
 			for work_order in work_order_list:
 				for row in final_data:
 					if row == work_order:
@@ -303,6 +304,7 @@ class ConsolidatedPickList(Document):
 							j = final_row.get(i)
 							for d in j:
 								if (d.get("required_qty")) > 0:
+									f_item_list.append(i)
 									self.append("work_order_pick_list_item",{
 										"item_code": i,
 										"item_name": item_data.get("item_name"),
@@ -320,7 +322,8 @@ class ConsolidatedPickList(Document):
 										# "batch_no" : d.get('batch_no')
 									})
 			
-			return self.batch_assignment_fifo()
+			print("=========================f_item_list",f_item_list)
+			return self.batch_assignment_fifo(f_item_list)
 		# self.save()
 	# def batch_assignment_fifo(self):
 	# 	item_list = [item.item_code for item in self.work_order_pick_list_item]
@@ -353,9 +356,11 @@ class ConsolidatedPickList(Document):
 	# 							row.serial_no = serial_nos
 	# 						break
 
-	def batch_assignment_fifo(self):
+	def batch_assignment_fifo(self,f_item_list):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
 		joined_item_list = "', '".join(item_list)
+		if item_list == []:
+			joined_item_list = "', '".join(f_item_list)
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 
 		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
@@ -1045,7 +1050,7 @@ def get_item_locations_for_manufacture(self,item_list,company):
 		item_locations = frappe.get_all('Bin',
 							fields=['warehouse', 'actual_qty as qty'],
 							filters={'item_code':item,
-							'actual_qty': ['>', 0],
+							# 'actual_qty': ['>', 0],
 							'warehouse' :['=', wip_warehouse]
 							},
 							order_by='creation')
@@ -1192,7 +1197,7 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 				frappe.db.commit()
 				return stock_entry.name
 		else:
-			frappe.throw("Please Pick Quantity For Atleast One Itemsssss")
+			frappe.throw("Please Pick Quantity For Atleast One Item")
 
 def wo_filter_condition(filters):
 	conditions = "1=1"
