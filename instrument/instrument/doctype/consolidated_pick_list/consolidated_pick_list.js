@@ -441,7 +441,7 @@ frappe.ui.form.on('Pick Orders', {
 	},
 	create_stock_entry:function(frm,cdt,cdn){
 		var row = locals[cdt][cdn]
-		if(row.work_order && frm.doc.docstatus ==1){
+		if(row.work_order){
 			frappe.call({
 				"method":"instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.check_stock_entries",
 				"args" : {
