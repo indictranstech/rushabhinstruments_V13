@@ -1,8 +1,11 @@
-<div class="conatiner">
+<div class="container">
     <table class="table table-bordered" width="100%">
          {% if data %}
         <thead>
-
+            <tr>
+                <th>Standard Lead Time In Days  : {{data[0].std_lead_time}}</th>
+                <th>Calculated Lead Time In Days  : {{data[0].calulated_lead_time_in_days}}</th>
+            </tr>
             <tr>
                 <th>Type</th>
                 <th>Date Available</th>
