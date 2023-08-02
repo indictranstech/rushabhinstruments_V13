@@ -13,6 +13,7 @@ def validate(doc,method):
 			'modified_by' : row.get("modified_by"),
 			'owner' : row.get("owner"),
 			'docstatus' : row.get("docstatus"),
+			'do_not_explode':row.get("do_not_explode"),
 			'parent':row.get("parent"),
 			'parentfield':row.get("parentfield"),
 			'parenttype':row.get("parenttype"),
