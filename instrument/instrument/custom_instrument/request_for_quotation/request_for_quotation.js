@@ -79,6 +79,31 @@ frappe.ui.form.on('Request for Quotation', {
 			dialog.show();
 		}, __("Get Items From"));
 
+		if(frm.doc.docstatus == 0){
+			frm.add_custom_button(__('Set Qty To Minimum Order Qty'), function () {
+				frappe.call({
+					method: "instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.set_min_order_qty",
+					args:{
+						doc : frm.doc
+					},
+					callback:function(r){
+						if(r.message){
+							$.each(r.message, function(idx, new_row){
+								$.each(frm.doc.items,function(idx_1,row){
+									if(new_row['item_code'] == row['item_code']){
+										console.log("=====================r.message",r.message)
+										frappe.model.set_value("Request for Quotation Item",row['name'],'qty',new_row['qty'])
+									}
+								})
+							})
+							refresh_field("items");
+						}
+
+					}
+				})
+			})
+		}
+
 	}
 });
 
