@@ -23,6 +23,29 @@ frappe.ui.form.on("Purchase Order", {
 		if(frm.doc.is_subcontracted){
 			frm.trigger("add_consolidated_pick_list_button")
 		}
+		if(frm.doc.docstatus == 0){
+			frm.add_custom_button(__('Set Qty To Minimum Order Qty'), function () {
+				frappe.call({
+					method: "instrument.instrument.custom_instrument.purchase_order.purchase_order.set_min_order_qty",
+					args:{
+						doc : frm.doc
+					},
+					callback:function(r){
+						if(r.message){
+							$.each(r.message, function(idx, new_row){
+								$.each(frm.doc.items,function(idx_1,row){
+									if(new_row['item_code'] == row['item_code']){
+										frappe.model.set_value("Purchase Order Item",row['name'],'qty',new_row['qty'])
+									}
+								})
+							})
+							refresh_field("items");
+						}
+
+					}
+				})
+			})
+		}
 	},
 
 	add_consolidated_pick_list_button: function(frm){

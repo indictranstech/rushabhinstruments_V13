@@ -7,7 +7,7 @@ from zipfile import ZipFile
 import os, shutil
 from frappe.utils import call_hook_method, cint, cstr, encode, get_files_path, get_hook_method, random_string, strip
 from frappe.model.mapper import get_mapped_doc
-
+import json
 
 def after_insert(doc,method):
 	pdf_data=frappe.attach_print('Request for Quotation',doc.name, print_format='Request for Quotation Print')
@@ -233,3 +233,17 @@ def create_zip_file(row, all_files):
 	file_doc.file_url = file_url
 	file_doc.insert(ignore_permissions=True)
 	frappe.db.commit()
+
+
+@frappe.whitelist()
+def set_min_order_qty(doc):
+	doc = json.loads(doc)
+	min_order_qty_list = []
+	if doc:
+		if doc.get("items"):
+			for row in doc.get("items"):
+				min_order_qty = frappe.db.get_value("Item",{'item_code':row.get("item_code")},'min_order_qty')
+				if row.get('qty') < min_order_qty:
+					row['qty'] = min_order_qty
+					min_order_qty_list.append({'item_code':row.get('item_code'),'qty':min_order_qty})
+		return min_order_qty_list

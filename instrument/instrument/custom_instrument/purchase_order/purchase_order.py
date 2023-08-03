@@ -309,8 +309,18 @@ def create_zip_file(row, all_files):
 	# p_file_doc.insert(ignore_permissions=True)
 	# frappe.db.commit()
 
-
-
+@frappe.whitelist()
+def set_min_order_qty(doc):
+	doc = json.loads(doc)
+	min_order_qty_list = []
+	if doc:
+		if doc.get("items"):
+			for row in doc.get("items"):
+				min_order_qty = frappe.db.get_value("Item",{'item_code':row.get("item_code")},'min_order_qty')
+				if row.get('qty') < min_order_qty:
+					row['qty'] = min_order_qty
+					min_order_qty_list.append({'item_code':row.get('item_code'),'qty':min_order_qty})
+		return min_order_qty_list
 
 # Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
 # License: GNU General Public License v3. See license.txt
