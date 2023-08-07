@@ -472,20 +472,23 @@ class ProductionPlanningWithLeadTime(Document):
 				for row in self.raw_materials_table:
 					if row.qty > 0:
 						item_doc = get_item_defaults(row.item, default_company)
-						engineering_revision = frappe.db.get_value("Engineering Revision",{'item_code':row.item,'is_default':1,'is_active':1},'name')
-						material_request_doc.append("items",{
-							'item_code': row.item,
-							'item_name': item_doc.get("item_name"),
-							'engineering_revision':item_doc.get("engineering_revision") if item_doc.get("engineering_revision") else engineering_revision,
-							'rfq_required':item_doc.get('rfq_required'),
-							'schedule_date':row.get('date_to_be_ready'),
-							'description':item_doc.get('description'),
-							'item_group':item_doc.get('item_group'),
-							'qty':row.qty,
-							'uom':item_doc.get("stock_uom"),
-							'stock_uom':item_doc.get("stock_uom"),
-							'warehouse':item_doc.get('item_defaults')[0].get('default_warehouse') if item_doc.get('item_defaults') else ''
-							})
+						# Make material requests for only stock items
+						stock_item = frappe.db.get_value("Item",{'name':row.item},'is_stock_item')
+						if stock_item:
+							engineering_revision = frappe.db.get_value("Engineering Revision",{'item_code':row.item,'is_default':1,'is_active':1},'name')
+							material_request_doc.append("items",{
+								'item_code': row.item,
+								'item_name': item_doc.get("item_name"),
+								'engineering_revision':item_doc.get("engineering_revision") if item_doc.get("engineering_revision") else engineering_revision,
+								'rfq_required':item_doc.get('rfq_required'),
+								'schedule_date':row.get('date_to_be_ready'),
+								'description':item_doc.get('description'),
+								'item_group':item_doc.get('item_group'),
+								'qty':row.qty,
+								'uom':item_doc.get("stock_uom"),
+								'stock_uom':item_doc.get("stock_uom"),
+								'warehouse':item_doc.get('item_defaults')[0].get('default_warehouse') if item_doc.get('item_defaults') else ''
+								})
 				material_request_doc.flags.ignore_permissions = 1
 				material_request_doc.run_method("set_missing_values")
 				material_request_doc.save()
