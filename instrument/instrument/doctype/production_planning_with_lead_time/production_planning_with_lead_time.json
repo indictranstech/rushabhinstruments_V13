@@ -1,11 +1,13 @@
 {
  "actions": [],
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2022-02-23 06:32:30.925808",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "from_date",
   "from_delivery_date",
   "customer",
@@ -186,12 +188,18 @@
    "fieldname": "hide_zero_qty_item",
    "fieldtype": "Check",
    "label": "Hide Zero Qty Item"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "MFG-PT-.YYYY.-"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-06-06 00:26:34.114400",
+ "modified": "2023-08-07 07:48:23.563975",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Production Planning With Lead Time",
