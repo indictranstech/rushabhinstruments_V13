@@ -89,8 +89,11 @@ def validate(doc,method):
 	# 	row.update({"idx":cont})
 	# 	doc.append("exploded_items",row)
 	# 	cont = cont + 1
+	set_old_refernce_bom(doc)
 	set_bom_level(doc)
-
+def set_old_refernce_bom(doc):
+	bom_no = frappe.db.get_value("BOM",{'item':doc.item,'is_default' :1,'is_active' : 1,'docstatus':1},'name')
+	doc.old_reference_bom = bom_no
 def set_bom_level(doc, update=False):
 		levels = []
 
@@ -122,7 +125,7 @@ def get_bom_query(item_code):
 
 @frappe.whitelist()
 def get_default_bom(item_code, bom):
-	bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1},'name')
+	bom_no = frappe.db.get_value("BOM",{'item':item_code,'is_default' :1,'is_active' : 1,'docstatus':1},'name')
 	frappe.db.set_value("BOM", bom, "old_reference_bom", bom_no)
 	frappe.db.commit()
 	return bom_no
