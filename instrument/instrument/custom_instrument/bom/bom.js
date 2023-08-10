@@ -135,6 +135,24 @@ frappe.ui.form.on("BOM", {
 		}
 		
 	},
+	onload:function(frm){
+		if(frm.doc.__islocal && frm.doc.item){
+			frappe.call({
+				method : "instrument.instrument.custom_instrument.bom.bom.get_default_bom",
+				args:{
+					item_code : frm.doc.item,
+					bom : frm.doc.name
+				},
+				callback:function(r){
+					if(r.message){
+						
+							frm.set_value("old_reference_bom",r.message);	
+					}
+				}
+			})
+		}
+
+	},
 	confirm_job_start: (frm, log_data) => {
 		let log_link = frappe.utils.get_form_link("BOM Update Log", log_data.name, true);
 		frappe.msgprint({
