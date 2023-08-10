@@ -23,7 +23,6 @@ frappe.ui.form.on('Consolidated Pick List', {
 				filters:{ 'purpose': frm.doc.purpose }
 			}
 		});
-		
 		var df = frappe.meta.get_docfield("Pick Orders","create_stock_entry", cur_frm.doc.name);
 		df.read_only = 1;
 		frm.set_query('production_plan', () => {
@@ -146,6 +145,17 @@ frappe.ui.form.on('Consolidated Pick List', {
 			}
 		})
 
+	},
+	remove_work_orders:(frm)=>{
+		
+		frappe.call({
+			method : "remove_work_orders",
+			doc: frm.doc,
+			callback: function(r, rt) {
+				// refresh_field("work_order_table");
+				// frm.set_value("work_order", "")
+			}
+		})
 	},
 
 	get_fg_sales_orders:(frm) =>{

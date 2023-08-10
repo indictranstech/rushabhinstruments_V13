@@ -92,6 +92,17 @@ def get_capacity_data(filters=None):
 		data.append(case_2_1)
 		for item in all_bom_items:
 			on_order_stock = get_on_order_stock_for_rm(item.item_code)
+		for bom in final_bom_list:
+			bom_items = get_raw_bom_data(bom)
+			if bom_items:
+				for item in bom_items:
+					if item.item_code in ohs_dict and item.item_code in on_order_stock:
+						available_quantity = flt(on_order_stock.get(item.item_code).get('qty'))+ ohs_dict.get(item.item_code)
+						proportion_qty = flt((available_quantity*item.get('quantity'))/item.get('raw_qty'))
+						final_item_dict[item.item_code] = {'schedule_date':on_order_stock[0].get('schedule_date'),'qty':proportion_qty}
+
+
+
 
 
 		# final_qty_produced_dict = dict()

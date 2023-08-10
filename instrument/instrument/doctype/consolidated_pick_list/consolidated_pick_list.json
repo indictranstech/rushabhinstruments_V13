@@ -30,6 +30,7 @@
   "purchase_order",
   "section_break_9",
   "get_fg_work_orders",
+  "remove_work_orders",
   "work_order_table",
   "get_work_orders",
   "section_break_3",
@@ -373,12 +374,17 @@
    "hidden": 1,
    "label": "Status",
    "options": "Draft\nSubmitted\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "remove_work_orders",
+   "fieldtype": "Button",
+   "label": "Remove Work Orders"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-15 08:31:57.212304",
+ "modified": "2023-07-04 03:46:38.383034",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
