@@ -439,7 +439,9 @@ class ConsolidatedPickList(Document):
 		                col.update({"qty":0})		
 		return new_list
 
-
+	@frappe.whitelist()
+	def remove_work_orders(self):
+		pass
 	#Pick Sales Order Pick Qty From Batch Basis On FIFO
 	@frappe.whitelist()
 	def get_sales_order_items(self):
