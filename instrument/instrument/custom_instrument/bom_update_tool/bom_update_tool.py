@@ -22,6 +22,14 @@ from frappe.utils import (
 	nowdate,
 	now
 )
+from erpnext.manufacturing.doctype.bom_update_log.bom_updation_utils import (
+	get_leaf_boms,
+	get_next_higher_level_boms,
+	handle_exception,
+	replace_bom,
+	set_values_in_log,
+	get_ancestor_boms
+)
 # from erpnext.manufacturing.doctype.bom.bom import get_boms_in_bottom_up_order
 
 # def replacee_bom(self):
@@ -148,6 +156,9 @@ def update_mapped_bom_item(current_bom, new_bom,current_doc):
 		(new_bom, current_bom), debug=1)
 	if len(bct_doc_list) > 0:
 		add_update_comment_for_bct(current_bom,new_bom,current_doc,bct_doc_list)
+	boms = {'current_bom':current_bom,'new_bom':new_bom}
+	bom_list = get_ancestor_boms(new_bom)
+	print("----------bom",bom_list)
 
 @frappe.whitelist()
 def add_update_comment(current_bom,new_bom,current_doc,mapped_bom_list):
