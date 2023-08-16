@@ -350,10 +350,13 @@ class ProductionPlanningWithLeadTime(Document):
 					#Add WO Status on Final Work Order Table 
 					wo_status = frappe.db.get_value("Work Order", work_order, "status")
 					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
+					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "work_order", work_order)
+					
 					frappe.db.commit()
 			else:
 				wo_status = frappe.db.get_value("Work Order", wo, "status")
 				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
+				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "work_order", wo)
 				frappe.db.commit()
 				wo = get_link_to_form("Work Order", wo)
 				so = get_link_to_form("Sales Order",item.get('so_reference'))
@@ -775,7 +778,24 @@ def get_sales_orders(self):
 						and exists (select name from `tabBOM` bom where bom.item=pi.item_code
 							and bom.is_active = 1)))
 		""", self.as_dict(), as_dict=1)
-	return open_so
+
+	open_sales_orders = [so.name for so in open_so]
+	
+	open_sales_orders = "', '".join(open_sales_orders)
+
+	check_previous_planning = frappe.db.sql("""SELECT sot.sales_order from `tabSales Order Table` sot join `tabProduction Planning With Lead Time` pp  on pp.name = sot.parent where pp.docstatus in (0,1) and sot.sales_order in  ('{0}') """.format(open_sales_orders),as_dict=1)
+
+	check_previous_planning = [sot.sales_order for sot in check_previous_planning]
+	final_so_list = []
+	if check_previous_planning:
+		for row in open_so:
+			if row.name in check_previous_planning:
+				pass
+			else:
+				final_so_list.append(row)
+		return final_so_list
+	else:
+		return open_so
 def get_open_mr(self):
 	mr_filter = item_filter = ""
 	bom_item = "bom.item = mr_item.item_code"
@@ -809,7 +829,23 @@ def get_open_mr(self):
 					and bom.is_active = 1)
 				)
 		""", self.as_dict(), as_dict=1)
-	return open_mr
+	open_material_request = [mr.name for mr in open_mr]
+
+	open_material_request = "', '".join(open_material_request)
+
+	check_previous_planning = frappe.db.sql("""SELECT sot.material_request from `tabSales Order Table` sot join `tabProduction Planning With Lead Time` pp  on pp.name = sot.parent where pp.docstatus in (0,1) and sot.material_request in  ('{0}') """.format(open_material_request),as_dict=1)
+
+	check_previous_planning = [sot.material_request for sot in check_previous_planning]
+	final_mr_list = []
+	if check_previous_planning:
+		for row in open_mr:
+			if row.name in check_previous_planning:
+				pass
+			else:
+				final_mr_list.append(row)
+		return final_mr_list
+	else:
+		return open_mr
 def get_bom_item(self):
 	"""Check if Item or if its Template has a BOM."""
 	bom_item = None
