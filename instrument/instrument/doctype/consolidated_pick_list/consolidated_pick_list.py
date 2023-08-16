@@ -322,7 +322,7 @@ class ConsolidatedPickList(Document):
 										# "batch_no" : d.get('batch_no')
 									})
 			
-			print("=========================f_item_list",f_item_list)
+			
 			return self.batch_assignment_fifo(f_item_list)
 		# self.save()
 	# def batch_assignment_fifo(self):
@@ -365,7 +365,7 @@ class ConsolidatedPickList(Document):
 
 		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
 		batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in {0}  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(tuple(item_list),wip_warehouse),{'today':today()},as_dict=1,debug=1)
-		print("==========================batch_data",batch_data)
+		# print("==========================batch_data",batch_data)
 		# batch_data = frappe.db.sql("""SELECT sle.warehouse,sle.batch_no,sum(sle.actual_qty) as qty from `tabStock Ledger Entry` sle join `tabBatch` batch on sle.batch_no = batch.name where sle.item_code in ('{0}') and batch.disabled = 0 and sle.is_cancelled=0 and IFNULL(batch.expiry_date, '2200-01-01') > %(today)s GROUP BY sle.batch_no HAVING `qty` > 0 ORDER BY IFNULL(batch.expiry_date, '2200-01-01'), batch.creation""".format(joined_item_list),{'today':today()},as_dict=1,debug=1)
 		# batch_locations = get_available_item_locations_for_batched_item(item_list)
 		# print("=================================batch_locations",batch_locations)
@@ -383,12 +383,13 @@ class ConsolidatedPickList(Document):
 		for row in work_list:
 		    wo_item = row.get("item_code")+row.get("work_order")
 		    war_item = row.get("work_order")+row.get("item_code")+row.get("warehouse")
+		    row.update({'actual_required_qty':row.get('required_qty')})
+
 		    for col in batch_data:
 		        if row.get("item_code")==col.get("item") and row.get("warehouse")==col.get("warehouse") and wo_item not in allocated_item_dict:
 		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("work_order")==wo_item])           
-		            rem_reqd_qty = abs(item_qty-row.get("required_qty"))
+		            rem_reqd_qty = abs(item_qty-row.get("actual_required_qty"))
 		            row.update({"required_qty":rem_reqd_qty})
-		            
 		            if col.get("qty")>= row.get("required_qty"):
 		                batch_qty = col.get("qty") - row.get("required_qty") 
 		                new_list.append({
@@ -402,7 +403,8 @@ class ConsolidatedPickList(Document):
 							"uom":row.get("uom"), 
 							"uom_conversion_factor":row.get("uom_conversion_factor"), 
 							"stock_uom":row.get("stock_uom"),
-							"wip_stock" : row.get('wip_stock')
+							"wip_stock" : row.get('wip_stock'),
+							"actual_required_qty":row.get('actual_required_qty')
 		                })
 		                col.update({"qty":batch_qty})
 		                allocated_item_dict.update({wo_item:wo_item})
@@ -420,7 +422,8 @@ class ConsolidatedPickList(Document):
 		                        "uom":row.get("uom"), 
 								"uom_conversion_factor":row.get("uom_conversion_factor"), 
 								"stock_uom":row.get("stock_uom"),
-								"wip_stock" : row.get('wip_stock')
+								"wip_stock" : row.get('wip_stock'),
+								"actual_required_qty":row.get('actual_required_qty')
 		                    })
 		      #           elif war_item not in allocated_war_item_dict:
 		      #               new_list.append({
@@ -437,6 +440,8 @@ class ConsolidatedPickList(Document):
 		      #               })
 		      #               allocated_war_item_dict.update({war_item:war_item})
 		                col.update({"qty":0})		
+		
+		# print("=====================new_list",new_list)
 		return new_list
 
 	@frappe.whitelist()
