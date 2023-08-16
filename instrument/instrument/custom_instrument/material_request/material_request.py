@@ -101,6 +101,7 @@ def make_purchase_order(doc):
 		raise e
 
 def create_purchase_order(item_lists,supplier,doc):
+	# update material request & material request item in purchase order item
 	if item_lists:
 		po_doc = frappe.new_doc("Purchase Order")
 		if po_doc:
