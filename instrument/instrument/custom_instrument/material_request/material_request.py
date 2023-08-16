@@ -66,31 +66,40 @@ def get_default_supplier_query(doctype, txt, searchfield, start, page_len, filte
 
 @frappe.whitelist()
 def make_purchase_order(doc):
-	doc = json.loads(doc)
-	doc = frappe.get_doc("Material Request", doc.get("name"))
-	item_list = []
-	for d in doc.items:
-		if not d.rfq_required:
-			item_list.append(d.item_code)
+	try:
+		doc = json.loads(doc)
+		doc = frappe.get_doc("Material Request", doc.get("name"))
+		item_list = []
+		for d in doc.items:
+			if not d.rfq_required:
+				item_list.append(d.item_code)
+		item_list = "', '".join(item_list)
+		supplier = frappe.db.sql("""SELECT distinct default_supplier
+			from `tabItem Default`
+			where parent in ('{0}') and
+			default_supplier IS NOT NULL
+			""".format(item_list),as_dict=1,debug=1)
+		supplier_list = [item.get("default_supplier") for item in supplier]
+		po_list = []
+		for row in supplier_list:
+			item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent = '{2}'""".format(row,item_list,doc.name),as_dict=1,debug=1)
+			po = create_purchase_order(item_lists,row,doc)
+			po_list.append(po)
+		if po_list:
+			po_list = ["""<a href="/app/Form/Purchase Order/{0}">{1}</a>""".format(m, m) \
+				for m in po_list]
+			msgprint(_("{0} created").format(comma_and(po_list)))
+		else :
+			msgprint(_("No purchase order created"))
+		return po_list
+	except Exception as e:
+		traceback = frappe.get_traceback()
+		frappe.log_error(
+			title=_("Error while creating Purchase Order"),
+			message=traceback,
+		)
+		raise e
 
-	supplier = frappe.db.sql("""SELECT distinct default_supplier
-		from `tabItem Default`
-		where parent in ({0}) and
-		default_supplier IS NOT NULL
-		""".format(', '.join(['%s']*len(item_list))),tuple(item_list),as_dict=1)
-	supplier_list = [item.get("default_supplier") for item in supplier]
-	po_list = []
-	for row in supplier_list:
-		item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in {1} and mri.parent = '{2}'""".format(row,tuple(item_list),doc.name),as_dict=1)
-		po = create_purchase_order(item_lists,row,doc)
-		po_list.append(po)
-	if po_list:
-		po_list = ["""<a href="/app/Form/Purchase Order/{0}">{1}</a>""".format(m, m) \
-			for m in po_list]
-		msgprint(_("{0} created").format(comma_and(po_list)))
-	else :
-		msgprint(_("No purchase order created"))
-	return po_list
 def create_purchase_order(item_lists,supplier,doc):
 	if item_lists:
 		po_doc = frappe.new_doc("Purchase Order")
@@ -99,6 +108,7 @@ def create_purchase_order(item_lists,supplier,doc):
 			po_doc.schedule_date = doc.schedule_date
 			for item in item_lists:
 				item['material_request'] = doc.name
+				item['material_request_item'] = item.name
 				po_doc.append('items',item)
 			po_doc.save()
 			return po_doc.name
