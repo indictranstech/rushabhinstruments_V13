@@ -763,15 +763,16 @@ def get_sales_orders(self):
 			so_filter += f" and so.{so_field} = %({field})s"
 
 	if self.item and frappe.db.exists('Item', self.item):
-		bom_item = self.get_bom_item() or bom_item
-		item_filter += " and so_item.item_code = %(item_code)s"
+		bom_item = get_bom_item(self) or bom_item
+		item_code = self.item
+		item_filter += " and so_item.item_code = '%s'" % self.item
 
 	open_so = frappe.db.sql(f"""
 		select distinct so.name, so.transaction_date, so.customer, date(so_item.delivery_date) as delivery_date,so_item.item_code,so_item.qty,so_item.name as sales_order_item
 		from `tabSales Order` so, `tabSales Order Item` so_item
 		where so_item.parent = so.name
 			and so.docstatus = 1 and so.status not in ("Stopped", "Closed") {so_filter} {item_filter}
-			and (exists (select name from `tabBOM` bom where {bom_item}
+			and (exists (select name from `tabBOM` bom where bom.item = so_item.item_code
 					and bom.is_active = 1)
 				or exists (select name from `tabPacked Item` pi
 					where pi.parent = so.name and pi.parent_item = so_item.item_code
@@ -817,8 +818,8 @@ def get_open_mr(self):
 	# 		so_filter += f" and so.{so_field} = %({field})s"
 
 	if self.item and frappe.db.exists('Item', self.item):
-		bom_item = self.get_bom_item() or bom_item
-		item_filter += " and mr_item.item_code = %(item_code)s"
+		bom_item = get_bom_item(self) or bom_item
+		item_filter += " and mr_item.item_code = '%s'" % self.item
 
 	open_mr = frappe.db.sql(f"""
 		select distinct mr.name, mr.transaction_date,date(mr_item.schedule_date) as delivery_date,mr_item.item_code,mr_item.qty,mr_item.name as material_request_item
