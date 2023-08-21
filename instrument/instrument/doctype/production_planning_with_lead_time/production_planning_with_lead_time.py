@@ -46,7 +46,17 @@ class ProductionPlanningWithLeadTime(Document):
 		mr_doc = frappe.db.get_value("Material Request", {"production_planning_with_lead_time":self.name}, "name")
 		if mr_doc:
 			update_mr_status_in_raw_materials_table(self, mr_doc)
+	
+	def on_submit(self):
+		frappe.db.set_value("Production Planning With Lead Time",self.name,"status","Submitted")
+		frappe.db.commit()
+		self.reload()
 
+	def on_cancel(self):
+		frappe.db.set_value("Production Planning With Lead Time",self.name,"status","Cancelled")
+		frappe.db.commit()
+		self.reload()
+	
 	@frappe.whitelist()
 	def get_open_sales_orders(self):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
@@ -133,8 +143,18 @@ class ProductionPlanningWithLeadTime(Document):
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
+		# Get allocated available_stock
+		allocated_ohs = get_allocated_ohs_fg()
 		# Get Planned Stock
-		planned_data = self.get_planned_data()
+		planned_data = self.get_planned_data_fg()
+		print("=============planned_data",planned_data)
+		# Get allocated Planned Stock
+		allocated_planned_stock = get_allocated_planned_stock_fg()
+		print("==================allocated_planned_stock",allocated_planned_stock)
+		# Get actual available_stock
+		ohs = get_actual_ohs(ohs,allocated_ohs)
+		# Get actual planned data for FG
+		planned_data = get_actual_planned_fg(planned_data,allocated_planned_stock)
 		if self.sales_order_table:
 			fg_data = []
 			for row in self.sales_order_table:
@@ -194,8 +214,12 @@ class ProductionPlanningWithLeadTime(Document):
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
+		# Get allocated available_stock
+		allocated_ohs = get_allocated_ohs_sfg()
 		# Get Planned Stock
-		planned_data = self.get_planned_data()
+		planned_data = self.get_planned_data_fg()
+		# Get actual available_stock
+		ohs = get_actual_ohs(ohs,allocated_ohs)
 		if self.fg_items_table:
 			for row in self.fg_items_table:
 				bom_data = []
@@ -231,6 +255,10 @@ class ProductionPlanningWithLeadTime(Document):
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
+		# Get allocated available_stock
+		allocated_ohs = get_allocated_ohs_raw()
+		# Get actual available_stock
+		ohs = get_actual_ohs(ohs,allocated_ohs)
 		if self.sub_assembly_items_table:
 			for row in self.sub_assembly_items_table:
 				raw_data = []
@@ -336,6 +364,8 @@ class ProductionPlanningWithLeadTime(Document):
 			default_warehouses = get_default_warehouse()
 			self.make_work_order_for_finished_goods(wo_list, default_warehouses)
 			self.show_list_created_message("Work Order", wo_list)
+			frappe.db.set_value("Production Planning With Lead Time",self.name,'status','In Progress')
+			frappe.db.commit()
 		else:
 			frappe.msgprint("Please Prepare for Final Work Orders")
 	def make_work_order_for_finished_goods(self, wo_list, default_warehouses):
@@ -420,43 +450,47 @@ class ProductionPlanningWithLeadTime(Document):
 			doc_list = [get_link_to_form(doctype, p) for p in doc_list]
 			msgprint(_("{0} created").format(comma_and(doc_list)))
 
-	def get_planned_data(self):
+	def get_planned_data_fg(self):
+		planned_data = frappe.db.sql("""SELECT i.item,sum(i.planned_qty) as qty from `tabFG Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') and i.material_request != '' group by i.item""",as_dict=1,debug=1)
+		planned_data = {i.item : i.qty for i in planned_data}
+		return planned_data
 		# Get planned qty from material request for which production plan not in place and work order not in place
 		# planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.transaction_date < '{0}' and mr.transaction_date >= '{1}' and not exists(SELECT pp.name from `tabProduction Plan` pp join `tabProduction Plan Material Request` pp_item on pp_item.parent = pp.name where pp_item.material_request = mr.name) and not exists(SELECT wo.name from `tabWork Order` wo where wo.material_request = mr.name)""".format(self.to_date,self.from_date),as_dict=1)
 		# # Manipulate in order to show in dict format
 		# planned_data_dict = {item.item_code : item.qty for item in planned_mr if item.item_code != None and item.qty != None}
 		# Get planned qty from production plan for which work order not in place
-		planned_data_dict = dict()
-		if self.to_date and self.from_date:
-			planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and pp.docstatus = 1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
-		else:
-			planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name and pp.docstatus =1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""",as_dict=1)
-		# update planned_data_dict
-		if planned_pp:
-			for row in planned_pp:
-				if row.get('item_code') in planned_data_dict:
-					qty = flt(planned_data_dict.get(row.get('item_code'))) + row.get('planned_qty')
-					planned_data_dict.update({row.get('item_code'):qty})
-				else:
-					if row.item_code != None and row.planned_qty != None:
-						planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
-		# Get planned qty from work order
-		if self.to_date and self.from_date:
-			planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}' and wo.docstatus=1""".format(self.to_date,self.from_date),as_dict=1)
-		else:
-			planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo  where wo.docstatus=1""",as_dict=1)
-		# update planned_data_dict
-		if planned_wo:
-			for row in planned_wo:
-				if row.get('production_item') in planned_data_dict:
-					qty = flt(planned_data_dict.get(row.get('production_item'))) + row.get('qty')
-					planned_data_dict.update({row.get('production_item'):qty})
-				else:
-					if row.item_code != None and row.planned_qty != None:
-						planned_data_dict.update({row.get('production_item'):row.get('qty')})
-					else:
-						planned_data_dict = {}
-		return planned_data_dict
+		# planned_data_dict = dict()
+		# if self.to_date and self.from_date:
+		# 	planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name where pp.posting_date < {0} and pp.posting_date >= '{1}' and pp.docstatus = 1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""".format(self.to_date,self.from_date),as_dict=1)
+		# else:
+		# 	planned_pp = frappe.db.sql("""SELECT pp_item.item_code,sum(pp_item.planned_qty) as planned_qty from `tabProduction Plan` pp join `tabProduction Plan Item` pp_item on pp_item.parent = pp.name and pp.docstatus =1 and not exists(SELECT wo.name from `tabWork Order` wo where wo.production_plan = pp.name)""",as_dict=1)
+		# # update planned_data_dict
+		# if planned_pp:
+		# 	for row in planned_pp:
+		# 		if row.get('item_code') in planned_data_dict:
+		# 			qty = flt(planned_data_dict.get(row.get('item_code'))) + row.get('planned_qty')
+		# 			planned_data_dict.update({row.get('item_code'):qty})
+		# 		else:
+		# 			if row.item_code != None and row.planned_qty != None:
+		# 				planned_data_dict.update({row.get('item_code'):row.get('planned_qty')})
+		# # Get planned qty from work order
+		# if self.to_date and self.from_date:
+		# 	planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo where wo.planned_start_date < '{0}' and wo.planned_start_date >= '{1}' and wo.docstatus=1""".format(self.to_date,self.from_date),as_dict=1)
+		# else:
+		# 	planned_wo = frappe.db.sql("""SELECT wo.production_item,(wo.qty-wo.produced_qty) as qty from `tabWork Order` wo  where wo.docstatus=1""",as_dict=1)
+		# # update planned_data_dict
+		# if planned_wo:
+		# 	for row in planned_wo:
+		# 		if row.get('production_item') in planned_data_dict:
+		# 			qty = flt(planned_data_dict.get(row.get('production_item'))) + row.get('qty')
+		# 			planned_data_dict.update({row.get('production_item'):qty})
+		# 		else:
+		# 			if row.item_code != None and row.planned_qty != None:
+		# 				planned_data_dict.update({row.get('production_item'):row.get('qty')})
+		# 			else:
+		# 				planned_data_dict = {}
+		# return planned_data_dict
+	
 	@frappe.whitelist()
 	def make_material_request(self):
 		"""Create Material Requests grouped by Sales Order and Material Request Type"""
@@ -742,6 +776,53 @@ def get_ohs(fg_warehouse_list):
 	current_stock = frappe.db.sql("""SELECT item_code,sum(actual_qty) as qty from `tabBin` where warehouse in ({0}) group by item_code """.format(fg_warehouse_list),as_dict=1)
 	ohs_dict = {item.item_code : item.qty for item in current_stock}
 	return ohs_dict
+
+def get_allocated_ohs_fg():
+	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.available_stock) as qty from `tabFG Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
+	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
+
+	return allocated_ohs
+
+def get_allocated_planned_stock_fg():
+	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.already_planned_qty) as qty from `tabFG Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
+	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
+
+	return allocated_ohs
+
+
+def get_allocated_ohs_sfg():
+	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.available_stock) as qty from `tabSub Assembly Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
+	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
+	return allocated_ohs
+
+def get_allocated_planned_stock_sfg():
+	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.already_planned_qty) as qty from `tabSub Assembly Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
+	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
+
+	return allocated_ohs
+
+def get_allocated_ohs_raw():
+	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.available_stock) as qty from `tabRaw Materials Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
+	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
+
+	return allocated_ohs
+
+def get_actual_ohs(ohs,allocated_ohs):
+	if ohs and allocated_ohs:
+		for row in allocated_ohs:
+			if row in ohs:
+				qty = ohs.get(row) - allocated_ohs.get(row)
+				ohs.update({row:qty})
+	return ohs
+
+def get_actual_planned_fg(planned_data,allocated_planned_stock):
+	if planned_data and allocated_planned_stock:
+		for row in planned_data:
+			if row in planned_data:
+				qty = planned_data.get(row) - allocated_planned_stock.get(row)
+				planned_data.update({row:qty})
+	return planned_data
+
 def get_sales_orders(self):
 	so_filter = item_filter = ""
 	bom_item = "bom.item = so_item.item_code"
@@ -983,10 +1064,10 @@ def get_partial_qty(date_to_be_ready, item_code, fg_warehouse_list):
 				partial_qty_dict.update({row.get('item_code'):row.get('qty'), "schedule_date": row.get("schedule_date")})
 	if partial_qty_dict.get("schedule_date"):
 		schedule_date = get_datetime(partial_qty_dict.get("schedule_date")) + timedelta(1)
-		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(schedule_date, "mm-dd-yyyy"))
+		partial_remark = "{0} qty can be completed in planned/available inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(schedule_date, "mm-dd-yyyy"))
 		partial_qty_dict.update({"partial_remark":partial_remark})	
 	elif partial_qty_dict.get(item_code):
-		partial_remark = "{0} qty can be completed in planned inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(date.today(), "mm-dd-yyyy"))
+		partial_remark = "{0} qty can be completed in planned/available inventory on date {1}.\n".format(partial_qty_dict.get(item_code), formatdate(date.today(), "mm-dd-yyyy"))
 		partial_qty_dict.update({"partial_remark":partial_remark})
 	else:
 		partial_qty_dict.update({"partial_remark":""})
