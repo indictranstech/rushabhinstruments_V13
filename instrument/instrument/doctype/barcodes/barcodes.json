@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "autoname": "field:doctype_name",
  "creation": "2023-03-15 03:25:58.558521",
@@ -38,7 +39,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-03-15 03:30:43.831313",
+ "modified": "2023-08-21 03:13:01.045118",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Barcodes",

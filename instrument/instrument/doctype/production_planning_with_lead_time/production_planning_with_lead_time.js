@@ -54,11 +54,16 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			},__("Menu"))
 		}
 	},
+	validate:function(frm){
+		frm.set_value("status","Draft")
+
+	},
 	get_sales_orders: function(frm) {
 		frm.doc.sales_order_table = ''
 		frappe.call({
 			method: "get_open_sales_orders",
 			doc: frm.doc,
+			freeze: true,
 			callback: function(r) {
 				refresh_field("sales_order_table");
 			}
@@ -69,6 +74,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frappe.call({
 			method: "sort_so_data",
 			doc: frm.doc,
+			freeze: true,
 			callback: function(r) {
 				refresh_field("sorted_sales_order_table");
 			}
@@ -79,6 +85,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frappe.call({
 			method: "work_order_planning",
 			doc: frm.doc,
+			freeze: true,
 			callback: function(r) {
 				refresh_field("fg_items_table");
 			}
@@ -89,6 +96,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frappe.call({
 			method: "sub_assembly_items",
 			doc: frm.doc,
+			freeze: true,
 			callback: function(r) {
 				refresh_field("sub_assembly_items_table");
 			}
@@ -99,6 +107,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frappe.call({
 			method: "get_raw_materials",
 			doc: frm.doc,
+			freeze: true,
 			callback: function(r) {
 				refresh_field("raw_materials_table");
 			}
@@ -106,7 +115,6 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 	},
 	download_raw_materials:function(frm){
 		if (!(frm.doc.__islocal==1)){
-			console.log('frm.doc.__islocal---', frm.doc.__islocal)
 			frappe.call({
 				method: "download_raw_material",
 				doc: frm.doc,
