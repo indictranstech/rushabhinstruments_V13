@@ -37,6 +37,8 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			cur_frm.add_custom_button(__('Create Material Request'),function(){
 				frappe.call({
 					method: "make_material_request",
+					freeze : true,
+					freeze_message: __("Creating Material Requests..."),
 					doc: frm.doc,
 					callback: function(r) {
 
@@ -46,6 +48,8 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			cur_frm.add_custom_button(__('Create Work Orders'),function(){
 				frappe.call({
 					method: "create_work_order",
+					freeze : true,
+					freeze_message: __("Creating Work Orders..."),
 					doc: frm.doc,
 					callback: function(r) {
 
@@ -86,6 +90,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			method: "work_order_planning",
 			doc: frm.doc,
 			freeze: true,
+			freeze_message: __("Fetching FG items..."),
 			callback: function(r) {
 				refresh_field("fg_items_table");
 			}
@@ -97,6 +102,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			method: "sub_assembly_items",
 			doc: frm.doc,
 			freeze: true,
+			freeze_message: __("Fetching SFG items..."),
 			callback: function(r) {
 				refresh_field("sub_assembly_items_table");
 			}
@@ -108,6 +114,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			method: "get_raw_materials",
 			doc: frm.doc,
 			freeze: true,
+			freeze_message: __("Fetching Raw items..."),
 			callback: function(r) {
 				refresh_field("raw_materials_table");
 			}
@@ -135,6 +142,8 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 		frappe.call({
 			method: "prepare_final_work_orders",
 			doc: frm.doc,
+			freeze: true,
+			freeze_message: __("Preparing Work Orders For FG items..."),
 			callback: function(r) {
 				refresh_field("final_work_orders");
 			}
