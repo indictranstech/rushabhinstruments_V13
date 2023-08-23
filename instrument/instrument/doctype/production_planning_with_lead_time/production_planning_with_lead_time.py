@@ -147,10 +147,8 @@ class ProductionPlanningWithLeadTime(Document):
 		allocated_ohs = get_allocated_ohs_fg()
 		# Get Planned Stock
 		planned_data = self.get_planned_data_fg()
-		print("=============planned_data",planned_data)
 		# Get allocated Planned Stock
 		allocated_planned_stock = get_allocated_planned_stock_fg()
-		print("==================allocated_planned_stock",allocated_planned_stock)
 		# Get actual available_stock
 		ohs = get_actual_ohs(ohs,allocated_ohs)
 		# Get actual planned data for FG
@@ -372,7 +370,7 @@ class ProductionPlanningWithLeadTime(Document):
 		items_data = self.get_production_items()
 		for key, item in items_data.items():
 			set_default_warehouses(item, default_warehouses)
-			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'so_reference':item.get('so_reference')})
+			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'so_reference':item.get('so_reference')}) or frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'mr_reference':item.get('mr_reference')})
 			if not wo: 
 				work_order = self.create_work_orders(item)
 				if work_order:
@@ -381,12 +379,18 @@ class ProductionPlanningWithLeadTime(Document):
 					wo_status = frappe.db.get_value("Work Order", work_order, "status")
 					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
 					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "work_order", work_order)
+
+					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'material_request':item.get('mr_reference')}, "wo_status", wo_status)
+					frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'material_request':item.get('mr_reference')}, "work_order", work_order)
+
 					
 					frappe.db.commit()
 			else:
 				wo_status = frappe.db.get_value("Work Order", wo, "status")
 				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "wo_status", wo_status)
 				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'sales_order':item.get('so_reference')}, "work_order", wo)
+				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'material_request':item.get('mr_reference')}, "wo_status", wo_status)
+				frappe.db.set_value("Final Work Orders", {'item':item.get('production_item'), 'material_request':item.get('mr_reference')}, "work_order", wo)
 				frappe.db.commit()
 				wo = get_link_to_form("Work Order", wo)
 				so = get_link_to_form("Sales Order",item.get('so_reference'))
@@ -411,9 +415,13 @@ class ProductionPlanningWithLeadTime(Document):
 				"qty":d.qty,
 				"production_planning_with_lead_time":self.name,
 				"material_request":d.material_request if d.is_subassembly == 0 else None,
-				"material_request_item":d.material_request_item
+				"material_request_item":d.material_request_item,
+				"mr_reference":d.material_request
 			}
-			item_dict[(d.item, d.sales_order)] = item_details
+			if d.sales_order:
+				item_dict[(d.item, d.sales_order)] = item_details
+			else:
+				item_dict[(d.item, d.material_request)] = item_details
 
 		return item_dict
 
@@ -849,10 +857,10 @@ def get_sales_orders(self):
 		item_filter += " and so_item.item_code = '%s'" % self.item
 
 	open_so = frappe.db.sql(f"""
-		select distinct so.name, so.transaction_date, so.customer, date(so_item.delivery_date) as delivery_date,so_item.item_code,so_item.qty,so_item.name as sales_order_item
+		select distinct so.name, so.transaction_date, so.customer, date(so_item.delivery_date) as delivery_date,so_item.item_code,(so_item.qty-so_item.delivered_qty) as qty,so_item.name as sales_order_item
 		from `tabSales Order` so, `tabSales Order Item` so_item
 		where so_item.parent = so.name
-			and so.docstatus = 1 and so.status not in ("Stopped", "Closed") {so_filter} {item_filter}
+			and so.docstatus = 1 and so.status not in ("Stopped", "Closed") and ((so_item.qty-so_item.delivered_qty)>0) {so_filter} {item_filter}
 			and (exists (select name from `tabBOM` bom where bom.item = so_item.item_code
 					and bom.is_active = 1)
 				or exists (select name from `tabPacked Item` pi
@@ -903,10 +911,10 @@ def get_open_mr(self):
 		item_filter += " and mr_item.item_code = '%s'" % self.item
 
 	open_mr = frappe.db.sql(f"""
-		select distinct mr.name, mr.transaction_date,date(mr_item.schedule_date) as delivery_date,mr_item.item_code,mr_item.qty,mr_item.name as material_request_item
+		select distinct mr.name, mr.transaction_date,date(mr_item.schedule_date) as delivery_date,mr_item.item_code,(mr_item.qty-mr_item.ordered_qty) as qty ,mr_item.name as material_request_item
 		from `tabMaterial Request` mr, `tabMaterial Request Item` mr_item
 		where mr_item.parent = mr.name
-			and mr.docstatus = 1 and mr.status not in ("Stopped", "Cancelled") and mr.material_request_type = "Manufacture" {mr_filter} {item_filter}
+			and mr.docstatus = 1 and mr.status not in ("Stopped", "Cancelled") and mr.material_request_type = "Manufacture" and ((mr_item.qty-mr_item.ordered_qty)>0) {mr_filter} {item_filter}
 			and (exists (select name from `tabBOM` bom where {bom_item}
 					and bom.is_active = 1)
 				)
