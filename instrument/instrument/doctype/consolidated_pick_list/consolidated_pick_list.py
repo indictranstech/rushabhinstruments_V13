@@ -73,7 +73,10 @@ class ConsolidatedPickList(Document):
 									percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
 									qty_will_be_produced = 0
 									qty_will_be_produced_list.append(qty_will_be_produced)
-						
+							else:
+								qty_will_be_produced = 0
+								qty_will_be_produced_list.append(qty_will_be_produced)
+
 						row['qty_will_be_produced'] =min(qty_will_be_produced_list)
 						self.append('work_order_table',{
 							'work_order':row.get('name'),
@@ -145,9 +148,9 @@ class ConsolidatedPickList(Document):
 						final_subassembly_items.append(col)
 					elif (ohs_dict.get(col) < bom_qty_dict.get(col)):
 						final_subassembly_items.append(col)
-				self.get_work_orders_for_subassembly(final_subassembly_items,planned_start_date)
+				self.get_work_orders_for_subassembly(final_subassembly_items,planned_start_date,row.work_order,bom_qty_dict)
 			else:
-				self.get_work_orders_for_subassembly(sub_assembly_items,planned_start_date)
+				self.get_work_orders_for_subassembly(sub_assembly_items,planned_start_date,bom_qty_dict)
 			
 			self.append('work_orders',{
 				'work_order':row.work_order,
@@ -158,13 +161,16 @@ class ConsolidatedPickList(Document):
 				})
 
 
-	def get_work_orders_for_subassembly(self,sub_assembly_items,planned_start_date):
+	def get_work_orders_for_subassembly(self,sub_assembly_items,planned_start_date,work_order,bom_qty_dict):
 		todays_date = datetime.date.today()
+		sales_order = frappe.db.get_value("Work Order",work_order,'so_reference')
+		mr_reference = frappe.db.get_value("Work Order",work_order,'mr_reference')
+		parent_item_code = frappe.db.get_value("Work Order",work_order,'parent_item_code')
 		if self.purpose == 'Material Transfer for Manufacture':
-			work_orders = frappe.db.sql("""SELECT name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in {0} and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process') order by name desc""".format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
+			work_orders = frappe.db.sql("""SELECT production_item,name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in {0} and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process') and (so_reference = '{2}' or mr_reference = '{3}') order by name desc""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
 		else:
-			work_orders =frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0""".format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
-			work_order_1 =frappe.db.sql("""SELECT wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty """.format(tuple(sub_assembly_items),planned_start_date.date()),as_dict=1,debug=1)
+			work_orders =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and (so_reference = '{2}' or mr_reference = '{3}')""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
+			work_order_1 =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and (so_reference = '{2}' or mr_reference = '{3}')""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
 			if work_order_1:
 				for item in work_order_1:
 					work_orders.append(item)
@@ -198,7 +204,7 @@ class ConsolidatedPickList(Document):
 				row['qty_will_be_produced'] =min(qty_will_be_produced_list)
 				self.append('work_orders',{
 					'work_order':row.get('name'),
-					'qty_of_finished_goods_to_pull':row.get('pending_qty'),
+					'qty_of_finished_goods_to_pull':bom_qty_dict.get(row.get('production_item')),
 					'total_qty_to_of_finished_goods_on_work_order':row.get('qty'),
 					'qty_of_finished_goods_already_completed':row.get('produced_qty'),
 					'qty_of_finished_goods':row.get('qty_will_be_produced')

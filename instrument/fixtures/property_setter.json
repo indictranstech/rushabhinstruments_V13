@@ -3843,23 +3843,6 @@
  },
  {
   "default_value": null,
-  "doc_type": "Purchase Receipt",
-  "docstatus": 0,
-  "doctype": "Property Setter",
-  "doctype_or_field": "DocField",
-  "field_name": "provisional_expense_account",
-  "modified": "2023-01-23 01:47:54.462435",
-  "name": "Purchase Receipt-provisional_expense_account-hidden",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
-  "property": "hidden",
-  "property_type": "Check",
-  "row_name": null,
-  "value": "1"
- },
- {
-  "default_value": null,
   "doc_type": "Engineering Revision",
   "docstatus": 0,
   "doctype": "Property Setter",
@@ -4146,5 +4129,22 @@
   "property_type": "Small Text",
   "row_name": null,
   "value": "task.subject"
+ },
+ {
+  "default_value": null,
+  "doc_type": "Purchase Receipt",
+  "docstatus": 0,
+  "doctype": "Property Setter",
+  "doctype_or_field": "DocField",
+  "field_name": "provisional_expense_account",
+  "modified": "2023-08-24 00:23:10.167500",
+  "name": "Purchase Receipt-provisional_expense_account-hidden",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "property": "hidden",
+  "property_type": "Check",
+  "row_name": null,
+  "value": "1"
  }
 ]
