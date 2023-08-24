@@ -243,7 +243,7 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 						# date_to_be_ready = date_to_be_ready.date()
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark')})
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark'),'parent_item_code':row.get('item')})
 						self.append('sub_assembly_items_table',final_row)
 			return self.sub_assembly_items_table
 						
@@ -332,7 +332,8 @@ class ProductionPlanningWithLeadTime(Document):
 								'bom':item.bom,
 								'total_operation_time':item.total_operation_time,
 								'date_to_be_ready':item.planned_start_date,
-								'is_subassembly' : 1
+								'is_subassembly' : 1,
+								'parent_item_code':row.item
 								})
 							item_list.append(item_dict)
 					fg_item_dict.update({
@@ -345,7 +346,8 @@ class ProductionPlanningWithLeadTime(Document):
 						'bom':row.bom,
 						'total_operation_time':row.total_operation_time,
 						'date_to_be_ready':row.planned_start_date,
-						'is_subassembly':0
+						'is_subassembly':0,
+						'parent_item_code':row.item
 						})					
 					item_list.append(fg_item_dict)
 			count = 1
@@ -416,7 +418,8 @@ class ProductionPlanningWithLeadTime(Document):
 				"production_planning_with_lead_time":self.name,
 				"material_request":d.material_request if d.is_subassembly == 0 else None,
 				"material_request_item":d.material_request_item,
-				"mr_reference":d.material_request
+				"mr_reference":d.material_request,
+				"parent_item_code":d.parent_item_code
 			}
 			if d.sales_order:
 				item_dict[(d.item, d.sales_order)] = item_details

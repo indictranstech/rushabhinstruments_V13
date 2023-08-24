@@ -227,6 +227,8 @@ frappe.ui.form.on('Consolidated Pick List', {
 		frm.call({
 			method: "get_work_order_items",
 			doc: frm.doc,
+			freeze: true,
+			freeze_message: __("Fetching Work Order Items..."),
 			callback: function(r) {
 				if (r.message) {
 					cur_frm.clear_table("work_order_pick_list_item");
@@ -476,7 +478,7 @@ frappe.ui.form.on('Pick Orders', {
 									var old_link = window.location.href
 									var split_data = old_link.split("/app")
 									var link =  split_data[0]+"/app/stock-entry/"+r.message
-									window.open(link, "_self");
+									window.open(link);
 																			}
 
 							}
