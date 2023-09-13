@@ -38,6 +38,8 @@ frappe.capacity_to_make = Class.extend({
 		    frappe.call({
 		        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
 		        args: {filters:filters},
+		        freeze : true,
+				freeze_message: __("Please wait..."),
 		        callback: function (r) {
 		        	if (r.message){
 		          		var html = r.message.html
