@@ -32,7 +32,6 @@ frappe.capacity_to_make = Class.extend({
 		var me = this
 	    $('.frappe-list').html("")
 	    if(me.delivery_date){
-	    	console.log("=============================",me.delivery_date)
 	    	var filters = {"production_item":me.production_item
 	    ,	"delivery_date":me.delivery_date}
 		    frappe.call({
@@ -64,9 +63,6 @@ frappe.capacity_to_make = Class.extend({
 	        }//calback end
 	    })
 	    }
-	    console.log("======filters",filters)
-	    
-
 	},
 	add_filters:function(){
 		var me = this;
@@ -76,6 +72,7 @@ frappe.capacity_to_make = Class.extend({
 			fieldname: 'production_item',
 			options: "Item",
 			reqd:1,
+			get_query: function(){ return {'filters': [['Item', 'item_group','in',['Product','Subassembly','Made in House']]]}},
 			onchange: function() {
 				me.production_item = this.value?this.value:null
 				me.get_data()
