@@ -1,25 +1,41 @@
-<div class="container">
+
+<style>
+    .order_table table th{
+    background: #0095ff;
+    color: #fff;
+    font-size: 15px;
+    text-align: center;
+    letter-spacing: .4px;
+    border-color:#0579ce;
+  }
+  .order_table table td{
+    font-size: 13px;
+    border-color:#e0dede;
+  }
+
+</style>
+<div class="order_table">
     <table class="table table-bordered" width="100%">
          {% if data %}
         <thead>
             <tr>
-                <th>Standard Lead Time In Days  : {{data[0].std_lead_time}}</th>
-                <th>Calculated Lead Time In Days  : {{data[0].calulated_lead_time_in_days}}</th>
+                <th colspan="6">Standard Lead Time In Days  : {{data[0].std_lead_time}}</th>
+                <th colspan="6">Calculated Lead Time In Days  : {{data[0].calulated_lead_time_in_days}}</th>
             </tr>
             <tr>
-                <th>Type</th>
-                <th>Date Available</th>
-                <th>Qty</th>
-                <th>Remark</th>
+                <th colspan="3">Type</th>
+                <th colspan="3">Date Available </th>
+                <th colspan="3">Qty</th>
+                <th colspan="3">Remark</th>
             </tr>
         </thead>
         <tbody>
              {% for row in data %}
            <tr>
-               <td>{{row.type}}</td>
-               <td>{{row.date_available}}</td>
-               <td>{{row.qty}}</td>
-               <td>{{row.remark}}</td>
+               <td colspan="3">{{row.type}}</td>
+               <td colspan="3">{{row.date_available}}</td>
+               <td colspan="3">{{row.qty}}</td>
+               <td colspan="3">{{row.remark}}</td>
            </tr>
         </tbody>
         {% endfor %}
