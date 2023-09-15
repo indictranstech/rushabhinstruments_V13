@@ -791,7 +791,6 @@ def get_ohs(fg_warehouse_list):
 def get_allocated_ohs_fg():
 	allocated_ohs = frappe.db.sql("""SELECT i.item,sum(i.available_stock) as qty from `tabFG Items Table` i join `tabProduction Planning With Lead Time` pp on pp.name = i.parent where pp.docstatus not in (0,2) and pp.status not in ('Completed') group by i.item""",as_dict=1,debug=1)
 	allocated_ohs = {item.item : item.qty for item in allocated_ohs}
-
 	return allocated_ohs
 
 def get_allocated_planned_stock_fg():
@@ -822,8 +821,8 @@ def get_actual_ohs(ohs,allocated_ohs):
 	if ohs and allocated_ohs:
 		for row in allocated_ohs:
 			if row in ohs:
-				qty = ohs.get(row) - allocated_ohs.get(row)
-				ohs.update({row:qty})
+				qty = flt(ohs.get(row)) - flt(allocated_ohs.get(row))
+				ohs.update({row:qty if qty > 0 else 0})
 	return ohs
 
 def get_actual_planned_fg(planned_data,allocated_planned_stock):
