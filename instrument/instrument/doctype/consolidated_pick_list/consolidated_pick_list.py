@@ -1448,7 +1448,7 @@ def get_pick_list_details(doc):
 
 
 	file_path = frappe.utils.get_site_path("public")
-	now = datetime.now()
+	# now = datetime.now()
 	fname = "WORK_ORDER_PICK_LIST" + nowdate() + ".xlsx"
 	book.save(file_path+fname)
 
@@ -1458,7 +1458,7 @@ def download_xlsx():
 	import openpyxl
 	from io import BytesIO
 	file_path = frappe.utils.get_site_path("public")
-	now = datetime.now()
+	# now = datetime.now()
 	fname = "WORK_ORDER_PICK_LIST" + nowdate() + ".xlsx"
 	wb = openpyxl.load_workbook(filename=file_path+fname)
 	xlsx_file = BytesIO()
