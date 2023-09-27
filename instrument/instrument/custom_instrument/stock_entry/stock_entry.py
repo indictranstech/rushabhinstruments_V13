@@ -111,6 +111,9 @@ def on_submit(doc,method):
 	if doc.purchase_order:
 		frappe.db.set_value("Pick List Purchase Order Table", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
 		frappe.db.commit()
+	if doc.consolidated_pick_list:
+		frappe.db.set_value("Pick Orders", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
+		frappe.db.commit()
 
 	status = []
 	doc_status = []
