@@ -29,6 +29,7 @@ from frappe.utils import (
 )
 import datetime
 from datetime import date,timedelta
+from erpnext.buying.doctype.purchase_order.purchase_order import make_purchase_receipt
 def on_submit(doc, method = None):
 	prepare_zip_attachment_for_po(doc, method)
 	file_att = []
@@ -1099,3 +1100,64 @@ def log_for_email_expiry():
 					expir_days = (today_date - file_creation_date.date())
 					if expir_days.days > rushabh_sett.expiry_days:
 						frappe.db.sql("""delete from `tabFile` where name=%s""",(row.get('name')))
+
+
+@frappe.whitelist()
+def create_bulk_pr(data):
+	data = json.loads(data)
+	data = data.get('purchase_order_data')
+	try:
+		for row in data:
+			if row.get('name'):
+				po_doc = frappe.get_doc("Purchase Order",row.get('name'))
+				if po_doc.docstatus == 1:
+					pr = make_purchase_receipt(po_doc.name)
+				else:
+					frappe.throw("Please Submit Purchase Order {0}".format(row.get('name')))
+	except Exception as e:
+		raise e
+
+@frappe.whitelist()
+def make_purchase_receipt(source_name, target_doc=None, ignore_permissions=True):
+	def update_item(obj, target, source_parent):
+		target.qty = flt(obj.qty) - flt(obj.received_qty)
+		target.stock_qty = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.conversion_factor)
+		target.amount = (flt(obj.qty) - flt(obj.received_qty)) * flt(obj.rate)
+		target.base_amount = (
+			(flt(obj.qty) - flt(obj.received_qty)) * flt(obj.rate) * flt(source_parent.conversion_rate)
+		)
+
+	doc = get_mapped_doc(
+		"Purchase Order",
+		source_name,
+		{
+			"Purchase Order": {
+				"doctype": "Purchase Receipt",
+				"field_map": {"supplier_warehouse": "supplier_warehouse"},
+				"validation": {
+					"docstatus": ["=", 1],
+				},
+			},
+			"Purchase Order Item": {
+				"doctype": "Purchase Receipt Item",
+				"field_map": {
+					"name": "purchase_order_item",
+					"parent": "purchase_order",
+					"bom": "bom",
+					"material_request": "material_request",
+					"material_request_item": "material_request_item",
+				},
+				"postprocess": update_item,
+				"condition": lambda doc: abs(doc.received_qty) < abs(doc.qty)
+				and doc.delivered_by_supplier != 1,
+			},
+			"Purchase Taxes and Charges": {"doctype": "Purchase Taxes and Charges", "add_if_empty": True},
+		},
+		target_doc,
+		set_missing_values,
+	)
+
+	doc.set_onload("ignore_price_list", True)
+	doc.insert(ignore_permissions=True)
+	frappe.msgprint("PR Created {0}".format(doc.name))
+	
