@@ -87,7 +87,7 @@ def make_purchase_order(doc):
 			""".format(item_list),as_dict=1,debug=1)
 		no_supplier = [item.parent for item in no_supplier]
 		if no_supplier:
-			frappe.msgprint("Please Add Default Supplier For Items {0}".format(no_supplier))
+			frappe.throw("Please Add Default Supplier For Items {0}".format(no_supplier))
 		po_list = []
 		for row in supplier_list:
 			item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent = '{2}' and (mri.qty-mri.received_qty) > 0""".format(row,item_list,doc.name),as_dict=1,debug=1)
