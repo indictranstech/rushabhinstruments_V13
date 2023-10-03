@@ -589,11 +589,12 @@ class ConsolidatedPickList(Document):
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
 		fg_item_groups = [item.get('item_group') for item in fg_item_groups]
+		joined_fg_list = "', '".join(fg_item_groups)
 		if fg_item_groups:
 			if self.purpose == "Sales Order Fulfillment":
-				fg_sales_orders = frappe.db.sql("""SELECT so.name,(i.qty - i.delivered_qty) as pending_qty , i.item_code, i.qty, i.produced_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in {0} and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2}""".format(tuple(fg_item_groups),todays_date, so_filter_condition(filters)),as_dict=1,debug=0)
+				fg_sales_orders = frappe.db.sql("""SELECT so.name,(i.qty - i.delivered_qty) as pending_qty , i.item_code, i.qty, i.produced_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in ('{0}') and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2}""".format(joined_fg_list,todays_date, so_filter_condition(filters)),as_dict=1,debug=1)
 
-				sales_order = frappe.db.sql("""SELECT so.name, sum(i.qty - i.delivered_qty) as pending_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in {0} and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2} group by so.name""".format(tuple(fg_item_groups),todays_date, so_filter_condition(filters)), as_dict=True, debug=1)
+				sales_order = frappe.db.sql("""SELECT so.name, sum(i.qty - i.delivered_qty) as pending_qty from `tabSales Order` so join `tabSales Order Item` i on i.parent = so.name where i.item_group in ('{0}') and so.delivery_date >= '{1}' and so.status not in ('Completed','Cancel') and {2} group by so.name""".format(joined_fg_list,todays_date, so_filter_condition(filters)), as_dict=True, debug=1)
 
 				qty_prod = {}
 				# sales_order = []
@@ -691,12 +692,12 @@ class ConsolidatedPickList(Document):
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
 		fg_item_groups = [item.get('item_group') for item in fg_item_groups]
-
+		joined_fg_list = "', '".join(fg_item_groups)
 		if fg_item_groups:
 			if self.purpose == "Material Transfer for Subcontracted Goods":
-				fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in {0} and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2}""".format(tuple(fg_item_groups),todays_date, po_filter_condition(filters)),as_dict=1,debug=1)
+				fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in ('{0}') and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2}""".format(joined_fg_list,todays_date, po_filter_condition(filters)),as_dict=1,debug=1)
 
-				purchase_order = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty, i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in {0} and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2} group by po.name""".format(tuple(fg_item_groups),todays_date, po_filter_condition(filters)),as_dict=1,debug=0)
+				purchase_order = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty, i.item_code from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in ('{0}') and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2} group by po.name""".format(joined_fg_list,todays_date, po_filter_condition(filters)),as_dict=1,debug=0)
 
 				# purchase_order = []
 				qty_prod = {}
