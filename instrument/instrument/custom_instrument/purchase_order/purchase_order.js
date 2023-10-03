@@ -69,7 +69,21 @@ frappe.ui.form.on("Purchase Order", {
 				frm: cur_frm
 			})
 		}, __('Create'));
-	} 
+	},
+	consolidate_qty:function(frm){
+		frappe.call({
+			method:"instrument.instrument.custom_instrument.purchase_order.purchase_order.consolidate_qty",
+			freeze : true,
+			freeze_message: __("Consolidating Qty..."),
+			args:{
+				doc:frm.doc
+			},
+			callback:function(r){
+				frm.reload_doc()
+
+			}
+		})
+	}
 
 })
 frappe.ui.form.on('Purchase Order Item', {
