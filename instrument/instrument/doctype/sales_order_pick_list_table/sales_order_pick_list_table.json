@@ -27,6 +27,7 @@
   {
    "fieldname": "qty_can_be_pulled",
    "fieldtype": "Float",
+   "hidden": 1,
    "in_list_view": 1,
    "label": "Qty Can Be Pulled"
   }
@@ -34,7 +35,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-08-19 07:51:53.424147",
+ "modified": "2023-10-04 02:51:45.467872",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Sales Order Pick List Table",
