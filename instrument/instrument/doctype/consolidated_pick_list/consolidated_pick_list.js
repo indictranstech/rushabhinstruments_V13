@@ -277,6 +277,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 						row.stock_qty=item_row.stock_qty
 						row.picked_qty=item_row.picked_qty
 						row.batch_no=item_row.batch_no
+						row.sales_order_item=item_row.sales_order_item
 					});
 					frm.save()
 					refresh_field("sales_order_pick_list_item");
