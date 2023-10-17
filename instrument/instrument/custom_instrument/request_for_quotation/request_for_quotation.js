@@ -104,6 +104,20 @@ frappe.ui.form.on('Request for Quotation', {
 			})
 		}
 
+	},
+	consolidate_qty:function(frm){
+		frappe.call({
+			method:"instrument.instrument.custom_instrument.request_for_quotation.request_for_quotation.consolidate_qty",
+			freeze : true,
+			freeze_message: __("Consolidating Qty..."),
+			args:{
+				doc:frm.doc
+			},
+			callback:function(r){
+				frm.reload_doc()
+
+			}
+		})
 	}
 });
 

@@ -247,3 +247,29 @@ def set_min_order_qty(doc):
 					row['qty'] = min_order_qty
 					min_order_qty_list.append({'item_code':row.get('item_code'),'qty':min_order_qty})
 		return min_order_qty_list
+
+@frappe.whitelist()
+def consolidate_qty(doc):
+	doc = json.loads(doc)
+	doc = frappe.get_doc("Request for Quotation",doc.get('name'))
+	if doc.get('items'):
+		item_data = doc.get('items')
+		item_dict = {(item.item_code,item.schedule_date):item.schedule_date for item in doc.get('items')}
+		final_data = []
+		count = 0
+		for item in item_dict:
+			total = 0
+			count = count + 1
+			for info in doc.get('items'):
+				item_date_dict = (info.get('item_code'),info.get('schedule_date'))
+				if item ==  item_date_dict:
+					total = total + info.get('qty')
+					item_info = info
+			item_info.qty = total
+			item_info.idx = count
+			final_data.append(item_info)
+		doc.items = ''
+		for i in final_data:
+			doc.append("items",i)
+		doc.save()
+	return True
