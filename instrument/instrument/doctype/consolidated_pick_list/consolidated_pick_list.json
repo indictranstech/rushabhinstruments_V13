@@ -108,8 +108,8 @@
    "fieldname": "production_plan",
    "fieldtype": "Link",
    "in_list_view": 1,
-   "label": "Production Plan",
-   "options": "Production Plan"
+   "label": "Production Planning With Lead Time",
+   "options": "Production Planning With Lead Time"
   },
   {
    "fieldname": "get_work_orders",
@@ -384,7 +384,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-07-04 03:46:38.383034",
+ "modified": "2023-10-12 01:53:02.899665",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

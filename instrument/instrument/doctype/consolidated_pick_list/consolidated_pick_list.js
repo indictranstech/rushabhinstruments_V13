@@ -28,7 +28,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 		frm.set_query('production_plan', () => {
 			return {
 				filters: {
-					'status' :'In Process' 
+					'status' :'In Progress' 
 				}
 			};
 		});
