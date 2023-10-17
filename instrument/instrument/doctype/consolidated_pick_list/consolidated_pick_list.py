@@ -248,9 +248,11 @@ class ConsolidatedPickList(Document):
 					for i in i_list:
 						item_list.append(i)
 					final_item_list= list(set(item_list))
+					print("============final ",final_item_list)
 					# Get all the avaialble locations for required items
 					if self.purpose == 'Material Transfer for Manufacture':
 						item_locations_dict = get_item_locations(self,final_item_list,self.company)
+						print("=================",item_locations_dict)
 					if self.purpose == 'Manufacture':
 						if wo_doc.skip_transfer == 1 and wo_doc.from_wip_warehouse == 0:
 							item_locations_dict = get_item_locations(self,final_item_list,self.company)
@@ -259,7 +261,9 @@ class ConsolidatedPickList(Document):
 					# Allocate qty from wip warehouse
 					# consider wip stock for the item and consume first wip stock,if wip stock allocated then do not consider it for next row 
 					wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+					print('---------------wip---',wip_warehouse)
 					wip_qty = get_wip_stock()
+					print("-------------------",wip_qty.get(final_item_list[0]))
 					remaining_wip_qty = dict()
 					# Manipulate in order to show in table
 					for row in raw_materials:
@@ -373,7 +377,8 @@ class ConsolidatedPickList(Document):
 		if self.purpose == 'Material Transfer for Manufacture':
 			batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in {0}  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(tuple(item_list),wip_warehouse),{'today':today()},as_dict=1,debug=1)
 		elif self.purpose == 'Manufacture':
-			batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in {0}  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(tuple(item_list),wip_warehouse),{'today':today()},as_dict=1,debug=1)
+			batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+			print("=============bat",batch_data)
 		# print("==========================batch_data",batch_data)
 		# batch_data = frappe.db.sql("""SELECT sle.warehouse,sle.batch_no,sum(sle.actual_qty) as qty from `tabStock Ledger Entry` sle join `tabBatch` batch on sle.batch_no = batch.name where sle.item_code in ('{0}') and batch.disabled = 0 and sle.is_cancelled=0 and IFNULL(batch.expiry_date, '2200-01-01') > %(today)s GROUP BY sle.batch_no HAVING `qty` > 0 ORDER BY IFNULL(batch.expiry_date, '2200-01-01'), batch.creation""".format(joined_item_list),{'today':today()},as_dict=1,debug=1)
 		# batch_locations = get_available_item_locations_for_batched_item(item_list)
@@ -906,7 +911,8 @@ def get_available_item_locations_for_batched_item(item_list):
 	return batch_locations
 
 def calculate_remaining_batch_qty(row):
-	used_qty = frappe.db.sql("""SELECT item_code, sum(picked_qty) as picked_qty From `tabWork Order Pick List Item` where batch_no='{0}' and item_code='{1}' and docstatus=1""".format(row.name, row.item), as_dict=1)
+	used_qty = frappe.db.sql("""SELECT item_code, sum(picked_qty) as picked_qty From `tabConsolidated Pick List` co join `tabWork Order Pick List Item` woi on woi.parent = co.name where batch_no='{0}' and item_code='{1}' and co.purpose = 'Manufacture' and co.docstatus=1""".format(row.name, row.item), as_dict=1,debug=1)
+	print("--------------used",used_qty)
 	if used_qty:
 		row["qty"] = abs(row.qty - flt(used_qty[0].get('picked_qty')))
 
@@ -1074,6 +1080,19 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 		work_order_doc = frappe.get_doc("Work Order",work_order)
 		pick_list_doc = frappe.get_doc("Consolidated Pick List",consolidated_pick_list)
 		qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':consolidated_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
+		if pick_list_doc.purpose == 'Manufacture':
+			job_cards = frappe.db.sql("""SELECT name from `tabJob Card` where work_order = '{0}' and docstatus = 0""".format(work_order),as_dict=1)
+			if job_cards:
+				for row in job_cards:
+					job_card = frappe.get_doc("Job Card",row.get('name'))
+					if job_card:
+						job_card.total_completed_qty = job_card.for_quantity
+						job_card.append('time_logs',{
+							'from_time':nowdate(),
+							'to_time':nowdate(),
+							'completed_qty':qty_of_finish_good})
+						job_card.save()
+						job_card.submit()
 		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict=1, debug=0)
 		if len(data) > 0:
 			stock_entry = frappe.new_doc("Stock Entry")

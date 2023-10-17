@@ -171,7 +171,7 @@ doc_events = {
  	"on_trash":"instrument.instrument.custom_instrument.material_request.material_request.on_trash"
  	},
  	"Job Card":{
- 	"validate":["instrument.instrument.custom_instrument.job_card.job_card.label_img","instrument.instrument.custom_instrument.job_card.job_card.validate"],
+ 	"validate":["instrument.instrument.custom_instrument.job_card.job_card.validate"],
  	"after_insert":"instrument.instrument.custom_instrument.job_card.job_card.after_insert"
  	},
  	"Pick List":{
