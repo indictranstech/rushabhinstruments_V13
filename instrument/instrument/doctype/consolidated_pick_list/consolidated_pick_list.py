@@ -45,7 +45,7 @@ import time
 class ConsolidatedPickList(Document):
 	@frappe.whitelist()
 	def get_fg_work_orders(self):
-		filters={"work_order":self.work_order, "planned_start_date":self.planned_start_date, "planned_end_date":self.planned_end_date, "expected_delivery_date":self.expected_delivery_date}
+		filters={"work_order":self.work_order, "planned_start_date":self.planned_start_date, "planned_end_date":self.planned_end_date, "expected_delivery_date":self.expected_delivery_date,"production_planning_with_lead_time":self.production_plan}
 		self.work_order_table = ''
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
@@ -53,7 +53,7 @@ class ConsolidatedPickList(Document):
 		joined_fg_list = "', '".join(fg_item_groups)
 		if fg_item_groups:
 			if self.purpose == "Material Transfer for Manufacture":
-				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.material_transferred_for_manufacturing) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and {2}""".format(joined_fg_list,todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
+				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.material_transferred_for_manufacturing) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.planned_start_date >= '{1}' and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and (wo.qty - wo.material_transferred_for_manufacturing) > 0 and  {2}""".format(joined_fg_list,todays_date, wo_filter_condition(filters)),as_dict=1,debug=1)
 				if fg_work_orders:
 					for row in fg_work_orders:
 						doc = frappe.get_doc("Work Order",row.get("name"))
@@ -86,9 +86,9 @@ class ConsolidatedPickList(Document):
 							'qty_of_finished_goods_already_completed':row.get('produced_qty')
 							})
 			else:
-				filters={"work_order":self.work_order}
-				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0  and {1}""".format(joined_fg_list, wo_filter_condition(filters)),as_dict=1,debug=1)
-				fg_work_orders_2 = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and {1}""".format(joined_fg_list, wo_filter_condition(filters)),as_dict=1,debug=1)
+				filters={"work_order":self.work_order, "planned_start_date":self.planned_start_date, "planned_end_date":self.planned_end_date, "expected_delivery_date":self.expected_delivery_date,"production_planning_with_lead_time":self.production_plan}
+				fg_work_orders = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0  and (wo.qty - wo.produced_qty) > 0 and {1}""".format(joined_fg_list, wo_filter_condition(filters)),as_dict=1,debug=1)
+				fg_work_orders_2 = frappe.db.sql("""SELECT wo.name,(wo.qty - wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo join `tabItem` i on i.item_code = wo.production_item where i.item_group in ('{0}') and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and (wo.qty - wo.produced_qty) > 0  and {1}""".format(joined_fg_list, wo_filter_condition(filters)),as_dict=1,debug=1)
 				if fg_work_orders_2:
 					for item in fg_work_orders_2:
 						fg_work_orders.append(item)
@@ -163,14 +163,15 @@ class ConsolidatedPickList(Document):
 
 	def get_work_orders_for_subassembly(self,sub_assembly_items,planned_start_date,work_order,bom_qty_dict):
 		todays_date = datetime.date.today()
+		sub_assembly_items = "', '".join(sub_assembly_items)
 		sales_order = frappe.db.get_value("Work Order",work_order,'so_reference')
 		mr_reference = frappe.db.get_value("Work Order",work_order,'mr_reference')
 		parent_item_code = frappe.db.get_value("Work Order",work_order,'parent_item_code')
 		if self.purpose == 'Material Transfer for Manufacture':
-			work_orders = frappe.db.sql("""SELECT production_item,name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in {0} and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process') and (so_reference = '{2}' or mr_reference = '{3}') order by name desc""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
+			work_orders = frappe.db.sql("""SELECT production_item,name,(qty-produced_qty) as pending_qty ,qty,produced_qty from `tabWork Order` where production_item in ('{0}') and planned_start_date <= '{1}' and docstatus =1 and status in ('Not Started','In Process') and (so_reference = '{2}' or mr_reference = '{3}') order by name desc""".format(sub_assembly_items,planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
 		else:
-			work_orders =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and (so_reference = '{2}' or mr_reference = '{3}')""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
-			work_order_1 =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in {0} and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and (so_reference = '{2}' or mr_reference = '{3}')""".format(tuple(sub_assembly_items),planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
+			work_orders =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in ('{0}') and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 0 and wo.produced_qty < wo.material_transferred_for_manufacturing and wo.material_transferred_for_manufacturing > 0 and (so_reference = '{2}' or mr_reference = '{3}')""".format(sub_assembly_items,planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
+			work_order_1 =frappe.db.sql("""SELECT wo.production_item,wo.name,(wo.qty-wo.produced_qty) as pending_qty ,wo.qty,wo.produced_qty from `tabWork Order` wo where wo.production_item in ('{0}') and wo.planned_start_date <= '{1}' and wo.docstatus =1 and wo.status in ('Not Started','In Process') and wo.skip_transfer = 1 and wo.produced_qty < wo.qty and (so_reference = '{2}' or mr_reference = '{3}')""".format(sub_assembly_items,planned_start_date.date(),sales_order,mr_reference),as_dict=1,debug=1)
 			if work_order_1:
 				for item in work_order_1:
 					work_orders.append(item)
@@ -248,11 +249,9 @@ class ConsolidatedPickList(Document):
 					for i in i_list:
 						item_list.append(i)
 					final_item_list= list(set(item_list))
-					print("============final ",final_item_list)
 					# Get all the avaialble locations for required items
 					if self.purpose == 'Material Transfer for Manufacture':
 						item_locations_dict = get_item_locations(self,final_item_list,self.company)
-						print("=================",item_locations_dict)
 					if self.purpose == 'Manufacture':
 						if wo_doc.skip_transfer == 1 and wo_doc.from_wip_warehouse == 0:
 							item_locations_dict = get_item_locations(self,final_item_list,self.company)
@@ -261,9 +260,8 @@ class ConsolidatedPickList(Document):
 					# Allocate qty from wip warehouse
 					# consider wip stock for the item and consume first wip stock,if wip stock allocated then do not consider it for next row 
 					wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
-					print('---------------wip---',wip_warehouse)
+					
 					wip_qty = get_wip_stock()
-					print("-------------------",wip_qty.get(final_item_list[0]))
 					remaining_wip_qty = dict()
 					# Manipulate in order to show in table
 					for row in raw_materials:
@@ -368,96 +366,93 @@ class ConsolidatedPickList(Document):
 
 	def batch_assignment_fifo(self,f_item_list):
 		item_list = [item.item_code for item in self.work_order_pick_list_item]
+		if f_item_list:
+			for i in f_item_list:
+				item_list.append(i)
 		joined_item_list = "', '".join(item_list)
-		if item_list == []:
-			joined_item_list = "', '".join(f_item_list)
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+		if item_list:
+			if self.purpose == 'Material Transfer for Manufacture':
+				batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+			elif self.purpose == 'Manufacture':
+				batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+			
+			for row in batch_data:
+				calculate_remaining_batch_qty(row)
 
-		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(tuple(item_list),wip_warehouse),as_dict=1,debug=1)
-		if self.purpose == 'Material Transfer for Manufacture':
-			batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in {0}  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(tuple(item_list),wip_warehouse),{'today':today()},as_dict=1,debug=1)
-		elif self.purpose == 'Manufacture':
-			batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
-			print("=============bat",batch_data)
-		# print("==========================batch_data",batch_data)
-		# batch_data = frappe.db.sql("""SELECT sle.warehouse,sle.batch_no,sum(sle.actual_qty) as qty from `tabStock Ledger Entry` sle join `tabBatch` batch on sle.batch_no = batch.name where sle.item_code in ('{0}') and batch.disabled = 0 and sle.is_cancelled=0 and IFNULL(batch.expiry_date, '2200-01-01') > %(today)s GROUP BY sle.batch_no HAVING `qty` > 0 ORDER BY IFNULL(batch.expiry_date, '2200-01-01'), batch.creation""".format(joined_item_list),{'today':today()},as_dict=1,debug=1)
-		# batch_locations = get_available_item_locations_for_batched_item(item_list)
-		# print("=================================batch_locations",batch_locations)
-		for row in batch_data:
-			calculate_remaining_batch_qty(row)
-
-		work_list = []
-		for row in self.work_order_pick_list_item:
-			work_list.append({"item_code":row.item_code, "uom":row.uom, "uom_conversion_factor":row.uom_conversion_factor, "stock_uom":row.stock_uom, "serial_nos":row.serial_no, "warehouse":row.warehouse, "required_qty":row.required_qty, "work_order":row.work_order, "stock_qty":0, "picked_qty":0,"wip_stock":row.wip_stock})
+			work_list = []
+			for row in self.work_order_pick_list_item:
+				work_list.append({"item_code":row.item_code, "uom":row.uom, "uom_conversion_factor":row.uom_conversion_factor, "stock_uom":row.stock_uom, "serial_nos":row.serial_no, "warehouse":row.warehouse, "required_qty":row.required_qty, "work_order":row.work_order, "stock_qty":0, "picked_qty":0,"wip_stock":row.wip_stock})
+			
+			new_list=[]
+			allocated_item_dict = dict()
+			allocated_war_item_dict = dict()
 		
-		new_list=[]
-		allocated_item_dict = dict()
-		allocated_war_item_dict = dict()
-	
-		for row in work_list:
-		    wo_item = row.get("item_code")+row.get("work_order")
-		    war_item = row.get("work_order")+row.get("item_code")+row.get("warehouse")
-		    row.update({'actual_required_qty':row.get('required_qty')})
+			for row in work_list:
+			    wo_item = row.get("item_code")+row.get("work_order")
+			    war_item = row.get("work_order")+row.get("item_code")+row.get("warehouse")
+			    row.update({'actual_required_qty':row.get('required_qty')})
 
-		    for col in batch_data:
-		        if row.get("item_code")==col.get("item") and row.get("warehouse")==col.get("warehouse") and wo_item not in allocated_item_dict:
-		            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("work_order")==wo_item])           
-		            rem_reqd_qty = abs(item_qty-row.get("actual_required_qty"))
-		            row.update({"required_qty":rem_reqd_qty})
-		            if col.get("qty")>= row.get("required_qty"):
-		                batch_qty = col.get("qty") - row.get("required_qty") 
-		                new_list.append({
-		                    "item_code":row.get("item_code"), 
-		                    "warehouse":row.get("warehouse"), 
-		                    "required_qty":row.get("required_qty"),
-		                    "work_order":row.get("work_order"),
-		                    "stock_qty":col.get("qty"),
-		                    "picked_qty":row.get("required_qty"),
-		                    "batch_no": col.get("name"),
-							"uom":row.get("uom"), 
-							"uom_conversion_factor":row.get("uom_conversion_factor"), 
-							"stock_uom":row.get("stock_uom"),
-							"wip_stock" : row.get('wip_stock'),
-							"actual_required_qty":row.get('actual_required_qty')
-		                })
-		                col.update({"qty":batch_qty})
-		                allocated_item_dict.update({wo_item:wo_item})
-		            else:
-		                reqd_qty = row.get("required_qty")-col.get("qty")
-		                if col.get("qty") > 0:
-		                    new_list.append({
-		                        "item_code":row.get("item_code"), 
-		                        "warehouse":row.get("warehouse"), 
-		                        "required_qty":row.get("required_qty"),
-		                        "work_order":row.get("work_order"),
-		                        "stock_qty":col.get("qty"),
-		                        "picked_qty":col.get("qty"),
-		                        "batch_no": col.get("name"),
-		                        "uom":row.get("uom"), 
+			    for col in batch_data:
+			        if row.get("item_code")==col.get("item") and row.get("warehouse")==col.get("warehouse") and wo_item not in allocated_item_dict:
+			            item_qty=sum([r.get("picked_qty") for r in new_list if new_list and row.get("item_code")==r.get("item_code") and r.get("item_code")+r.get("work_order")==wo_item])           
+			            rem_reqd_qty = abs(item_qty-row.get("actual_required_qty"))
+			            row.update({"required_qty":rem_reqd_qty})
+			            if col.get("qty")>= row.get("required_qty"):
+			                batch_qty = col.get("qty") - row.get("required_qty") 
+			                new_list.append({
+			                    "item_code":row.get("item_code"), 
+			                    "warehouse":row.get("warehouse"), 
+			                    "required_qty":row.get("required_qty"),
+			                    "work_order":row.get("work_order"),
+			                    "stock_qty":col.get("qty"),
+			                    "picked_qty":row.get("required_qty"),
+			                    "batch_no": col.get("name"),
+								"uom":row.get("uom"), 
 								"uom_conversion_factor":row.get("uom_conversion_factor"), 
 								"stock_uom":row.get("stock_uom"),
 								"wip_stock" : row.get('wip_stock'),
 								"actual_required_qty":row.get('actual_required_qty')
-		                    })
-		      #           elif war_item not in allocated_war_item_dict:
-		      #               new_list.append({
-		      #                   "item_code":row.get("item_code"), 
-		      #                   "warehouse":row.get("warehouse"), 
-		      #                   "required_qty":row.get("required_qty"),
-		      #                   "work_order":row.get("work_order"),
-		      #                   "stock_qty": 0,
-		      #                   "picked_qty": 0,
-		      #                   "batch_no": "",
-		      #                   "uom":row.get("uom"), 
-								# "uom_conversion_factor":row.get("uom_conversion_factor"), 
-								# "stock_uom":row.get("stock_uom")
-		      #               })
-		      #               allocated_war_item_dict.update({war_item:war_item})
-		                col.update({"qty":0})		
-		
-		# print("=====================new_list",new_list)
-		return new_list
-
+			                })
+			                col.update({"qty":batch_qty})
+			                allocated_item_dict.update({wo_item:wo_item})
+			            else:
+			                reqd_qty = row.get("required_qty")-col.get("qty")
+			                if col.get("qty") > 0:
+			                    new_list.append({
+			                        "item_code":row.get("item_code"), 
+			                        "warehouse":row.get("warehouse"), 
+			                        "required_qty":row.get("required_qty"),
+			                        "work_order":row.get("work_order"),
+			                        "stock_qty":col.get("qty"),
+			                        "picked_qty":col.get("qty"),
+			                        "batch_no": col.get("name"),
+			                        "uom":row.get("uom"), 
+									"uom_conversion_factor":row.get("uom_conversion_factor"), 
+									"stock_uom":row.get("stock_uom"),
+									"wip_stock" : row.get('wip_stock'),
+									"actual_required_qty":row.get('actual_required_qty')
+			                    })
+			      #           elif war_item not in allocated_war_item_dict:
+			      #               new_list.append({
+			      #                   "item_code":row.get("item_code"), 
+			      #                   "warehouse":row.get("warehouse"), 
+			      #                   "required_qty":row.get("required_qty"),
+			      #                   "work_order":row.get("work_order"),
+			      #                   "stock_qty": 0,
+			      #                   "picked_qty": 0,
+			      #                   "batch_no": "",
+			      #                   "uom":row.get("uom"), 
+									# "uom_conversion_factor":row.get("uom_conversion_factor"), 
+									# "stock_uom":row.get("stock_uom")
+			      #               })
+			      #               allocated_war_item_dict.update({war_item:war_item})
+			                col.update({"qty":0})		
+			
+			# print("=====================new_list",new_list)
+			return new_list
+		else:
+			frappe.msgprint("No Items Found For Pick")
 	@frappe.whitelist()
 	def remove_work_orders(self):
 		pass
@@ -1166,6 +1161,8 @@ def wo_filter_condition(filters):
 		conditions += " and wo.planned_end_date <= '{0}'".format(filters.get('planned_end_date'))
 	if filters.get("expected_delivery_date"):
 		conditions += " and wo.expected_delivery_date = '{0}'".format(filters.get('expected_delivery_date'))
+	if filters.get("production_planning_with_lead_time"):
+		conditions += " and wo.production_planning_with_lead_time = '{0}'".format(filters.get('production_planning_with_lead_time'))
 	return conditions
 
 def so_filter_condition(filters):
