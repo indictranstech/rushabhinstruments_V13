@@ -117,6 +117,20 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			freeze_message: __("Fetching Raw items..."),
 			callback: function(r) {
 				refresh_field("raw_materials_table");
+				cur_frm.save()
+			}
+		});
+	},
+	refresh_latest_date_availability:function(frm){
+		frm.doc.raw_materials_table = ''
+		frappe.call({
+			method: "get_raw_materials",
+			doc: frm.doc,
+			freeze: true,
+			freeze_message: __("Refresh Latest Date Availability For Raw items..."),
+			callback: function(r) {
+				refresh_field("raw_materials_table");
+				cur_frm.save()
 			}
 		});
 	},

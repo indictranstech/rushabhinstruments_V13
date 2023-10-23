@@ -279,39 +279,62 @@ class ProductionPlanningWithLeadTime(Document):
 					remainingg_qty = flt(ohs.get(item.get("item"))) - flt(item.get("qty")) if flt(ohs.get(item.get("item"))) > flt(item.get("qty")) else 0
 					ohs.update({item.get('item'):remainingg_qty})
 					item.update({'shortage':qty,'qty':qty})
-					# Allocate from planned_po nd mr of type Purchase
-					if item.get('item') not in remaining_dict:
-						on_order_stock,schedule_date_dict = get_on_order_stock(self,required_date)
-						
-						qty = flt(item.get("qty")) - flt(on_order_stock.get(item.get("item"))) if flt(on_order_stock.get(item.get("item"))) < flt(item.get("qty")) else 0
-						if flt(item.get("qty")) == 0:
-							pass
-						elif qty == 0:
-							item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
-						else:
-							latest_date_availability = today_date + timedelta(lead_time)
-							item.update({'latest_date_availability':latest_date_availability})
-						remaining_qty = flt(on_order_stock.get(item.get('item'))) - item.get('qty') 
-						remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
-						item.update({'qty':qty,'on_order_stock':on_order_stock.get(item.get("item")),'shortage':qty})
+					if item.get('qty') == 0:
+						item.update({'readiness_status':'#008000'})
+						item.update({'latest_date_availability':today_date})
+						self.append('raw_materials_table',item)
+						continue
 					else:
-						virtual_stock = remaining_dict.get(item.get('item'))
-						qty = flt(item.get("qty")) - flt(virtual_stock) if flt(virtual_stock) < flt(item.get("qty")) else 0
-						remaining_qty = virtual_stock - item.get('qty')
+						# Allocate from planned_po nd mr of type Purchase
+						if item.get('item') not in remaining_dict:
+							on_order_stock,schedule_date_dict = get_on_order_stock(self,required_date)
+							
+							if item.get('item') in on_order_stock:
+								qty = flt(item.get("qty")) - flt(on_order_stock.get(item.get("item"))) if flt(on_order_stock.get(item.get("item"))) < flt(item.get("qty")) else 0
+								# print("=============item",item.get('item'),qty)
 
-						remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
-						item.update({'qty':qty,'on_order_stock':virtual_stock,'shortage':qty})
-					if item.get('latest_date_availability'):
-						latest_date_availability_in_days = (item.get('latest_date_availability') - today_date).days
-						readiness_status = (item.get('date_to_be_ready')-item.get('latest_date_availability'))
-						if readiness_status.days > 0:
-							item.update({'readiness_status':'#FF0000'})
-						elif readiness_status.days < 0:
-							item.update({'readiness_status':'#CD3700'})
+								# if flt(item.get("qty")) == 0:
+								# 	item.update({'latest_date_availability':today_date})
+								# elif qty == 0:
+								# 	item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+								# else:
+								# 	latest_date_availability = today_date + timedelta(lead_time)
+								# 	item.update({'latest_date_availability':latest_date_availability})
+								remaining_qty = flt(on_order_stock.get(item.get('item'))) - item.get('qty') 
+								remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
+								item.update({'qty':qty,'on_order_stock':on_order_stock.get(item.get("item")),'shortage':qty})
+								item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+								item.update({'readiness_status':'#FFA500'})
+							else:
+								latest_date_availability = today_date + timedelta(lead_time)
+								item.update({'latest_date_availability':latest_date_availability,'readiness_status':'#FF0000'})
+
 						else:
-							item.update({'readiness_status':'#FF8000'})
-					else:
-						item.update({'readiness_status':'#FF0000'})
+							virtual_stock = remaining_dict.get(item.get('item'))
+							qty = flt(item.get("qty")) - flt(virtual_stock) if flt(virtual_stock) < flt(item.get("qty")) else 0
+							remaining_qty = virtual_stock - item.get('qty')
+
+							remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
+							item.update({'qty':qty,'on_order_stock':virtual_stock,'shortage':qty})
+							item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+							item.update({'readiness_status':'#FFA500'})
+						# if item.get('latest_date_availability'):
+						# 	latest_date_availability_in_days = (item.get('latest_date_availability') - today_date).days
+						# 	readiness_status = (item.get('date_to_be_ready')-item.get('latest_date_availability'))
+						# 	if readiness_status.days > 0:
+						# 		item.update({'readiness_status':'#008000'})
+						# 	elif readiness_status.days < 0:
+						# 		item.update({'readiness_status':'#FFA500'})
+						# 	else:
+						# 		item.update({'readiness_status':'#FF8000'})
+						# else:
+						# 	item.update({'readiness_status':'#FF0000'})
+						# if item.get('qty') == 0:
+						# 	item.update({'readiness_status':'#008000'})
+						# 	item.update({'latest_date_availability':today_date})
+					
+					
+					
 					self.append('raw_materials_table',item)
 			return self.raw_materials_table
 	@frappe.whitelist()
@@ -735,14 +758,14 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				else:
 					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready,row_name, warehouse_list, indent=indent+1)
 def get_on_order_stock(self,required_date):
-	planned_po = frappe.db.sql("""SELECT poi.item_code,if(sum(poi.qty-poi.received_qty)>0,sum(poi.qty-poi.received_qty),0) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0""".format(required_date),as_dict=1)
+	planned_po = frappe.db.sql("""SELECT poi.item_code,sum(poi.qty-poi.received_qty) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0 group by poi.item_code""".format(required_date),as_dict=1,debug=0)
 	# Manipulate in order to show in dict format
 	if planned_po:
 		on_order_stock = {item.item_code : item.qty for item in planned_po if item.item_code!=None}
 	else:
 		on_order_stock = dict()
 	schedule_date_dict = {item.item_code : item.schedule_date for item in planned_po if item.item_code!=None}
-	planned_mr = frappe.db.sql("""SELECT mri.item_code,if(sum(mri.qty)>0,sum(mri.qty),0) as qty ,mri.schedule_date from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.schedule_date <= '{0}' and mr.material_request_type = 'Purchase' and not exists (SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.material_request = mr.name)""".format(required_date),as_dict=1)
+	planned_mr = frappe.db.sql("""SELECT mri.item_code,sum(mri.qty) as qty ,mri.schedule_date from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name where mr.schedule_date <= '{0}' and mr.material_request_type = 'Purchase' and not exists (SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.material_request = mr.name) and mr.docstatus = 1 and qty >0 group by mri.item_code""".format(required_date),as_dict=1)
 	if planned_mr:
 		for row in planned_mr:
 			if row.get('item_code') != None:
