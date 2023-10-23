@@ -28,6 +28,7 @@
   "get_subassembly_items",
   "sub_assembly_items_table",
   "get_raw_materials",
+  "refresh_latest_date_availability",
   "hide_zero_qty_item",
   "raw_materials_table",
   "download_raw_materials",
@@ -203,12 +204,17 @@
    "label": "Status",
    "options": "\nDraft\nSubmitted\nIn Progress\nCompleted\nCancelled",
    "read_only": 1
+  },
+  {
+   "fieldname": "refresh_latest_date_availability",
+   "fieldtype": "Button",
+   "label": "Refresh Latest Date Availability"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-08-24 00:31:10.030784",
+ "modified": "2023-10-23 02:40:46.133418",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Production Planning With Lead Time",
