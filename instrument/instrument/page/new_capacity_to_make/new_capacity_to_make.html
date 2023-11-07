@@ -2,17 +2,159 @@
 <style>
     .order_table table th{
     background: #0095ff;
-    color: #fff;
+    /*color: #fff;
     font-size: 15px;
     text-align: center;
     letter-spacing: .4px;
-    border-color:#0579ce;
+    border-color:#0579ce;*/
   }
   .order_table table td{
     font-size: 13px;
     border-color:#e0dede;
   }
+  .new_table table th{
+    background: #0095ff;
+/*    color: #fff;*/
+/*    font-size: 15px;*/
+/*    text-align: center;*/
+/*    letter-spacing: .4px;*/
+/*    border-color:#0579ce;*/
+  }
+   .new_table {
+        background-color: white;
+        margin: auto;
+        border-collapse: separate;
+        display: block;
+        overflow-x: scroll;
+         overflow-y: scroll;
+    }
+     n_thead, n_tbody {
+        display: inline-block;
+    }
+    .sticky {
+        position: sticky;
+        top: 5px;
+        z-index: 3;
+    }
+     td,th {
+        /*min-width: 153px;
+        max-width: 153px;*/
+        word-wrap: break-word;
+        background-color: lightgrey;
+    }
 
+    .fixed {
+        position: sticky;
+        width: 5em;
+        left: 0;
+        top: auto;
+        z-index: 2;
+    }
+    .col1 {
+         background-color: lightgrey;
+    }
+    .col2 {
+        position: sticky;
+        left: 9em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }
+    .col3 {
+        position: sticky;
+        left: 18em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }
+    .col4 {
+        position: sticky;
+        left: 27em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+         background-color: lightgrey;
+    }
+    .col5 {
+        position: sticky;
+        left: 36em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }
+    .col6 {
+        position: sticky;
+        left: 45em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }
+    .col7 {
+        position: sticky;
+        left: 54em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }  
+    .col8 {
+        position: sticky;
+        left: 63em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }  
+    .col9 {
+        position: sticky;
+        left: 72em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }  
+    .col10 {
+        position: sticky;
+        left: 81em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }  
+    .col11 {
+        position: sticky;
+        left: 90em;
+        top: auto;
+        min-width: 120px;
+        max-width: 120px;
+        text-align: center;
+        background-color: lightgrey;
+    }   
+      .ta{
+        text-align: center;
+        word-wrap: break-word;
+        min-width: 126px;
+        max-width: 126px;
+    }
+    .tdate{
+        min-width: 120px;
+        max-width: 120px;
+    }
+     .center{text-align: center;}
+  
 </style>
 <div class="order_table">
     <table class="table table-bordered" width="100%">
@@ -20,7 +162,7 @@
         <thead>
             <tr>
                 <th colspan="6">Standard Lead Time In Days  : {{data[0].std_lead_time}}</th>
-                <th colspan="6">Calculated Lead Time In Days  : {{data[0].calulated_lead_time_in_days}}</th>
+                <th colspan="6">Calculated Lead Time In Days(Operation Time & Makeup Days Included)  : {{data[0].calulated_lead_time_in_days}}</th>
             </tr>
             <tr>
                 <th colspan="3">Type</th>
@@ -36,6 +178,51 @@
                <td colspan="3">{{row.date_available}}</td>
                <td colspan="3">{{row.qty}}</td>
                <td colspan="3">{{row.remark}}</td>
+           </tr>
+        </tbody>
+        {% endfor %}
+         {% endif %}
+    </table>
+</div>
+<div class="new_table">
+    <table class="table table-bordered" width="100%">
+         {% if data %}
+        <thead class="n_thead">
+            <tr>
+                <th  class="center fixed sticky ta fixcolor col1"><b>Item Code</b></th>
+                <!-- <th  class="center fixed sticky ta fixcolor col2">Item Name</th> -->
+                <th  class="center fixed sticky ta fixcolor col2">BOM Qty</th>
+                <!-- <th  class="center fixed sticky ta fixcolor col4">UOM</th> -->
+                <th class="center fixed sticky ta fixcolor col3">In Stock</th>
+                <!-- <th class="center fixed sticky ta fixcolor col6">Is Subassembly</th> -->
+                <th class="center fixed sticky ta fixcolor col4">Ordered (via Purchase Order ,Work Order) and available in future production plans</th>
+                <th class="center fixed sticky ta fixcolor col5">Max Days to Expected Delivery Date or Expected Manufacture</th>
+                <th class="center fixed sticky ta fixcolor col6">Lead Time (days)</th>
+                <th class="center fixed sticky ta fixcolor col7">Operation Time (hours)According to BOM Qty</th>
+                <th class="center fixed sticky ta fixcolor col8">Type</th>
+                {% for date in data[3].date_list %}
+                <th class="bcolor center tdate">{{date}}</th>
+                {% endfor %}
+
+            </tr>
+        </thead>
+        <tbody class="n_tbody">
+             {% for row in data[3].new_table_data %}
+           <tr>
+               <td class="center fixed sticky ta fixcolor col1"><b>{{row.item}}</b></td>
+                <!-- <td class="center fixed sticky ta fixcolor col2">{{row.item_name}}</td> -->
+               <td class="center fixed sticky ta fixcolor col2">{{row.qty}}</td>
+               <!-- <td class="center fixed sticky ta fixcolor col4">{{row.uom}}</td> -->
+               <td class="center fixed sticky ta fixcolor col3">{{row.ohs}}</td>
+               <!-- <td class="center fixed sticky ta fixcolor col6">{{row.is_subassembly}}</td> -->
+               <td class="center fixed sticky ta fixcolor col4">{{row.ordered_qty}}</td>
+               <td class="center fixed sticky ta fixcolor col5">{{row.max_days}}</td>
+               <td class="center fixed sticky ta fixcolor col6">{{row.std_lead_time}}</td>
+               <td class="center fixed sticky ta fixcolor col7">{{row.operation_time}}</td>
+               <td class="center fixed sticky ta fixcolor col8">{{row.type}}</td>
+               {% for date in data[3].date_list %}
+                <td class="bcolor center tdate">{{row.get(date)}}</td>
+                {% endfor %}
            </tr>
         </tbody>
         {% endfor %}
