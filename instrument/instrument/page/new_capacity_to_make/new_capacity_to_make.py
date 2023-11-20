@@ -3,6 +3,8 @@ import frappe
 from frappe.model.document import Document
 from frappe.utils import nowdate, cstr, flt, cint, now, getdate,get_datetime,time_diff_in_seconds,add_to_date,time_diff_in_seconds,add_days,today
 from datetime import datetime,date, timedelta
+from frappe.utils import nowdate,nowtime, today, flt,now
+
 from frappe.model.naming import make_autoname
 import time
 import json
@@ -829,3 +831,104 @@ def get_on_order_stock(item_code,required_date):
 					on_order_stock.update({row.get('production_item'):flt(row.get('qty'))})
 
 	return on_order_stock
+
+@frappe.whitelist()
+def make_xlsx_file(renderd_data):
+	data =json.loads(renderd_data)
+	
+	header = ['Item Code','BOM Qty','In Stock','Ordered Qty','Max Days','Lead Time (days)','Operation Time (hours)According to BOM Qty','Type']
+
+	if data[3].get('date_list'):
+		for date in data[3].get('date_list'):
+			header.append(date)
+	
+	book = Workbook()
+	sheet = book.active
+	
+	row = 1
+	col = 1
+
+	for item in header:
+		cell = sheet.cell(row=row,column=col)
+		cell.value = item
+		cell.font = cell.font.copy(bold=True)
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		cell.fill = PatternFill(start_color='1E90FF', end_color='1E90FF', fill_type = 'solid')
+		
+		col+=1
+
+	row = 2
+	col = 1
+
+	for data_row in data[3].get('new_table_data'):
+		cell = sheet.cell(row=row,column=col)
+		cell.value = data_row.get('item')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cell = sheet.cell(row=row,column=col+1)
+		cell.value = data_row.get('qty')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+2)
+		cell.value = data_row.get('ohs')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+3)
+		cell.value = data_row.get('ordered_qty')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+4)
+		cell.value = data_row.get('max_days')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+5)
+		cell.value = data_row.get('std_lead_time')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+6)
+		cell.value = data_row.get('operation_time')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+		cell = sheet.cell(row=row,column=col+7)
+		cell.value = data_row.get('type')
+		cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+		sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+
+		cols = 9
+		for date in data[3].get('date_list'):
+			cell = sheet.cell(row=row,column=cols)
+			cell.value = data_row.get(date)
+			cell.alignment = cell.alignment.copy(horizontal="center", vertical="center")
+			sheet.merge_cells(start_row=row, start_column=col, end_row=row, end_column=col)
+
+			cols+=1
+		row += 1
+
+	file_path = frappe.utils.get_site_path("public")
+	fname = "Capacity_To_Make" + nowdate() + ".xlsx"
+	book.save(file_path+fname)
+
+@frappe.whitelist()
+def download_xlsx():
+	import openpyxl
+	from io import BytesIO
+	file_path = frappe.utils.get_site_path("public")
+	# now = datetime.now()
+	fname = "Capacity_To_Make" + nowdate() + ".xlsx"
+	wb = openpyxl.load_workbook(filename=file_path+fname)
+	xlsx_file = BytesIO()
+	wb.save(xlsx_file)
+	frappe.local.response.filecontent=xlsx_file.getvalue()
+
+	frappe.local.response.type = "download"
+	
+	frappe.local.response.filename = fname
