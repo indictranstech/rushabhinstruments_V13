@@ -181,7 +181,19 @@ def get_date_list(calulated_lead_time_in_days):
 @frappe.whitelist()
 def get_sub_assembly_items_final(bom_no, bom_data_new,indent=1):
 	data = get_children('BOM', parent = bom_no)
-	for d in data:
+	item_dict = {item.item_code:item.stock_qty for item in data}
+	final_data = []
+	count = 0
+	for item in item_dict:
+		total = 0
+		count = count + 1
+		for info in data:
+			if item ==  info.get('item_code'):
+				total = total + info.get('stock_qty')
+				item_info = info
+		item_info.stock_qty = total
+		final_data.append(item_info)
+	for d in final_data:
 		if d.expandable:
 			operation_time = frappe.db.sql("""SELECT sum(bo.time_in_mins) as lead_time from `tabBOM Operation` bo join `tabBOM` b on b.name = bo.parent where b.name = '{0}' """.format(bom_no),as_dict=1)
 			operation_time = flt(operation_time[0].get('lead_time'))/flt(60)
@@ -285,6 +297,7 @@ def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days
 		for date in date_list:
 			sub_assembly_item_dict= dict()
 			qty_can_be_produced = []
+			raw_item_dict= dict()
 			for row in reversed(bom_data_new):
 				if row.bom_no:
 					bom_items = get_bom_items(row.bom_no)
@@ -292,60 +305,21 @@ def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days
 					sub_item_list = "', '".join(sub_item_list)
 					qty_can_be_produced_raw = []
 					for item in bom_items:
-						item_list = [item.get('item')]
-						item_list = "', '".join(item_list)
-						on_order_stock = get_on_order_stock_day(date,item_list)
-						if ohs_dict and item.get('item') in ohs_dict :
-							available_quantity = ohs_dict.get(item.get('item'))
-						else:
-							available_quantity = 0
-						if on_order_stock_before and  item.get('item') in on_order_stock_before:
-							available_quantity = available_quantity + flt(on_order_stock_before.get(item.get('item')).get('qty'))
-						if on_order_stock and  item.get('item') in on_order_stock:
-							available_quantity = available_quantity + flt(on_order_stock.get(item.get('item')).get('qty'))
-						if item.get('item') in sub_assembly_item_dict:
-							available_quantity = available_quantity + sub_assembly_item_dict.get(item.get('item'))
-					
-						proportion_qty = flt(available_quantity)/flt(item.get('qty'))
-
-						if proportion_qty > 0:
-							qty_can_be_produced_raw.append(round(flt(proportion_qty),2))
-							ohs_dict[item.get('item')] = 0
-							if on_order_stock_before and  item.get('item') in on_order_stock_before: 
-								on_order_stock_before[item.get('item')]['qty'] = 0
-							if on_order_stock and  item.get('item') in on_order_stock: 
-								on_order_stock[item.get('item')]['qty']=0 
-							row[str(date)] = proportion_qty
+						if item.get('item') in raw_item_dict:
+							qty_can_be_produced_raw.append(raw_item_dict.get(item.get('item')))
 						else:
 							qty_can_be_produced_raw.append(0)
-							row[str(date)] = 0		
-
-					on_order_stock = get_on_order_stock_day(date,sub_item_list)
-					if ohs_dict and row.get('item') in ohs_dict :
-						available_quantity = ohs_dict.get(row.get('item'))
-					else:
-						available_quantity = 0
-					if on_order_stock_before and  row.get('item') in on_order_stock_before:
-						available_quantity = available_quantity + flt(on_order_stock_before.get(row.get('item')).get('qty'))
-					if on_order_stock and  row.get('item') in on_order_stock:
-						available_quantity = available_quantity + flt(on_order_stock.get(row.get('item')).get('qty'))
-					if row.get('item') in sub_assembly_item_dict:
-						available_quantity = available_quantity + sub_assembly_item_dict.get(row.get('item'))
-					proportion_qty = flt(available_quantity)/flt(row.get('qty'))
-					produced = min(qty_can_be_produced_raw)
-					proportion_qty = proportion_qty + produced
-					sub_assembly_item_dict[row.get('item')] = proportion_qty
+					
+					final_qty = (min(qty_can_be_produced_raw) + (ohs_dict.get(row.get('item')) if row.get('item') in ohs_dict else 0))
 					ohs_dict[row.get('item')] = 0
-					row[str(date)]= round(flt(proportion_qty),2)
-					qty_can_be_produced_raw =[]
-
+					row[str(date)] = final_qty
+					raw_item_dict[row.get('item')] = final_qty
 				else:
 					item_list = [row.get('item')]
 					item_list = "', '".join(item_list)
 					on_order_stock = get_on_order_stock_day(date,item_list)
 					if ohs_dict and row.get('item') in ohs_dict :
 						available_quantity = ohs_dict.get(row.get('item'))
-
 					else:
 						available_quantity = 0
 					if on_order_stock_before and  row.get('item') in on_order_stock_before:
@@ -354,77 +328,27 @@ def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days
 						available_quantity = available_quantity + flt(on_order_stock.get(row.get('item')).get('qty'))
 					if row.get('item') in sub_assembly_item_dict:
 						available_quantity = available_quantity + sub_assembly_item_dict.get(row.get('item'))
-				
 					proportion_qty = flt(available_quantity)/flt(row.get('qty'))
-					if proportion_qty > 0:
-						qty_can_be_produced.append(round(flt(proportion_qty),2))
-						ohs_dict[row.get('item')] = 0
-						if on_order_stock_before and  row.get('item') in on_order_stock_before: 
-							on_order_stock_before[row.get('item')]['qty'] = 0
-						if on_order_stock and  row.get('item') in on_order_stock: 
-							on_order_stock[row.get('item')]['qty']=0 
-						row[str(date)] = proportion_qty
-					else:
-						proportion_qty = 0
-						row[str(date)] = proportion_qty
-						qty_can_be_produced.append(0)
+					row[str(date)] = proportion_qty
+					raw_item_dict[row.get('item')] = proportion_qty
+					# if proportion_qty > 0:
+					# 	qty_can_be_produced.append(round(flt(proportion_qty),2))
+					# 	raw_item_dict[row.get('item')] = proportion_qty
+					# 	ohs_dict[row.get('item')] = 0
+					# 	if on_order_stock_before and  row.get('item') in on_order_stock_before: 
+					# 		on_order_stock_before[row.get('item')]['qty'] = 0
+					# 	if on_order_stock and  row.get('item') in on_order_stock: 
+					# 		on_order_stock[row.get('item')]['qty']=0 
+					# 	row[str(date)] = proportion_qty
 					# else:
-					# 	if qty_can_be_produced:
-					# 		qty = min(qty_can_be_produced)+flt(available_quantity)
-					# 		row['available_quantity'] = qty
-					# 	else:
-					# 		qty = flt(available_quantity)
-					# 		row['available_quantity'] = qty
-					sub_assembly_item_dict[row.get('item')] = proportion_qty
-					
-					
-					row[str(date)]= round(flt(proportion_qty),2)
-					ohs_dict[row.get('item')] = 0
-
-
-			# for item in reversed(bom_data_new):
-			# 	item_list = [item.get('item')]
-			# 	item_list = "', '".join(item_list)
-			# 	on_order_stock = get_on_order_stock_day(date,item_list)
-			# 	if ohs_dict and item.get('item') in ohs_dict :
-			# 		available_quantity = ohs_dict.get(item.get('item'))
-
-			# 	else:
-			# 		available_quantity = 0
-			# 	if on_order_stock_before and  item.get('item') in on_order_stock_before:
-			# 		available_quantity = available_quantity + flt(on_order_stock_before.get(item.get('item')).get('qty'))
-			# 	if on_order_stock and  item.get('item') in on_order_stock:
-			# 		available_quantity = available_quantity + flt(on_order_stock.get(item.get('item')).get('qty'))
-			# 	if item.get('item') in sub_assembly_item_dict:
-			# 		available_quantity = available_quantity + sub_assembly_item_dict.get(item.get('item'))
-			# 	item[str(date)] = available_quantity
-			# 	if not item.get('is_subassembly'):
-			# 		proportion_qty = flt(available_quantity)/flt(item.get('qty'))
-			# 		item['available_quantity'] = available_quantity
-			# 		if proportion_qty > 0:
-			# 			qty_can_be_produced.append(round(flt(proportion_qty),2))
-			# 			ohs_dict[item.get('item')] = 0
-			# 			if on_order_stock_before and  item.get('item') in on_order_stock_before: 
-			# 				on_order_stock_before[item.get('item')]['qty'] = 0
-			# 			if on_order_stock and  item.get('item') in on_order_stock: 
-			# 				on_order_stock[item.get('item')]['qty']=0 
-			# 			item[str(date)] = proportion_qty
-			# 	else:
-			# 		if qty_can_be_produced:
-			# 			qty = min(qty_can_be_produced)+flt(available_quantity)
-			# 			item['available_quantity'] = qty
-			# 		else:
-			# 			qty = flt(available_quantity)
-			# 			item['available_quantity'] = qty
-			# 		sub_assembly_item_dict[item.get('item')] = qty
-			# 		qty_can_be_produced = []
-			# 		qty_can_be_produced.append(qty)
-			# 		item[str(date)]= round(flt(qty),2)
-			# 		ohs_dict[item.get('item')] = 0
+					# 	proportion_qty = 0
+					# 	row[str(date)] = proportion_qty
+					# 	qty_can_be_produced.append(0)
+			
 	return bom_data_new
 def get_bom_items(bom):
 	if bom:
-		bom_items = frappe.db.sql("""SELECT i.item_code as item ,i.qty,i.bom_no from `tabBOM Item` i join `tabBOM` b on b.name=i.parent where b.name = '{0}'""".format(bom),as_dict=1)
+		bom_items = frappe.db.sql("""SELECT i.item_code as item ,sum(i.qty) as qty,i.bom_no from `tabBOM Item` i join `tabBOM` b on b.name=i.parent where b.name = '{0}' group by item_code""".format(bom),as_dict=1)
 		return bom_items
 def get_parent_bom_detials(bom,raw_data):
 	doc = frappe.get_doc("BOM",{'name':bom})

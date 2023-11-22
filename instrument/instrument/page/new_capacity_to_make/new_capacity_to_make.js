@@ -117,7 +117,7 @@ frappe.capacity_to_make = Class.extend({
 			fieldname: 'production_item',
 			options: "Item",
 			reqd:1,
-			get_query: function(){ return {'filters': [['Item', 'item_group','in',['Product','Subassembly','Made in House']]]}},
+			// get_query: function(){ return {'filters': [['Item', 'item_group','in',['Product','Subassembly','Made in House']]]}},
 			onchange: function() {
 				me.production_item = this.value?this.value:null
 				me.get_data()
