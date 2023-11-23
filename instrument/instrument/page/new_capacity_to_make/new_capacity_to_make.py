@@ -30,9 +30,19 @@ from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 
 
 @frappe.whitelist()
+def get_sales_items():
+	sales_items = frappe.get_all("Item",{'is_sales_item':1},'name')
+	if sales_items:
+		for item in sales_items:
+			print("==========",item)
+			filters = {'production_item':'B11844'}
+			data = get_capacity_data(filters)
+			break
+
+@frappe.whitelist()
 def get_capacity_data(filters=None):
 	try:
-		filters = json.loads(filters)
+		# filters = json.loads(filters)
 		if 'delivery_date' in filters:
 			if filters.get('delivery_date') <= today():
 				frappe.throw("Expected Delivery Date Must be Greater Than Or Equal To Today")
@@ -132,17 +142,19 @@ def get_capacity_data(filters=None):
 				if qty_can_be_produced :
 					qty_can_be_produced = min(qty_can_be_produced)
 					final_item_dict[bom_item] = {'schedule_date':max_date,'qty':qty_can_be_produced if qty_can_be_produced else 0}
+			final_qty = (flt(final_item_dict.get(main_bom_item).get('qty')) if flt(final_item_dict.get(main_bom_item).get('qty')) > 0 else 0)
+			
 			case_3 = dict()
 			case_3['type'] = 'Qty Can Be Manufactured Before Calculated Lead Time'
 			case_3['std_lead_time'] = std_lead_time
 			case_3['calulated_lead_time_in_days'] =calulated_lead_time_in_days
 			case_3['date_available'] = max_date if flt(final_item_dict.get(main_bom_item).get('qty')) > 0 else end_date_of_lead_time
-			case_3['remark'] = '{0} Can Be Manufactured Before {1}'.format(flt(final_item_dict.get(main_bom_item).get('qty')),end_date_of_lead_time) if flt(final_item_dict.get(main_bom_item).get('qty')) > 0 else 'There is no enough material in stock and currently ordered which will available before {0}'.format(end_date_of_lead_time)
-			case_3['qty'] = flt(final_item_dict.get(main_bom_item).get('qty'))
+			case_3['remark'] = '{0} Can Be Manufactured Before {1}'.format(final_qty,end_date_of_lead_time) if final_qty > 0 else 'There is no enough material in stock and currently ordered which will available before {0}'.format(end_date_of_lead_time)
+			case_3['qty'] = final_qty
 			data.append(case_3)
 
 			# Case 4
-			total_qty = flt(ohs_dict.get(filters.get('production_item'))) + flt(post_quick_qty) + flt(final_item_dict.get(main_bom_item).get('qty'))
+			total_qty = flt(ohs_dict.get(filters.get('production_item'))) + flt(post_quick_qty) + final_qty
 			case_4 = dict()
 			case_4['type'] = 'Max Qty Before Calculated Lead Time'
 			case_4['std_lead_time'] = std_lead_time
@@ -157,11 +169,7 @@ def get_capacity_data(filters=None):
 				new_table_data = get_new_table_data(bom,std_lead_time,calulated_lead_time_in_days)
 				case_4['new_table_data'] = new_table_data
 			data.append(case_4)
-
-		
-		path = 'instrument/instrument/page/new_capacity_to_make/new_capacity_to_make.html'
-		html=frappe.render_template(path,{'data':data})
-		return {'html':html,'data':data}
+			return data
 	except Exception as e:
 		traceback = frappe.get_traceback()
 		frappe.log_error(
@@ -169,6 +177,14 @@ def get_capacity_data(filters=None):
 			message=traceback,
 		)
 		raise e
+
+@frappe.whitelist()
+def capacity_data(filters=None):
+	filters = json.loads(filters)
+	data = get_capacity_data(filters)
+	path = 'instrument/instrument/page/new_capacity_to_make/new_capacity_to_make.html'
+	html=frappe.render_template(path,{'data':data})
+	return {'html':html,'data':data}
 
 def get_date_list(calulated_lead_time_in_days):
 	start_date = date.today()
@@ -223,21 +239,11 @@ def get_sub_assembly_items_final(bom_no, bom_data_new,indent=1):
 				'operation_time':0
 
 			}))
-	# print("===============bom_data",bom_data_new)
 def get_new_table_data(bom,std_lead_time,calulated_lead_time_in_days):
-	# bom_childs = []
-	# bom_child_list = get_child_boms(bom,bom_childs)
-	# bom_child_list.append({'bom' : bom})
-	# final_bom_list = get_all_boms_in_order_desc(bom_child_list)
-	# final_bom_list = [item.get('bom') for item in final_bom_list]
-	# joined_bom_list = "', '".join(final_bom_list)
-	# raw_data = []
 	bom_data_new = []
-	# print("===========bom",bom)
 	doc = frappe.get_doc("BOM",bom)
 	operation_time = frappe.db.sql("""SELECT sum(bo.time_in_mins) as lead_time from `tabBOM Operation` bo join `tabBOM` b on b.name = bo.parent where b.name = '{0}' """.format(bom),as_dict=1)
 	operation_time = flt(operation_time[0].get('lead_time'))/flt(60)
-
 	if doc:
 		bom_data_new.append(frappe._dict({	
 				'item': doc.item,
@@ -250,17 +256,10 @@ def get_new_table_data(bom,std_lead_time,calulated_lead_time_in_days):
 				'operation_time':operation_time if operation_time else 0,
 				'bom_no':bom
 			}))
-
-	# parent_bom_details = get_parent_bom_detials(final_bom_list[0],raw_data)
 	get_sub_assembly_items_final(bom,bom_data_new)
-	# print("============fia",raw_data)
-	# final_bom_list = final_bom_list.reverse()
-	# for row in final_bom_list:
-		# get_raw_items(row,raw_data)
 	ohs_dict = get_ohs()
 	for row in bom_data_new:
 		std_lead_time = frappe.db.get_values("Item",{'item_code':row.get('item')},['lead_time_days','item_name'],as_dict=1,debug=0)
-		# print("===========std_lead_time",std_lead_time)
 		row['std_lead_time'] = std_lead_time[0].get('lead_time_days') if std_lead_time[0].get('lead_time_days') else 0
 		row['item_name'] = std_lead_time[0].get('item_name') if std_lead_time[0].get('item_name') else ''
 		if row.get('item') in ohs_dict:
@@ -274,17 +273,12 @@ def get_new_table_data(bom,std_lead_time,calulated_lead_time_in_days):
 		row['ordered_qty'] = ordered_dict.get(row.get('item')).get('qty') if ordered_dict else 0
 		max_days =  (ordered_dict.get(row.get('item')).get('schedule_date')-date.today()).days if ordered_dict else 0
 		row['max_days'] = max_days
-
-	# bom_list = get_all_boms_in_order(bom_child_list)
-	# bom_list = [item.get('bom') for item in bom_list]
-	# calculate_day_wise_qty(ohs_dict,bom_list,bom_data,calulated_lead_time_in_days)
 	calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days)
 	return bom_data_new
 
 def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days):
 	date_list = get_date_list(calulated_lead_time_in_days)
 	date_wise_data = dict()
-	# all_bom_items = get_all_bom_items(bom_list)
 	all_bom_items = [i.get('item') for i in bom_data_new]
 	all_bom_items = "', '".join(all_bom_items)
 	on_order_stock_before = get_on_order_stock_before(today(),all_bom_items)
@@ -314,6 +308,12 @@ def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days
 					ohs_dict[row.get('item')] = 0
 					row[str(date)] = final_qty
 					raw_item_dict[row.get('item')] = final_qty
+					if final_qty > 0:
+						ohs_dict[row.get('item')] = 0
+						if on_order_stock_before and  row.get('item') in on_order_stock_before: 
+							on_order_stock_before[row.get('item')]['qty'] = 0
+						if on_order_stock and  row.get('item') in on_order_stock: 
+							on_order_stock[row.get('item')]['qty']=0 
 				else:
 					item_list = [row.get('item')]
 					item_list = "', '".join(item_list)
@@ -331,21 +331,24 @@ def calculate_day_wise_qty(bom,ohs_dict,bom_data_new,calulated_lead_time_in_days
 					proportion_qty = flt(available_quantity)/flt(row.get('qty'))
 					row[str(date)] = proportion_qty
 					raw_item_dict[row.get('item')] = proportion_qty
-					# if proportion_qty > 0:
-					# 	qty_can_be_produced.append(round(flt(proportion_qty),2))
-					# 	raw_item_dict[row.get('item')] = proportion_qty
-					# 	ohs_dict[row.get('item')] = 0
-					# 	if on_order_stock_before and  row.get('item') in on_order_stock_before: 
-					# 		on_order_stock_before[row.get('item')]['qty'] = 0
-					# 	if on_order_stock and  row.get('item') in on_order_stock: 
-					# 		on_order_stock[row.get('item')]['qty']=0 
-					# 	row[str(date)] = proportion_qty
-					# else:
-					# 	proportion_qty = 0
-					# 	row[str(date)] = proportion_qty
-					# 	qty_can_be_produced.append(0)
-			
+					if proportion_qty > 0:
+						ohs_dict[row.get('item')] = 0
+						if on_order_stock_before and  row.get('item') in on_order_stock_before: 
+							on_order_stock_before[row.get('item')]['qty'] = 0
+						if on_order_stock and  row.get('item') in on_order_stock: 
+							on_order_stock[row.get('item')]['qty']=0 
+			# calculate_remaining_qty(date,bom_data_new,ohs_dict,on_order_stock,on_order_stock_before)
 	return bom_data_new
+def calculate_remaining_qty(date,bom_data_new,ohs_dict,on_order_stock,on_order_stock_before):
+	# print("================bom_data_new",bom_data_new[0])
+	if bom_data_new[0]:
+		if bom_data_new[0].get(date):
+			qty = flt(bom_data_new[0].get(date)) - flt(bom_data_new[0].get('ohs'))
+			if qty > 0:
+				bom_items = get_bom_items(bom_data_new[0].get('bom_no'))
+			else:
+				pass
+
 def get_bom_items(bom):
 	if bom:
 		bom_items = frappe.db.sql("""SELECT i.item_code as item ,sum(i.qty) as qty,i.bom_no from `tabBOM Item` i join `tabBOM` b on b.name=i.parent where b.name = '{0}' group by item_code""".format(bom),as_dict=1)
@@ -840,6 +843,7 @@ def make_xlsx_file(renderd_data):
 	file_path = frappe.utils.get_site_path("public")
 	fname = "Capacity_To_Make" + nowdate() + ".xlsx"
 	book.save(file_path+fname)
+	return  file_path+fname
 
 @frappe.whitelist()
 def download_xlsx():

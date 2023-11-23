@@ -41,7 +41,7 @@ frappe.capacity_to_make = Class.extend({
 		var me = this
 	    var filters = {"production_item":me.production_item}
 	    frappe.call({
-	        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
+	        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.capacity_data",
 	        args: {filters:filters},
 	        callback: function (r) {
 	        	if (r.message){
@@ -78,7 +78,7 @@ frappe.capacity_to_make = Class.extend({
 	    	var filters = {"production_item":me.production_item
 	    ,	"delivery_date":me.delivery_date}
 		    frappe.call({
-		        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
+		        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.capacity_data",
 		        args: {filters:filters},
 		        freeze : true,
 				freeze_message: __("Please wait..."),
@@ -94,7 +94,7 @@ frappe.capacity_to_make = Class.extend({
 	    }else{
 	    	var filters = {"production_item":me.production_item}
 	    	frappe.call({
-	        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
+	        "method": "instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.capacity_data",
 	        freeze : true,
 			freeze_message: __("Loading..."),
 	        args: {filters:filters},
@@ -117,7 +117,7 @@ frappe.capacity_to_make = Class.extend({
 			fieldname: 'production_item',
 			options: "Item",
 			reqd:1,
-			// get_query: function(){ return {'filters': [['Item', 'item_group','in',['Product','Subassembly','Made in House']]]}},
+			// get_query: function(){ return {'filters': [['Item', 'is_sales_item','=',1]]}},
 			onchange: function() {
 				me.production_item = this.value?this.value:null
 				me.get_data()
