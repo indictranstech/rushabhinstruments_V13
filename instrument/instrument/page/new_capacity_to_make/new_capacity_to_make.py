@@ -860,3 +860,29 @@ def download_xlsx():
 	frappe.local.response.type = "download"
 	
 	frappe.local.response.filename = fname
+
+
+@frappe.whitelist(allow_guest=True)
+def capacity_to_make_api(production_item=None):
+    filters= {'production_item':production_item}
+    data = get_capacity_data(filters)
+    final_data = []
+    instock = {'In Stock':data[0].get('qty'),'date':data[0].get('date_available')}
+    qty = data[3].get('new_table_data')[0].get(data[0].get('date_available'))-data[0].get('qty')
+    data[3]['new_table_data'][0][data[0].get('date_available')] = qty
+    final_data.append(instock)
+    planned_wo  = frappe.db.sql("""SELECT sum(wo.qty) as qty,date(wo.planned_end_date) as planned_end_date from `tabWork Order` wo where  wo.planned_end_date <= '{0}' and wo.production_item = '{1}' and wo.status not in ('Completed','Stopped') group by wo.planned_end_date""".format(data[2].get('date_available'),production_item),as_dict =1)
+    in_progress = []
+    for row in planned_wo:
+    	in_progress.append({'In Progress Qty':row.get('qty'),'Expected Completion Date':row.get('planned_end_date')})
+    final_data.append(in_progress)
+    in_built = []
+    for row in data[3].get('new_table_data')[0]:
+    	for date in data[3].get('date_list'):
+    		if row == date and data[3].get('new_table_data')[0].get(row) > 0:
+    			in_built.append({'Qty Can Be Built':data[3].get('new_table_data')[0].get(row),'Expected Date':date})
+    final_data.append(in_built)
+    final_data.append({
+    	"Lead Time In Calender Days":data[0].get('calulated_lead_time_in_days')
+    	})
+    return(final_data)
