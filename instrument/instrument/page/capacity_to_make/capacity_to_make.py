@@ -27,7 +27,7 @@ from openpyxl.utils.cell import get_column_letter
 from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
 
 
-@frappe.whitelist()
+@frappe.whitelist(allow_guest=True)
 def get_capacity_data(filters=None):
 	filters = json.loads(filters)
 	if filters.get('delivery_date') <= today():
