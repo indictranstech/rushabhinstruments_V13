@@ -58,26 +58,55 @@ class ConsolidatedPickList(Document):
 					for row in fg_work_orders:
 						doc = frappe.get_doc("Work Order",row.get("name"))
 						ohs = get_current_stock()
-						qty_will_be_produced_list = []
-						for item in doc.required_items:
-							if item.item_code in ohs:
-								if item.required_qty <= ohs.get(item.item_code):
-									percent_stock = 100
-									qty_will_be_produced = item.required_qty
-									qty_will_be_produced_list.append(qty_will_be_produced)
-								elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
-									percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-									qty_will_be_produced = (percent_stock/100*item.required_qty)
-									qty_will_be_produced_list.append(qty_will_be_produced)
-								else : 
-									percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-									qty_will_be_produced = 0
-									qty_will_be_produced_list.append(qty_will_be_produced)
-							else:
-								qty_will_be_produced = 0
+						bom_childs = []
+						bom_child_list = get_child_boms(doc.bom_no,bom_childs)
+						bom_child_list.append({'bom' : doc.bom_no})
+						
+						# find all the bom in descending order (bom level)
+						final_bom_list = get_all_boms_in_order(bom_child_list)
+						final_bom_list = [item.get('bom') for item in final_bom_list]
+						final_qty_dict = dict()
+						for bom in final_bom_list:
+							qty_will_be_produced_list = []
+							bom_item = frappe.db.get_value("BOM",{'name':bom},'item')
+							qty_will_be_produced = 0
+							bom_items = get_raw_bom_data(bom)
+							for item in bom_items:
+								if item.item_code in ohs:
+									qty_will_be_produced = qty_will_be_produced + (ohs.get(item.item_code)*item.qty)
+								if item.item_code in final_qty_dict:
+									qty_will_be_produced = qty_will_be_produced + final_qty_dict.get(item.item_code)
 								qty_will_be_produced_list.append(qty_will_be_produced)
+							if qty_will_be_produced_list:
+								final_qty_dict[bom_item] = min(qty_will_be_produced_list)
+							else:
+								final_qty_dict[bom_item] = 0
 
-						row['qty_will_be_produced'] =min(qty_will_be_produced_list)
+
+
+
+
+						# print("===========final_bom_list",final_bom_list)
+						# qty_will_be_produced_list = []
+						# for item in doc.required_items:
+						# 	if item.item_code in ohs:
+						# 		if item.required_qty <= ohs.get(item.item_code):
+						# 			percent_stock = 100
+						# 			qty_will_be_produced = item.required_qty
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						# 		elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
+						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+						# 			qty_will_be_produced = (percent_stock/100*item.required_qty)
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						# 		else : 
+						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+						# 			qty_will_be_produced = 0
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						# 	else:
+						# 		qty_will_be_produced = 0
+						# 		qty_will_be_produced_list.append(qty_will_be_produced)
+
+						row['qty_will_be_produced'] =final_qty_dict.get(doc.production_item) if doc.production_item in final_qty_dict else 0 
 						self.append('work_order_table',{
 							'work_order':row.get('name'),
 							'pending_qty':row.get('pending_qty'),
@@ -100,24 +129,48 @@ class ConsolidatedPickList(Document):
 						elif doc.skip_transfer == 1:
 							ohs = get_current_stock()
 						else:
-							ohs = get_current_stock()
-						qty_will_be_produced_list = []
-						for item in doc.required_items:
-							if item.item_code in ohs:
-								if item.required_qty <= ohs.get(item.item_code):
-									percent_stock = 100
-									qty_will_be_produced = item.required_qty
-									qty_will_be_produced_list.append(qty_will_be_produced)
-								elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
-									percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-									qty_will_be_produced = (percent_stock/100*item.required_qty)
-									qty_will_be_produced_list.append(qty_will_be_produced)
-								else : 
-									percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-									qty_will_be_produced = 0
-									qty_will_be_produced_list.append(qty_will_be_produced)
+							ohs = get_current_stock_for_manufacture()
+						bom_childs = []
+						bom_child_list = get_child_boms(doc.bom_no,bom_childs)
+						bom_child_list.append({'bom' : doc.bom_no})
 						
-						row['qty_will_be_produced'] =min(qty_will_be_produced_list)
+						# find all the bom in descending order (bom level)
+						final_bom_list = get_all_boms_in_order(bom_child_list)
+						final_bom_list = [item.get('bom') for item in final_bom_list]
+						final_qty_dict = dict()
+						for bom in final_bom_list:
+							qty_will_be_produced_list = []
+							bom_item = frappe.db.get_value("BOM",{'name':bom},'item')
+							qty_will_be_produced = 0
+							bom_items = get_raw_bom_data(bom)
+							for item in bom_items:
+								if item.item_code in ohs:
+									qty_will_be_produced = qty_will_be_produced + (ohs.get(item.item_code)*item.qty)
+								if item.item_code in final_qty_dict:
+									qty_will_be_produced = qty_will_be_produced + final_qty_dict.get(item.item_code)
+								qty_will_be_produced_list.append(qty_will_be_produced)
+							if qty_will_be_produced_list:
+								final_qty_dict[bom_item] = min(qty_will_be_produced_list)
+							else:
+								final_qty_dict[bom_item] = 0
+						# qty_will_be_produced_list = []
+						# for item in doc.required_items:
+						# 	if item.item_code in ohs:
+						# 		if item.required_qty <= ohs.get(item.item_code):
+						# 			percent_stock = 100
+						# 			qty_will_be_produced = item.required_qty
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						# 		elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
+						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+						# 			qty_will_be_produced = (percent_stock/100*item.required_qty)
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						# 		else : 
+						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+						# 			qty_will_be_produced = 0
+						# 			qty_will_be_produced_list.append(qty_will_be_produced)
+						
+						print("============final_qty_dict",final_qty_dict)
+						row['qty_will_be_produced'] =final_qty_dict.get(doc.production_item) if doc.production_item in final_qty_dict else 0 
 						self.append('work_order_table',{
 							'work_order':row.get('name'),
 							'pending_qty':row.get('pending_qty'),
@@ -127,7 +180,7 @@ class ConsolidatedPickList(Document):
 							})
 		else:
 			frappe.throw("Please Enter Item Groups for FG in Rushabh Settings")
-
+	
 	@frappe.whitelist()
 	def get_sub_assembly_items(self, manufacturing_type=None):
 		self.sub_assembly_items = []
@@ -183,26 +236,49 @@ class ConsolidatedPickList(Document):
 				elif doc.skip_transfer == 1:
 					ohs = get_current_stock()
 				else:
-					ohs = get_current_stock()
+					ohs = get_current_stock_for_manufacture()
 				qty_will_be_produced_list = []
-				for item in doc.required_items:
-					if item.item_code in ohs:
-						if item.required_qty <= ohs.get(item.item_code):
-							percent_stock = 100
-							qty_will_be_produced = item.required_qty
-							qty_will_be_produced_list.append(qty_will_be_produced)
-						elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
-							percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-							qty_will_be_produced = (percent_stock/100*item.required_qty)
-							qty_will_be_produced_list.append(qty_will_be_produced)
-						else : 
-							percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-							qty_will_be_produced = 0
-							qty_will_be_produced_list.append(qty_will_be_produced)
-					else:
-						qty_will_be_produced = 0
+				bom_childs = []
+				bom_child_list = get_child_boms(doc.bom_no,bom_childs)
+				bom_child_list.append({'bom' : doc.bom_no})
+				
+				# find all the bom in descending order (bom level)
+				final_bom_list = get_all_boms_in_order(bom_child_list)
+				final_bom_list = [item.get('bom') for item in final_bom_list]
+				final_qty_dict = dict()
+				for bom in final_bom_list:
+					qty_will_be_produced_list = []
+					bom_item = frappe.db.get_value("BOM",{'name':bom},'item')
+					qty_will_be_produced = 0
+					bom_items = get_raw_bom_data(bom)
+					for item in bom_items:
+						if item.item_code in ohs:
+							qty_will_be_produced = qty_will_be_produced + (ohs.get(item.item_code)*item.qty)
+						if item.item_code in final_qty_dict:
+							qty_will_be_produced = qty_will_be_produced + final_qty_dict.get(item.item_code)
 						qty_will_be_produced_list.append(qty_will_be_produced)
-				row['qty_will_be_produced'] =min(qty_will_be_produced_list)
+					if qty_will_be_produced_list:
+						final_qty_dict[bom_item] = min(qty_will_be_produced_list)
+					else:
+						final_qty_dict[bom_item] = 0
+				# for item in doc.required_items:
+				# 	if item.item_code in ohs:
+				# 		if item.required_qty <= ohs.get(item.item_code):
+				# 			percent_stock = 100
+				# 			qty_will_be_produced = item.required_qty
+				# 			qty_will_be_produced_list.append(qty_will_be_produced)
+				# 		elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
+				# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+				# 			qty_will_be_produced = (percent_stock/100*item.required_qty)
+				# 			qty_will_be_produced_list.append(qty_will_be_produced)
+				# 		else : 
+				# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
+				# 			qty_will_be_produced = 0
+				# 			qty_will_be_produced_list.append(qty_will_be_produced)
+				# 	else:
+				# 		qty_will_be_produced = 0
+				# 		qty_will_be_produced_list.append(qty_will_be_produced)
+				row['qty_will_be_produced'] =final_qty_dict.get(doc.production_item) if doc.production_item in final_qty_dict else 0 
 				self.append('work_orders',{
 					'work_order':row.get('name'),
 					'qty_of_finished_goods_to_pull':bom_qty_dict.get(row.get('production_item')),
@@ -808,7 +884,7 @@ class ConsolidatedPickList(Document):
 						col.update({"qty":0})
 		
 		return new_list
-
+	
 	@frappe.whitelist()
 	def new_create_dn_for_so(self):
 		for so in self.pick_list_sales_order_table:
@@ -1044,12 +1120,36 @@ def get_wip_stock():
 	current_stock = frappe.db.sql("""SELECT item_code,sum(actual_qty) as qty from `tabBin` where warehouse = '{0}' group by item_code """.format(wip_warehouse),as_dict=1)
 	ohs_dict = {item.item_code : item.qty for item in current_stock}
 	return ohs_dict
+def get_raw_bom_data(bom):
+	if bom:
+		raw_bom_data = frappe.db.sql("""SELECT b.item as item_code,b.quantity,boi.item_code,boi.qty as qty from `tabBOM` b join `tabBOM Item` boi on b.name = boi.parent where b.name = '{0}' """.format(bom),as_dict=1)
+		if raw_bom_data:
+			return raw_bom_data
 def get_current_stock():
 	# 1.get wip warehouse
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", 'default_wip_warehouse')
 	current_stock = frappe.db.sql("""SELECT item_code,sum(actual_qty) as qty from `tabBin` where warehouse != '{0}' group by item_code """.format(wip_warehouse),as_dict=1)
 	ohs_dict = {item.item_code : item.qty for item in current_stock}
 	return ohs_dict
+@frappe.whitelist()
+def get_child_boms(bom,bom_childs):
+	if bom:
+		childs = frappe.db.sql("""SELECT bom_no as bom from `tabBOM Item` where parent = '{0}' and bom_no is not null """.format(bom),as_dict=1)
+
+		bom_childs += childs
+
+		if len(childs)>0:
+			for c in childs:
+				get_child_boms(c.get('bom'),bom_childs)
+		return bom_childs
+@frappe.whitelist()
+def get_all_boms_in_order(bom_childs):
+	if len(bom_childs)>1:
+		final_list = [row.get('bom') for row in bom_childs if row.get("bom")]
+
+		final_list = '(' + ','.join("'{}'".format(i) for i in final_list) + ')'
+		childs = frappe.db.sql("""SELECT b.name as bom,b.bom_level from `tabBOM` b where b.name in {0} order by b.bom_level asc""".format(final_list),as_dict=1)
+		return childs
 def get_current_stock_for_manufacture():
 	# 1.get wip warehouse
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings", 'default_wip_warehouse')

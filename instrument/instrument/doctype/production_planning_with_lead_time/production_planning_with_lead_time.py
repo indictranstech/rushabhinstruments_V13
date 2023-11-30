@@ -257,6 +257,68 @@ class ProductionPlanningWithLeadTime(Document):
 		allocated_ohs = get_allocated_ohs_raw()
 		# Get actual available_stock
 		ohs = get_actual_ohs(ohs,allocated_ohs)
+		if  self.fg_items_table:
+			for row in self.fg_items_table:
+				raw_data = []
+				get_raw_items_fg(row.bom,raw_data,row.planned_qty)
+				remaining_dict = dict()
+				for item in raw_data:
+					lead_time = frappe.db.get_value("Item",{'name':item.get('item')},'lead_time_days')
+					item.update({'available_stock':ohs.get(item.get('item')),'lead_time':lead_time,'original_qty':item.get('qty')})
+					rm_readiness_days = frappe.db.get_single_value("Rushabh Settings",'rm_readiness_days')
+					date_to_be_ready = datetime.datetime.strptime(row.get('planned_start_date'), '%Y-%m-%d')
+					date_to_be_ready = date_to_be_ready.date()
+					required_date = (date_to_be_ready-timedelta(rm_readiness_days))
+					item.update({'date_to_be_ready':required_date})
+					today_date = date.today()
+					# Calculate Order in days
+					order_in_days = (required_date - today_date)
+					item.update({'order_in_days':order_in_days.days})
+					# Allocate from available_stock
+					qty = flt(item.get("qty")) - flt(ohs.get(item.get("item"))) if flt(ohs.get(item.get("item"))) < flt(item.get("qty")) else 0
+					remainingg_qty = flt(ohs.get(item.get("item"))) - flt(item.get("qty")) if flt(ohs.get(item.get("item"))) > flt(item.get("qty")) else 0
+					ohs.update({item.get('item'):remainingg_qty})
+					item.update({'shortage':qty,'qty':qty})
+					if item.get('qty') == 0:
+						item.update({'readiness_status':'#008000'})
+						item.update({'latest_date_availability':today_date})
+						self.append('raw_materials_table',item)
+						continue
+					else:
+						# Allocate from planned_po nd mr of type Purchase
+						if item.get('item') not in remaining_dict:
+							on_order_stock,schedule_date_dict = get_on_order_stock(self,required_date)
+							
+							if item.get('item') in on_order_stock:
+								qty = flt(item.get("qty")) - flt(on_order_stock.get(item.get("item"))) if flt(on_order_stock.get(item.get("item"))) < flt(item.get("qty")) else 0
+								# print("=============item",item.get('item'),qty)
+
+								# if flt(item.get("qty")) == 0:
+								# 	item.update({'latest_date_availability':today_date})
+								# elif qty == 0:
+								# 	item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+								# else:
+								# 	latest_date_availability = today_date + timedelta(lead_time)
+								# 	item.update({'latest_date_availability':latest_date_availability})
+								remaining_qty = flt(on_order_stock.get(item.get('item'))) - item.get('qty') 
+								remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
+								item.update({'qty':qty,'on_order_stock':on_order_stock.get(item.get("item")),'shortage':qty})
+								item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+								item.update({'readiness_status':'#FFA500'})
+							else:
+								latest_date_availability = today_date + timedelta(lead_time)
+								item.update({'latest_date_availability':latest_date_availability,'readiness_status':'#FF0000'})
+
+						else:
+							virtual_stock = remaining_dict.get(item.get('item'))
+							qty = flt(item.get("qty")) - flt(virtual_stock) if flt(virtual_stock) < flt(item.get("qty")) else 0
+							remaining_qty = virtual_stock - item.get('qty')
+
+							remaining_dict[item.get('item')] = remaining_qty if remaining_qty > 0 else 0
+							item.update({'qty':qty,'on_order_stock':virtual_stock,'shortage':qty})
+							item.update({'latest_date_availability':schedule_date_dict.get(item.get('item'))})
+							item.update({'readiness_status':'#FFA500'})
+					self.append('raw_materials_table',item)
 		if self.sub_assembly_items_table:
 			for row in self.sub_assembly_items_table:
 				raw_data = []
@@ -702,6 +764,18 @@ def make_work_order_for_finished_goods(production_plan_doc, wo_list):
 			wo_list.append(work_order)
 @frappe.whitelist()
 def get_raw_items(bom,raw_data,qty):
+	doc = frappe.get_doc("BOM",{'name':bom})
+	if doc:
+		for row in doc.items:
+			stock_qty = (row.qty*qty)
+			if not row.bom_no:
+				raw_data.append({
+					'item':row.item_code,
+					'qty':stock_qty
+				})
+		return raw_data
+@frappe.whitelist()
+def get_raw_items_fg(bom,raw_data,qty):
 	doc = frappe.get_doc("BOM",{'name':bom})
 	if doc:
 		for row in doc.items:
