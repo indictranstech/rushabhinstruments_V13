@@ -245,6 +245,7 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
 						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark'),'parent_item_code':row.get('item')})
 						self.append('sub_assembly_items_table',final_row)
+			
 			return self.sub_assembly_items_table
 						
 	@frappe.whitelist()
@@ -408,7 +409,8 @@ class ProductionPlanningWithLeadTime(Document):
 				if row.planned_qty > 0:
 					for item in self.sub_assembly_items_table:
 						item_dict = dict()
-						if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
+						# if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
+						if item.sales_order == row.sales_order and item.qty >0:
 							item_dict.update({
 								'item':item.item,
 								'qty':item.qty,

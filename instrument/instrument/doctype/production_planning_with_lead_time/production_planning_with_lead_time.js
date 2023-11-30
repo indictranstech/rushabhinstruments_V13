@@ -93,6 +93,7 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			freeze_message: __("Fetching FG items..."),
 			callback: function(r) {
 				refresh_field("fg_items_table");
+				cur_frm.save()
 			}
 		});
 	},

@@ -73,24 +73,31 @@ def make_purchase_order(doc):
 		for d in doc.items:
 			if not d.rfq_required:
 				item_list.append(d.item_code)
+		po_item_list = frappe.db.sql("""SELECT distinct poi.item_code from `tabPurchase Order Item` poi join `tabPurchase Order` po on po.name = poi.parent where poi.material_request = '{0}'""".format(doc.name),as_dict=1,debug=0)
+		po_item_list = [poi.item_code for poi in po_item_list]
+		for row in po_item_list:
+			if row in item_list:
+				item_list.remove(row)
 		item_list = "', '".join(item_list)
-		supplier = frappe.db.sql("""SELECT distinct default_supplier
-			from `tabItem Default`
-			where parent in ('{0}') and
-			default_supplier IS NOT NULL
-			""".format(item_list),as_dict=1,debug=1)
-		supplier_list = [item.get("default_supplier") for item in supplier]
 		no_supplier = frappe.db.sql("""SELECT parent
 			from `tabItem Default`
 			where parent in ('{0}') and
 			default_supplier IS NULL
-			""".format(item_list),as_dict=1,debug=1)
+			""".format(item_list),as_dict=1,debug=0)
 		no_supplier = [item.parent for item in no_supplier]
 		if no_supplier:
 			frappe.throw("Please Add Default Supplier For Items {0}".format(no_supplier))
+		supplier = frappe.db.sql("""SELECT distinct default_supplier
+			from `tabItem Default`
+			where parent in ('{0}') and
+			default_supplier IS NOT NULL
+			""".format(item_list),as_dict=1,debug=0)
+		if supplier:
+			supplier_list = [item.get("default_supplier") for item in supplier]
+		
 		po_list = []
 		for row in supplier_list:
-			item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent = '{2}' and (mri.qty-mri.received_qty) > 0""".format(row,item_list,doc.name),as_dict=1,debug=1)
+			item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent = '{2}' and (mri.qty-mri.received_qty) > 0""".format(row,item_list,doc.name),as_dict=1,debug=0)
 			po = create_purchase_order(item_lists,row,doc)
 			po_list.append(po)
 		if po_list:
