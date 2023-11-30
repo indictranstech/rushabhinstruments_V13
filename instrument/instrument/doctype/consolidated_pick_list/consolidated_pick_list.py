@@ -82,30 +82,6 @@ class ConsolidatedPickList(Document):
 							else:
 								final_qty_dict[bom_item] = 0
 
-
-
-
-
-						# print("===========final_bom_list",final_bom_list)
-						# qty_will_be_produced_list = []
-						# for item in doc.required_items:
-						# 	if item.item_code in ohs:
-						# 		if item.required_qty <= ohs.get(item.item_code):
-						# 			percent_stock = 100
-						# 			qty_will_be_produced = item.required_qty
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
-						# 		elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
-						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-						# 			qty_will_be_produced = (percent_stock/100*item.required_qty)
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
-						# 		else : 
-						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-						# 			qty_will_be_produced = 0
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
-						# 	else:
-						# 		qty_will_be_produced = 0
-						# 		qty_will_be_produced_list.append(qty_will_be_produced)
-
 						row['qty_will_be_produced'] =final_qty_dict.get(doc.production_item) if doc.production_item in final_qty_dict else 0 
 						self.append('work_order_table',{
 							'work_order':row.get('name'),
@@ -153,23 +129,7 @@ class ConsolidatedPickList(Document):
 								final_qty_dict[bom_item] = min(qty_will_be_produced_list)
 							else:
 								final_qty_dict[bom_item] = 0
-						# qty_will_be_produced_list = []
-						# for item in doc.required_items:
-						# 	if item.item_code in ohs:
-						# 		if item.required_qty <= ohs.get(item.item_code):
-						# 			percent_stock = 100
-						# 			qty_will_be_produced = item.required_qty
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
-						# 		elif item.required_qty > ohs.get(item.item_code) and ohs.get(item.item_code) > 0: 
-						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-						# 			qty_will_be_produced = (percent_stock/100*item.required_qty)
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
-						# 		else : 
-						# 			percent_stock = (ohs.get(item.item_code)/item.required_qty*100)
-						# 			qty_will_be_produced = 0
-						# 			qty_will_be_produced_list.append(qty_will_be_produced)
 						
-						print("============final_qty_dict",final_qty_dict)
 						row['qty_will_be_produced'] =final_qty_dict.get(doc.production_item) if doc.production_item in final_qty_dict else 0 
 						self.append('work_order_table',{
 							'work_order':row.get('name'),
@@ -233,10 +193,12 @@ class ConsolidatedPickList(Document):
 				doc = frappe.get_doc("Work Order",row.get("name"))
 				if doc.skip_transfer == 1 and doc.from_wip_warehouse == 1:
 					ohs = get_current_stock_for_manufacture()
+				elif self.purpose == "Manufacture":
+					ohs = get_current_stock_for_manufacture()
 				elif doc.skip_transfer == 1:
 					ohs = get_current_stock()
 				else:
-					ohs = get_current_stock_for_manufacture()
+					ohs = get_current_stock()
 				qty_will_be_produced_list = []
 				bom_childs = []
 				bom_child_list = get_child_boms(doc.bom_no,bom_childs)
