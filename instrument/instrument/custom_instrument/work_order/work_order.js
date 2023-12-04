@@ -118,17 +118,19 @@ frappe.ui.form.on('Work Order', {
 	},
 
 	add_consolidated_pick_list_button: function(frm){
-		frm.call({
-			method: "instrument.instrument.custom_instrument.work_order.work_order.get_fg_item_for_consolidated_pick_list",
-			"args" : {
-				item : frm.doc.production_item
-			},
-			callback: function(r){
-				if (r.message){
-					frm.trigger("add_consolidated_button")
+		if(frm.doc.production_item){
+			frm.call({
+				method: "instrument.instrument.custom_instrument.work_order.work_order.get_fg_item_for_consolidated_pick_list",
+				"args" : {
+					item : frm.doc.production_item
+				},
+				callback: function(r){
+					if (r.message){
+						frm.trigger("add_consolidated_button")
+					}
 				}
-			}
-		})
+			})
+		}
 	},
 
 	add_consolidated_button: function(frm) { 
