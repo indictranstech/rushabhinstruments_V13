@@ -104,6 +104,7 @@ def get_attachments_as_zip(doc):
 		file_doc.insert(ignore_permissions=True)
 		frappe.db.commit()
 		package_doc.reload()
+	return full_path
 
 
 @frappe.whitelist()

@@ -15,13 +15,10 @@ frappe.ui.form.on('Package Document', {
 				doc : frm.doc
 			},
 			callback:function(r){
-				// var w = window.open(
-				// 		frappe.urllib.get_full_url(
-				// 		"/api/method/instrument.instrument.doctype.package_document.package_document.download_attachments?"+ 'doc='+encodeURIComponent(frm.doc.name)));
-
-				// if(!w)
-				// 	frappe.msgprint(__("Please enable pop-ups")); return;
-
+				console.log(r.message)
+				// // window.location.href = r.message;
+				// frappe.msgprint("Download <a href={0}</a>").format(r.message)
+				}
 			}
 		})
 
