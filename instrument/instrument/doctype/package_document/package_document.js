@@ -5,6 +5,26 @@ frappe.ui.form.on('Package Document', {
 	refresh: function(frm) {
 		frm.add_custom_button(__('Copy Rows'),() => frm.events.copy(frm));
 		frm.add_custom_button(__('Copy Attachments From Side Bar'),() => frm.events.copy_attachments(frm));
+		frm.add_custom_button(__('Download'),() => frm.events.download_attachments(frm));
+
+	},
+	download_attachments:function(frm){
+		frappe.call({
+			method:"instrument.instrument.doctype.package_document.package_document.get_attachments_as_zip",
+			args:{
+				doc : frm.doc
+			},
+			callback:function(r){
+				// var w = window.open(
+				// 		frappe.urllib.get_full_url(
+				// 		"/api/method/instrument.instrument.doctype.package_document.package_document.download_attachments?"+ 'doc='+encodeURIComponent(frm.doc.name)));
+
+				// if(!w)
+				// 	frappe.msgprint(__("Please enable pop-ups")); return;
+
+			}
+		})
+
 	},
 	copy_attachments:function(frm){
 		return frm.call({
