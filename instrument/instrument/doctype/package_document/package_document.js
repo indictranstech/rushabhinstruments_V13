@@ -17,7 +17,6 @@ frappe.ui.form.on('Package Document', {
 			callback:function(r){
 				console.log(r.message)
 				// // window.location.href = r.message;
-				// frappe.msgprint("Download <a href={0}</a>").format(r.message)
 				}
 			}
 		})
