@@ -1126,7 +1126,7 @@ def validate_picked_qty(work_order,required_qty,picked_qty,doc_name,row_name,ite
 @frappe.whitelist()
 def check_stock_entries(work_order,consolidated_pick_list):
 	if work_order and consolidated_pick_list:
-		stock_entry_list = frappe.db.sql("""SELECT name from `tabStock Entry` where work_order = '{0}' and consolidated_pick_list = '{1}'""".format(work_order,consolidated_pick_list),as_dict=1)
+		stock_entry_list = frappe.db.sql("""SELECT name from `tabStock Entry` where work_order = '{0}' and consolidated_pick_list = '{1}' and docstatus != '2'""".format(work_order,consolidated_pick_list),as_dict=1)
 		if len(stock_entry_list)==0:
 			return True
 		else:
@@ -1212,18 +1212,18 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 						if batch_data:
 							for row in batch_data:
 								calculate_remaining_batch_qty(row)
-								if batch_data:
-									for row in batch_data:
-										if row.item in remaining_items:
-											wo_qty = frappe.db.get_value("Work Order Item",{'parent':work_order,'item_code':row.item},'required_qty')
-											if row.qty >= wo_qty:
-												stock_entry.append("items",{
-													"item_code": row.item,
-													"qty": wo_qty,
-													"s_warehouse": row.warehouse,
-													# "t_warehouse": work_order_doc.fg_warehouse,
-													'batch_no' : row.name,
-												})
+								
+								if row.item in remaining_items:
+									wo_qty = frappe.db.get_value("Work Order Item",{'parent':work_order,'item_code':row.item},'required_qty')
+									if row.qty >= wo_qty:
+										stock_entry.append("items",{
+											"item_code": row.item,
+											"qty": wo_qty,
+											"s_warehouse": row.warehouse,
+											# "t_warehouse": work_order_doc.fg_warehouse,
+											'batch_no' : row.name,
+										})
+						print("================batch_data",batch_data)
 					stock_entry.append("items",{
 						"item_code":work_order_doc.production_item,
 						"qty": qty_of_finish_good,
