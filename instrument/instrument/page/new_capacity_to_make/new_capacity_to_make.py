@@ -1,19 +1,17 @@
 from __future__ import unicode_literals
 import frappe
 from frappe.model.document import Document
-from frappe.utils import nowdate, cstr, flt, cint, now, getdate,get_datetime,time_diff_in_seconds,add_to_date,time_diff_in_seconds,add_days,today
+from frappe.utils import nowdate, cstr, flt, cint, now, getdate,get_datetime,time_diff_in_seconds,add_to_date,time_diff_in_seconds,add_days,today,nowtime
 from datetime import datetime,date, timedelta
-from frappe.utils import nowdate,nowtime, today, flt,now
-
+import datetime
 from frappe.model.naming import make_autoname
 import time
 import json
 import pandas as pd
 from frappe import _
-from erpnext.manufacturing.doctype.bom.bom import get_bom_items_as_dict
+from erpnext.manufacturing.doctype.bom.bom import get_bom_items_as_dict,get_children, validate_bom_no
 import operator
 import itertools
-import datetime
 from frappe.utils.pdf import get_pdf
 from frappe.utils.xlsxutils import make_xlsx
 import openpyxl
@@ -24,10 +22,8 @@ from openpyxl import Workbook
 from six import StringIO, string_types
 import sys
 from openpyxl import Workbook
-from openpyxl.styles import Alignment
 from openpyxl.utils.cell import get_column_letter
-from erpnext.manufacturing.doctype.bom.bom import get_children, validate_bom_no
-
+from frappe.utils.background_jobs import enqueue
 
 @frappe.whitelist()
 def get_sales_items():
@@ -38,6 +34,15 @@ def get_sales_items():
 			filters = {'production_item':'B11844'}
 			data = get_capacity_data(filters)
 			break
+
+@frappe.whitelist()
+def get_capacity_to_make(filters=None):
+	enqueue(
+			"instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
+			queue='long',
+			filters=filters,
+			timeout=1500
+		)
 
 @frappe.whitelist()
 def get_capacity_data(filters=None):
@@ -52,7 +57,6 @@ def get_capacity_data(filters=None):
 		std_lead_time = frappe.db.get_value("Item",{'item_code':filters.get('production_item')},'lead_time_days')
 		if bom:
 			calulated_lead_time_in_days = calculate_lead_time(bom)
-			print("==============calulated_lead_time_in_days",calulated_lead_time_in_days)
 			end_date_of_lead_time = date.today() + timedelta(calulated_lead_time_in_days)
 		else:
 			frappe.throw("There Is No Any Active & Default BOM Available for item {0}".format(filters.get('production_item')))
@@ -123,7 +127,6 @@ def get_capacity_data(filters=None):
 					qty = flt(qty) + new_table_data[0].get(d)
 					final_qty_dict['qty'] = qty
 					final_qty_dict['date'] = d
-			print("===================final_qty_dict",final_qty_dict)
 			final_qty_dict['qty'] = flt(final_qty_dict.get('qty')) - (flt(ohs_dict.get(filters.get('production_item'))) if filters.get('production_item') in ohs_dict else 0) -  flt(post_quick_qty)
 
 			
