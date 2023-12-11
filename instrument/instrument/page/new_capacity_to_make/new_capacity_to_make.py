@@ -37,7 +37,7 @@ def get_sales_items():
 
 @frappe.whitelist()
 def get_capacity_to_make(filters=None):
-	enqueue(
+	frappe.enqueue(
 			"instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
 			queue='long',
 			filters=filters,
