@@ -7,6 +7,7 @@ frappe.listview_settings['Purchase Order'] = {
 			var myJSON = JSON.stringify(data);
 			frappe.call({
 				method : "instrument.instrument.custom_instrument.purchase_order.purchase_order.create_bulk_pr",
+				freeze : true,
 				args:{
 					data : myJSON
 				},

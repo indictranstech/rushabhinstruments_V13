@@ -49,6 +49,26 @@ def validate(doc,method):
 		})
 		_file.save()
 
+	if doc.items:
+		item_data = doc.items
+		item_dict = {(item.item_code,item.schedule_date):item.schedule_date for item in doc.items}
+		final_data = []
+		count = 0
+		for item in item_dict:
+			total = 0
+			count = count + 1
+			for info in doc.items:
+				item_date_dict = (info.get('item_code'),info.get('schedule_date'))
+				if item ==  item_date_dict:
+					total = total + info.get('qty')
+					item_info = info
+			item_info.qty = total
+			item_info.idx = count
+			final_data.append(item_info)
+		doc.items = ''
+		for i in final_data:
+			doc.append("items",i)
+
 @frappe.whitelist()
 @frappe.validate_and_sanitize_search_inputs
 def get_default_supplier_query(doctype, txt, searchfield, start, page_len, filters):

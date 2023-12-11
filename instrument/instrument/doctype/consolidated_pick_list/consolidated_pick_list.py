@@ -1151,6 +1151,16 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 						job_card.save()
 						job_card.submit()
 		data =  frappe.db.sql("""SELECT item_code,warehouse as s_warehouse,picked_qty,work_order,stock_uom,engineering_revision,batch_no,serial_no from `tabWork Order Pick List Item` where parent = '{0}' and work_order = '{1}' and picked_qty > 0""".format(consolidated_pick_list,work_order),as_dict=1, debug=0)
+		items = [i.item_code for i in data]
+		work_order_items = frappe.db.sql("""SELECT wo.item_code from `tabWork Order Item` wo where wo.parent = '{0}'""".format(work_order),as_dict=1,debug=1)
+		if work_order_items:
+			work_order_items = [i.item_code for i in work_order_items]
+		remaining_items = []
+		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
+		for item in work_order_items:
+			if item not in items:
+				remaining_items.append(item)
+		# wip_data = frappe.db.sql("""SELECT """)
 		if len(data) > 0:
 			stock_entry = frappe.new_doc("Stock Entry")
 			if stock_entry:
@@ -1196,6 +1206,24 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 								'serial_no' : row.get("serial_no")
 
 						})
+					if remaining_items:
+						joined_item_list = "', '".join(remaining_items)
+						batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+						if batch_data:
+							for row in batch_data:
+								calculate_remaining_batch_qty(row)
+								if batch_data:
+									for row in batch_data:
+										if row.item in remaining_items:
+											wo_qty = frappe.db.get_value("Work Order Item",{'parent':work_order,'item_code':row.item},'required_qty')
+											if row.qty >= wo_qty:
+												stock_entry.append("items",{
+													"item_code": row.item,
+													"qty": wo_qty,
+													"s_warehouse": row.warehouse,
+													# "t_warehouse": work_order_doc.fg_warehouse,
+													'batch_no' : row.name,
+												})
 					stock_entry.append("items",{
 						"item_code":work_order_doc.production_item,
 						"qty": qty_of_finish_good,
@@ -1203,10 +1231,10 @@ def create_stock_entry(work_order, consolidated_pick_list, row_name):
 						"t_warehouse": work_order_doc.fg_warehouse,
 						# 'batch_no' : row.get("batch_no"),
 						# 'serial_no' : row.get("serial_no")
-					})
+					})	
 					stock_entry.save()
 				frappe.db.set_value("Pick Orders", {"name":row_name}, {"stock_entry":stock_entry.name, "stock_entry_status":"Draft"})
-				frappe.db.commit()
+				frappe.db.commit()	
 				return stock_entry.name
 		else:
 			frappe.throw("Please Pick Quantity For Atleast One Item")
