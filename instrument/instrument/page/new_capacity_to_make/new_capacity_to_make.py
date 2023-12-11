@@ -41,7 +41,7 @@ def get_capacity_to_make(filters=None):
 			"instrument.instrument.page.new_capacity_to_make.new_capacity_to_make.get_capacity_data",
 			queue='long',
 			filters=filters,
-			timeout=1500
+			timeout=5000
 		)
 
 @frappe.whitelist()
