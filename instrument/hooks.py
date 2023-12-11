@@ -124,8 +124,8 @@ doc_events = {
 	"BOM" : {
 	"validate" :  "instrument.instrument.custom_instrument.bom.bom.validate",
 	# "on_update" : "instrument.instrument.custom_instrument.bom.bom.validate",
-	"on_submit" : "instrument.instrument.custom_instrument.bom.bom.disable_old_boms",
-	"on_update_after_submit": "instrument.instrument.custom_instrument.bom.bom.disable_old_boms"
+	# "on_submit" : "instrument.instrument.custom_instrument.bom.bom.disable_old_boms",
+	# "on_update_after_submit": "instrument.instrument.custom_instrument.bom.bom.disable_old_boms"
 	},
 	"Work Order" : {
 	"after_insert" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.after_insert"],
