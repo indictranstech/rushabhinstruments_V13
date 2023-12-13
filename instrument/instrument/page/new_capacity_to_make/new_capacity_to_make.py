@@ -127,7 +127,8 @@ def get_capacity_data(filters=None):
 					qty = flt(qty) + new_table_data[0].get(d)
 					final_qty_dict['qty'] = qty
 					final_qty_dict['date'] = d
-			final_qty_dict['qty'] = flt(final_qty_dict.get('qty')) - (flt(ohs_dict.get(filters.get('production_item'))) if filters.get('production_item') in ohs_dict else 0) -  flt(post_quick_qty)
+			case_2_qty = flt(final_qty_dict.get('qty')) - (flt(ohs_dict.get(filters.get('production_item'))) if filters.get('production_item') in ohs_dict else 0) -  flt(post_quick_qty)
+			final_qty_dict['qty'] = flt(case_2_qty) if case_2_qty > 0 else 0
 
 			
 			# date_range = date.today() + timedelta(calulated_lead_time_in_days)
