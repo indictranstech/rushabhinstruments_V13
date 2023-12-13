@@ -834,7 +834,7 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				else:
 					get_sub_assembly_item(d.value, bom_data, stock_qty,date_to_be_ready,row_name, warehouse_list, indent=indent+1)
 def get_on_order_stock(self,required_date):
-	planned_po = frappe.db.sql("""SELECT poi.item_code,sum(poi.qty-poi.received_qty) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0 group by poi.item_code""".format(required_date),as_dict=1,debug=0)
+	planned_po = frappe.db.sql("""SELECT poi.item_code,sum(poi.qty-poi.received_qty) as qty,poi.schedule_date from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.schedule_date < '{0}' and qty > 0 and po.status in ('To Receive and Bill','To Receive') and po.docstatus = 1 group by poi.item_code""".format(required_date),as_dict=1,debug=0)
 	# Manipulate in order to show in dict format
 	if planned_po:
 		on_order_stock = {item.item_code : item.qty for item in planned_po if item.item_code!=None}
