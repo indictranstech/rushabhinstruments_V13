@@ -142,6 +142,10 @@ def get_prod_engineering_revision(item_code,bom_no):
 @frappe.validate_and_sanitize_search_inputs
 def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_len, filters):
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
+@frappe.whitelist()
+@frappe.validate_and_sanitize_search_inputs
+def get_consolidated_pick_list(doctype, txt, searchfield, start, page_len, filters):
+	return frappe.db.sql(""" SELECT po.parent,poi.purpose FROM `tabPick Orders` po join `tabConsolidated Pick List` poi on poi.name = po.parent where po.work_order = '{0}' """.format(filters.get("work_order")))
 def after_insert(doc,method):
 	start_string = doc.name 
 	end_string = '.png'
@@ -199,6 +203,8 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+	if doc.status == 'Draft':
+		unstock_items_details(doc.bom_no)
 
 @frappe.whitelist()
 def get_engineering_revision(item_code):

@@ -44,6 +44,13 @@ frappe.ui.form.on('Work Order', {
 				filters:{ 'item_code': row.item_code }
 			}
 		});	
+		frm.set_query("consolidated_pick_list", "consolidated_pick_list_reference", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+			query: "instrument.instrument.custom_instrument.work_order.work_order.get_consolidated_pick_list",
+			filters:{ 'work_order': frm.doc.name }
+		}
+		});	
 		cur_frm.fields_dict['engineering_revision'].get_query = function(doc, cdt, cdn) {
 			return {
 				filters: [

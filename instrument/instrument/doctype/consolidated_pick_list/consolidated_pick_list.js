@@ -42,6 +42,13 @@ frappe.ui.form.on('Consolidated Pick List', {
 				},
 			};
 		});
+		frm.set_query("stock_entry", "work_orders", function(doc, cdt, cdn) {
+			const row = locals[cdt][cdn];
+			return {
+				query: "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.get_se",
+				filters:{ 'work_order': row.work_order}
+			}
+		});
 		if(frm.doc.docstatus == 0 || frm.doc.docstatus == 1){
 			frm.add_custom_button(__('Export Excel'), function() {
 				
@@ -60,7 +67,22 @@ frappe.ui.form.on('Consolidated Pick List', {
 			})
 			
 		}
+		//Hide Button
+		if(frm.doc.docstatus == 0 && frm.doc.work_orders != []){
+			frm.add_custom_button(__('Create Stock Entries In Bulk'), function() {
+				frappe.call({
+					method : "instrument.instrument.doctype.consolidated_pick_list.consolidated_pick_list.create_stock_entries_in_bulk",
+					freeze:true,
+					freeze_message:"Creating Stock Entries..",
+					args:{
+						doc : frm.doc
+					},
+					callback:function(r){
 
+					}
+				})
+			})
+		} 
 		if (frm.doc.__islocal && frm.doc.work_order) {
 			frm.trigger("get_fg_work_orders")
 			frm.set_value("naming_series", "WO-PICK-.YYYY.-")
@@ -134,7 +156,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 		})
 	},
 	get_fg_work_orders:(frm) =>{
-		frm.doc.work_order_table = ''
+		// frm.doc.work_order_table = ''
 		frm.dirty();
 		frm.call({
 			method: "get_fg_work_orders",

@@ -104,9 +104,9 @@ def on_submit(doc,method):
 		frappe.db.set_value("Final Work Orders", {'item':d.production_item, 'sales_order':d.sales_order}, "wo_status", d.get_status())
 		frappe.db.commit()
 
-	if doc.work_order:
-		frappe.db.set_value("Pick Orders", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
-		frappe.db.commit()
+	# if doc.work_order:
+		# frappe.db.set_value("Pick Orders", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
+		# frappe.db.commit()
 	
 	if doc.purchase_order:
 		frappe.db.set_value("Pick List Purchase Order Table", {"stock_entry":doc.name}, "stock_entry_status", "Submitted")
@@ -124,6 +124,7 @@ def on_submit(doc,method):
 				frappe.db.set_value("Pick Orders", row.name, "stock_entry_status", "Not Created")
 				status.append("Not Created")
 				frappe.db.commit()
+				con_doc.reload()
 
 		po_orders_count=frappe.db.get_list('Pick Orders', filters={'qty_of_finished_goods': ['>', 0], 'parent':doc.consolidated_pick_list}, fields=['count(name) as count'])
 		po_orders_status=frappe.db.get_list('Pick Orders', filters={'qty_of_finished_goods': ['>', 0], "stock_entry_status":"Submitted", 'parent':doc.consolidated_pick_list}, fields=['count(name) as count'])
