@@ -21,7 +21,7 @@ frappe.ui.form.on('Material Request', {
 		
 
      
-		if (frm.doc.material_request_type === "Purchase") {
+		if (frm.doc.material_request_type === "Purchase" && frm.doc.docstatus == 1) {
 			frm.add_custom_button(__('Purchase Orders'),
 				() => frm.events.make_purchase_order(frm), __('Create'));
 			frm.add_custom_button(__("Request for Quotations"),

@@ -32,8 +32,8 @@
   "get_fg_work_orders",
   "remove_work_orders",
   "work_order_table",
+  "section_break_bpnwf",
   "get_work_orders",
-  "section_break_3",
   "work_orders",
   "get_items",
   "work_order_pick_list_item",
@@ -115,11 +115,6 @@
    "fieldname": "get_work_orders",
    "fieldtype": "Button",
    "label": "Get Work Orders"
-  },
-  {
-   "depends_on": "eval:doc.purpose==\"Material Transfer for Manufacture\" || doc.purpose==\"Manufacture\"",
-   "fieldname": "section_break_3",
-   "fieldtype": "Section Break"
   },
   {
    "fieldname": "work_orders",
@@ -379,12 +374,16 @@
    "fieldname": "remove_work_orders",
    "fieldtype": "Button",
    "label": "Remove Work Orders"
+  },
+  {
+   "fieldname": "section_break_bpnwf",
+   "fieldtype": "Section Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-10-12 01:53:02.899665",
+ "modified": "2023-12-26 00:12:18.431100",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",
