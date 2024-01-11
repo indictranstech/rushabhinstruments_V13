@@ -139,6 +139,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 						doc: frm.doc,
 						callback: function() {
 							refresh_field("work_orders");
+							frm.save()
 						}
 					});	
 				},function(){
@@ -150,6 +151,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 						doc: frm.doc,
 						callback: function() {
 							refresh_field("work_orders");
+							frm.save()
 						}
 					});
 			});
@@ -498,10 +500,10 @@ frappe.ui.form.on('Pick Orders', {
 								if(r.message){
 									frappe.model.set_value(row.doctype, row.name, 'stock_entry_status','Draft');
 									frappe.model.set_value(row.doctype, row.name, 'stock_entry',r.message);
-									var old_link = window.location.href
-									var split_data = old_link.split("/app")
-									var link =  split_data[0]+"/app/stock-entry/"+r.message
-									window.open(link);
+									// var old_link = window.location.href
+									// var split_data = old_link.split("/app")
+									// var link =  split_data[0]+"/app/stock-entry/"+r.message
+									// window.open(link);
 																			}
 
 							}

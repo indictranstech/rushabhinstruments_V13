@@ -409,8 +409,8 @@ class ProductionPlanningWithLeadTime(Document):
 				if row.planned_qty > 0:
 					for item in self.sub_assembly_items_table:
 						item_dict = dict()
-						# if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
-						if item.sales_order == row.sales_order and item.qty >0:
+						if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
+						# if item.sales_order == row.sales_order and item.qty >0:
 							item_dict.update({
 								'item':item.item,
 								'qty':item.qty,

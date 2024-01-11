@@ -11,5 +11,8 @@ def get_data():
 		"transactions": [
 			{"label": _("Stock"), "items": ["Material Request"]},
 			{"label": _("Manufacture"), "items": ["Work Order"]},
+		],
+		"disable_create_buttons": [
+			
 		]
 	}

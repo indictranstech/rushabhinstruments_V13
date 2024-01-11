@@ -36,6 +36,8 @@
   "get_work_orders",
   "work_orders",
   "get_items",
+  "change_batches_as_per_previous_consolidated_pick_list",
+  "change_batches",
   "work_order_pick_list_item",
   "consider_current_stock",
   "section_break_29",
@@ -378,12 +380,24 @@
   {
    "fieldname": "section_break_bpnwf",
    "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "change_batches",
+   "fieldtype": "Button",
+   "hidden": 1,
+   "label": "Change Batches"
+  },
+  {
+   "default": "0",
+   "fieldname": "change_batches_as_per_previous_consolidated_pick_list",
+   "fieldtype": "Check",
+   "label": "Change Batches As per Previous Consolidated Pick List"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-12-26 00:12:18.431100",
+ "modified": "2024-01-04 04:21:03.567039",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Consolidated Pick List",

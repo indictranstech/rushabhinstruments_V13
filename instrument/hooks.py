@@ -129,12 +129,12 @@ doc_events = {
 	},
 	"Work Order" : {
 	"after_insert" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.after_insert"],
-	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
-	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock","instrument.instrument.custom_instrument.work_order.work_order.disable_bom"],
+	"on_update_after_submit" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock"],
+	"on_update" : ["instrument.instrument.custom_instrument.work_order.work_order.check_stock"],
 	"validate" : ["instrument.instrument.custom_instrument.work_order.work_order.add_bom_level","instrument.instrument.custom_instrument.work_order.work_order.validate"],
 	"on_submit" :["instrument.instrument.custom_instrument.work_order.work_order.on_submit", "instrument.instrument.custom_instrument.work_order.work_order.update_status_on_production_planning_with_lead_time"],
 	"on_cancel":["instrument.instrument.custom_instrument.work_order.work_order.disable_bom", "instrument.instrument.custom_instrument.work_order.work_order.update_status_on_production_planning_with_lead_time"],
-	"on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
+	# "on_change":"instrument.instrument.custom_instrument.work_order.work_order.disable_bom",
 	"on_trash":"instrument.instrument.custom_instrument.work_order.work_order.on_trash"
 	},
 	"Item" : {
