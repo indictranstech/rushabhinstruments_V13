@@ -1111,7 +1111,11 @@ def create_bulk_pr(data):
 			if row.get('name'):
 				po_doc = frappe.get_doc("Purchase Order",row.get('name'))
 				if po_doc.docstatus == 1:
-					pr = make_purchase_receipt(po_doc.name)
+					check_pr = frappe.db.get_value("Purchase Receipt Item",{'purchase_order':po_doc.name,'docstatus':0},'name')
+					if check_pr:
+						frappe.msgprint("Purchase Receipt Already Created For PO {0},Please Submit.".format(po_doc.name))
+					else:
+						pr = make_purchase_receipt(po_doc.name)
 				else:
 					frappe.throw("Please Submit Purchase Order {0}".format(row.get('name')))
 	except Exception as e:

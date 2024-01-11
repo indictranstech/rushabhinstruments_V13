@@ -203,8 +203,17 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
-	if doc.status == 'Draft':
-		unstock_items_details(doc.bom_no)
+		unstock_items = unstock_items_details(doc.bom_no)
+		if unstock_items:
+			if not doc.unstock_items_table:
+				for row in unstock_items:
+					doc.append('unstock_items_table',{
+							'item_code':row.get('item_code'),
+							'item_name':row.get('item_name'),
+							'description':row.get('description'),
+							'qty':row.get('qty')
+						})
+				
 
 @frappe.whitelist()
 def get_engineering_revision(item_code):
