@@ -114,11 +114,11 @@ def make_purchase_order(doc):
 			""".format(item_list),as_dict=1,debug=0)
 		if supplier:
 			supplier_list = [item.get("default_supplier") for item in supplier]
-		
+		print("================supplier_list",len(supplier_list),supplier_list)
 		po_list = []
 		for row in supplier_list:
 			item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent = '{2}' and (mri.qty-mri.received_qty) > 0""".format(row,item_list,doc.name),as_dict=1,debug=0)
-			po = create_purchase_order(item_lists,row,doc)
+			po = create_purchase_order(item_lists,row,doc,item_list)
 			po_list.append(po)
 		if po_list:
 			po_list = ["""<a href="/app/Form/Purchase Order/{0}">{1}</a>""".format(m, m) \
@@ -135,19 +135,22 @@ def make_purchase_order(doc):
 		)
 		raise e
 
-def create_purchase_order(item_lists,supplier,doc):
+def create_purchase_order(item_lists,supplier,doc,item_list):
 	# update material request & material request item in purchase order item
 	if item_lists:
-		po_doc = frappe.new_doc("Purchase Order")
-		if po_doc:
-			po_doc.supplier = supplier
-			po_doc.schedule_date = doc.schedule_date
-			for item in item_lists:
-				item['material_request'] = doc.name
-				item['material_request_item'] = item.name
-				po_doc.append('items',item)
-			po_doc.save()
-			return po_doc.name
+		check_po = frappe.db.sql("""SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.item_code in ('{0}') and po.supplier = '{1}' and po.docstatus in (0,2)""".format(item_list,supplier),as_dict=1)
+		print("============check_po",check_po)
+		if not check_po:
+			po_doc = frappe.new_doc("Purchase Order")
+			if po_doc:
+				po_doc.supplier = supplier
+				po_doc.schedule_date = doc.schedule_date
+				for item in item_lists:
+					item['material_request'] = doc.name
+					item['material_request_item'] = item.name
+					po_doc.append('items',item)
+				po_doc.save()
+				return po_doc.name
 @frappe.whitelist()
 def make_rfq(doc):
 	doc = json.loads(doc)
