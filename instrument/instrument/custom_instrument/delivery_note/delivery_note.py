@@ -26,6 +26,9 @@ def on_submit(doc, method = None):
 			message = "Delivery Note: "+"https://uatrushabhinstruments.indictranstech.com/app/delivery-note/{0}".format(doc.name),
 			attachments = file_att,
 			)
+	if doc.consolidated_pick_list:
+		frappe.db.set_value("Pick List Sales Order Table",{'delivery_note':doc.name,'parent':doc.consolidated_pick_list},'delivery_note_status','Submitted')
+		frappe.db.commit()
 	custom_api(doc)
 
 	# frappe.db.set_value("Pick List Sales Order Table", {"name":row_name}, {"delivery_note":doc.name, "delivery_note_status":doc.status})

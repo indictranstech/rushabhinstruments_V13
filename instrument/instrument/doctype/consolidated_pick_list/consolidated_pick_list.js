@@ -151,7 +151,7 @@ frappe.ui.form.on('Consolidated Pick List', {
 						doc: frm.doc,
 						callback: function() {
 							refresh_field("work_orders");
-							frm.save()
+							
 						}
 					});
 			});
