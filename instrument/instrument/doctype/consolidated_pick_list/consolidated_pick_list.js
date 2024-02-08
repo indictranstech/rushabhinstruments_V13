@@ -494,7 +494,9 @@ frappe.ui.form.on('Pick Orders', {
 							"args" : {
 								work_order : row.work_order,
 								consolidated_pick_list : frm.doc.name,
-								row_name: row.name
+								row_name: row.name,
+								work_order_list :frm.doc.work_orders
+
 							},
 							callback:function(r){
 								if(r.message){

@@ -63,7 +63,7 @@ frappe.ui.form.on('Mapped BOM', {
 						freeze: true,
 						args: {
 						
-							// "current_bom": frm.doc.old_reference_bom,
+							"current_bom": frm.doc.old_reference_bom,
 							"new_bom": frm.doc.name
 						
 						}

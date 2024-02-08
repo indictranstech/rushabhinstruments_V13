@@ -30,7 +30,7 @@ from frappe.utils import (
 class BOMCreationTool(Document):
 
 	@frappe.whitelist()
-	def review_item_mappings(doc,method):
+	def review_item_mappings(doc,method=None):
 		if doc.attribute_table:
 			final_items_review = []
 			doc.review_item_mapping = ''
@@ -161,6 +161,10 @@ class BOMCreationTool(Document):
 											})
 										final_items_review.append(line.item_code)
 			doc.difference_table_data()
+			if doc.check:
+				doc.check = 0
+			else:
+				doc.check = 1
 			# doc.save()
 			return True
 	def difference_table_data(doc):
@@ -287,7 +291,8 @@ class BOMCreationTool(Document):
 				if bom_doc:
 					default_company = frappe.db.get_single_value("Global Defaults",'default_company')
 					# std_item = frappe.db.get_value("Review Item Mapping",{'mapped_bom':bom.get("name"),'mapped_item':bom_doc.item,'parent':doc.name},'standard_item_code')
-					std_item = frappe.db.get_value("Review Item Mapping",{'mapped_item':bom_doc.item,'parent':doc.name},'standard_item_code')
+					std_item = frappe.db.get_value("Review Item Mapping",{'mapped_item':bom_doc.item,'parent':doc.name},'standard_item_code',debug=1)
+					print("==============std_item",std_item,bom_doc.item)
 					if not std_item:
 						frappe.throw("Standard Item Code Not found for {0}".format(bom_doc.item))
 					item_details = frappe.db.get_values("Item",{'name':std_item},['item_name','default_bom'],as_dict=1)

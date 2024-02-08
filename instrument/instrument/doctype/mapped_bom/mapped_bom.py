@@ -26,6 +26,8 @@ from erpnext.stock.doctype.item.item import get_item_details
 from erpnext.stock.get_item_details import get_conversion_factor, get_price_list_rate
 from instrument.instrument.doctype.bom_creation_tool.bom_creation_tool import get_map_item_attributes
 
+
+
 class MappedBOMTree:
 	"""Full tree representation of a BOM"""
 
@@ -985,8 +987,8 @@ def replace_bom(args):
 	frappe.db.auto_commit_on_many_writes = 0
 
 @frappe.whitelist()
-def propogate_update_to_descendent(new_bom):
-	# if current_bom and new_bom:
+def propogate_update_to_descendent(current_bom,new_bom):
+	if current_bom and new_bom:
 	# 	old_bom_data = get_bom_data(current_bom)
 	# 	old_item_dict = {row.get("item_code"):row for row in old_bom_data}
 	# 	new_bom_data = get_bom_data(new_bom)
@@ -1024,35 +1026,36 @@ def propogate_update_to_descendent(new_bom):
 	# 	else:
 	# 		create_standard_bom(current_bom,new_item_list,old_item_dict,new_bom)
 
-	create_bom_creation_tool(new_bom)
-	frappe.db.set_value("Mapped BOM",new_bom,'propogate_update_to_descendent_bom_status','Completed')
-	frappe.db.commit()
+		create_bom_creation_tool(current_bom,new_bom)
+		frappe.db.set_value("Mapped BOM",new_bom,'propogate_update_to_descendent_bom_status','Completed')
+		frappe.db.commit()
 
-def create_bom_creation_tool(bom):
-	if bom:
+def create_bom_creation_tool(current_bom,bom):
+	if current_bom and bom:
 		bom_creation_docs = frappe.get_all("BOM Creation Tool",{'mapped_bom':bom})
 		
 		if len(bom_creation_docs) == 0 :
-			frappe.throw("BOM Creation Tool is not Found for Mapped BOM {0}".format(bom))
-		else:
-			for d in bom_creation_docs:
-				old_doc = frappe.get_doc("BOM Creation Tool",d.get("name"))
-				if old_doc.docstatus == 1 :
-					new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
-					new_doc.mapped_bom = bom
-					new_doc.review_item_mapping = ''
-					new_doc.table_of_standard_boms_produced = ''
-					new_doc.difference_between_previous_and_current_review_item_mappings = ''
-					new_doc.save()
-					frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
-					frappe.db.commit()
-					frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
-				else:
-					old_doc.mapped_bom = bom
-					old_doc.save()
-					frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
-					frappe.db.commit()
-					frappe.msgprint("BOM Creation Tool Updated For Mapped BOM <b>{0}</b>".format(bom))
+			bom_creation_docs = frappe.get_all("BOM Creation Tool",{'mapped_bom':current_bom})
+		for d in bom_creation_docs:
+			old_doc = frappe.get_doc("BOM Creation Tool",d.get("name"))
+			if old_doc.docstatus == 1 :
+				new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
+				new_doc.mapped_bom = bom
+				new_doc.review_item_mapping = ''
+				new_doc.review_item_mappings()
+				new_doc.table_of_standard_boms_produced = ''
+				new_doc.difference_between_previous_and_current_review_item_mappings = ''
+				new_doc.save()
+				new_doc.submit()
+				frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+				frappe.db.commit()
+				frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
+			# else:
+			# 	old_doc.mapped_bom = bom
+			# 	old_doc.save()
+			# 	frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
+			# 	frappe.db.commit()
+			# 	frappe.msgprint("BOM Creation Tool Updated For Mapped BOM <b>{0}</b>".format(bom))
 
 		# bom_creation_data ,check_exists = get_map_item_attributes(bom)
 		# bom_creation_tool = frappe.new_doc("BOM Creation Tool")
@@ -1261,20 +1264,27 @@ def create_bom_tree_for_item_mapping(mapped_item,mapped_bom):
 	if mapped_item and mapped_bom:
 		item_mappings = frappe.db.sql("""SELECT item_code from `tabItem Mapping` where mapped_item = '{0}'""".format(mapped_item),as_dict=1)
 		item_mappings_list = [row.item_code for row in item_mappings]
+		print("===============item_mappings_list",item_mappings_list)
 		check_existing = frappe.db.sql("""SELECT standard_item_code from `tabBOM Creation Tool` where mapped_bom = '{0}' and mapped_item = '{1}'""".format(mapped_bom,mapped_item),as_dict=1)
+		print("=============check_existing",check_existing)
 		if len(check_existing) > 0:
 			for row in check_existing:
 				if row.standard_item_code in item_mappings_list:
 					item_mappings_list.remove(row.standard_item_code)
 
+		print("================item_mapping",item_mappings_list)
 		bct_doc_list=[]
 		if len(item_mappings_list) > 0:
 			for row in item_mappings_list:
-				attribute_table_data = get_map_item_attributes(mapped_bom,mapped_item,row)
+				
 				bc_doc = frappe.new_doc("BOM Creation Tool")
 				if bc_doc:
 					item_mapping = frappe.db.get_value("Item Mapping",{'mapped_item':mapped_item,'item_code':row},'name')
+					print("===============item",item_mapping)
+					attribute_table_data = get_map_item_attributes(mapped_bom,mapped_item,row,item_mapping)
+					print("================attribute_table_data",attribute_table_data)
 					mapping_doc_data = frappe.db.sql("SELECT attribute,value from `tabAttribute Table` where parent = '{0}'".format(item_mapping),as_dict=1)
+					print("===========mapping_doc_data",mapping_doc_data,row,item_mapping)
 					mapped_attribute_value_dict = {item.attribute:item.value for item in mapping_doc_data}
 					bc_doc.mapped_item = mapped_item
 					bc_doc.standard_item_code = row
