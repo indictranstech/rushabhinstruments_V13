@@ -24,7 +24,8 @@
   "review_item_mapping",
   "table_of_standard_boms_produced",
   "difference_between_previous_and_current_review_item_mappings",
-  "amended_from"
+  "amended_from",
+  "check"
  ],
  "fields": [
   {
@@ -149,12 +150,19 @@
    "fieldtype": "Table",
    "label": "Table of Standard BOMs Produced",
    "options": "Table of Standard BOMs Produced"
+  },
+  {
+   "default": "0",
+   "fieldname": "check",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "check"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-04-18 04:17:12.773316",
+ "modified": "2024-02-08 03:49:10.672402",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",

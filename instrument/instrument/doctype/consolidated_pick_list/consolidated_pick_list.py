@@ -345,14 +345,14 @@ class ConsolidatedPickList(Document):
 						frappe.db.set_value("Consolidated Pick List Reference",{'parent':wo_doc.name,'consolidated_pick_list':self.name},'status',self.status)
 						frappe.db.commit()
 					else:
-						frappe.db.set_value("Consolidated Pick List Reference",{'parent':wo_doc.name},'consolidated_pick_list',self.name)
-						frappe.db.set_value("Consolidated Pick List Reference",{'parent':wo_doc.name},'status',self.status)
-						frappe.db.commit()
-				# 	wo_doc.append('consolidated_pick_list_reference',{
-				# 		'consolidated_pick_list':self.name,
-				# 		'status':self.status
-				# 		})
-				# wo_doc.save()
+						# frappe.db.set_value("Consolidated Pick List Reference",{'parent':wo_doc.name},'consolidated_pick_list',self.name)
+						# frappe.db.set_value("Consolidated Pick List Reference",{'parent':wo_doc.name},'status',self.status)
+						# frappe.db.commit()
+						wo_doc.append('consolidated_pick_list_reference',{
+							'consolidated_pick_list':self.name,
+							'status':self.status
+							})
+						wo_doc.save()
 			self.update_status()
 	@frappe.whitelist()
 	def get_work_order_items(self):
@@ -1381,12 +1381,13 @@ def check_stock_entries(work_order,consolidated_pick_list):
 		else:
 			frappe.throw("Stock Entries already created for work order {0}".format(work_order))
 @frappe.whitelist()
-def create_stock_entry(work_order, consolidated_pick_list, row_name,work_order_list):
+def create_stock_entry(work_order, consolidated_pick_list, row_name):
 	try:
 		if work_order and consolidated_pick_list:
 			work_order_doc = frappe.get_doc("Work Order",work_order)
 			pick_list_doc = frappe.get_doc("Consolidated Pick List",consolidated_pick_list)
-			
+			work_order_list = [wo.work_order for wo in pick_list_doc.work_orders]
+			work_order_list = "', '".join(work_order_list)
 			qty_of_finish_good = frappe.db.get_value("Pick Orders",{'parent':consolidated_pick_list,'work_order':work_order},'qty_of_finished_goods_to_pull')
 			if pick_list_doc.purpose == 'Manufacture':
 				# check_dependent_wo = frappe.db.sql("""SELECT wo.name from `tabWork Order` wo where wo.production_planning_with_lead_time = '{0}' and wo.so_reference = '{1}' and wo.produced_qty = 0 and wo.bom_level < {2} and wo.parent_item_code = '{3}'""".format(work_order_doc.production_planning_with_lead_time,work_order_doc.so_reference,work_order_doc.bom_level,work_order_doc.parent_item_code),as_dict=1)
@@ -1930,7 +1931,7 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 
 	stock_entry = frappe.db.sql("""SELECT a.purchase_order, b.subcontracted_item from `tabStock Entry` a left join `tabStock Entry Detail` b on a.name=b.parent where a.purchase_order='{0}' and b.subcontracted_item='{1}'""".format(purchase_order, item), as_dict=True)
 	t_warehouse = frappe.db.get_value("Purchase Order", purchase_order, "supplier_warehouse")
-	
+	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 	if len(stock_entry)==0:
 		doc = frappe.new_doc("Stock Entry")
 		doc.stock_entry_type = "Send to Subcontractor"
@@ -1942,7 +1943,7 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 					"item_code":row.get("item_code"),
 					"qty": row.get("picked_qty"),
 					"s_warehouse": row.get("warehouse"),
-					"t_warehouse": t_warehouse,
+					"t_warehouse": wip_warehouse,
 					"basic_rate": frappe.db.get_value("Purchase Order Item Supplied", {"parent":purchase_order, "main_item_code":row.get("main_item"), "rm_item_code":row.get("item_code")}, "rate"),
 					"batch_no": row.get("batch_no"),
 					"serial_no": row.get("serial_no")
@@ -2040,7 +2041,7 @@ def create_stock_entri(doc):
 					if len(stock_entry_list)!=0:
 						continue
 					else:
-						se = create_stock_entry(row.get('work_order'),doc.get('name'),row.get('name'),work_order_list)
+						se = create_stock_entry(row.get('work_order'),doc.get('name'),row.get('name'))
 						if se:
 							work_orders.append(se)
 							se_list.append(se)
@@ -2078,7 +2079,7 @@ def create_stock_entri(doc):
 									frappe.throw("Please Complete Dependent Work Order Before Proceeding {0}".format(check_dependent_wo))
 									break
 								else:
-									se = create_stock_entry(col.get('work_order'),doc.get('name'),col.get('row_name'),work_order_list)
+									se = create_stock_entry(col.get('work_order'),doc.get('name'),col.get('row_name'))
 								if se:
 									final_work_orders.append(se)
 									count+=1

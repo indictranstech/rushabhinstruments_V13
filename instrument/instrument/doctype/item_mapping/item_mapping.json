@@ -1,5 +1,6 @@
 {
  "actions": [],
+ "allow_import": 1,
  "allow_rename": 1,
  "creation": "2021-10-18 04:55:14.023976",
  "doctype": "DocType",
@@ -80,7 +81,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-11-14 05:40:02.674432",
+ "modified": "2024-02-07 02:03:53.813247",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Item Mapping",
