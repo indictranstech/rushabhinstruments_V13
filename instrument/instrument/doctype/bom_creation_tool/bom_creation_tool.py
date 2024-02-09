@@ -285,6 +285,7 @@ class BOMCreationTool(Document):
 				'mapped_bom' : doc.mapped_bom
 				})
 			final_bom_list = get_all_boms_in_order(bom_child_list)
+			print("=============final_bom_list",final_bom_list)
 			std_bom_list_for_bct = []
 			for bom in final_bom_list:
 				bom_doc = frappe.get_doc("Mapped BOM",bom.get('name'))
@@ -359,8 +360,10 @@ class BOMCreationTool(Document):
 										'stock_uom' : scrap.stock_uom,
 										'rate' :scrap.rate
 										})
+							print("=================bom items",bom_doc.items)
 							for line in bom_doc.items:
 								if line.is_map_item ==1 :
+									print("===============yes")
 									# raw_std_item = frappe.db.get_value("Review Item Mapping",{'mapped_bom':bom.get("name"),'mapped_item':line.item_code},'standard_item_code')
 									raw_std_item = frappe.db.get_value("Review Item Mapping",{'mapped_item':line.item_code},'standard_item_code')
 									if not raw_std_item:
@@ -384,8 +387,28 @@ class BOMCreationTool(Document):
 										})
 
 								else : 
+									print("=====================no")
+
 									line.reference_item = line.item_code
-									std_bom.append('items',line)
+									raw_item_data = get_item_defaults(line.item_code, default_company)
+									default_bom = frappe.db.get_value("BOM",{'item':line.item_code,'is_active':1,'is_default':1,'docstatus' : 1},'name')
+									std_bom.append('items',{
+										'item_code': line.item_code,
+										'item_name':raw_item_data.get("item_name"),
+										'qty' : line.qty,
+										'description':line.description,
+										'stock_uom':line.stock_uom,
+										'bom_no':line.bom_no,
+										'conversion_factor':1,
+										'rate':line.rate,
+										'engineering_revision':line.engineering_revision,
+										'use_specific_engineering_revision':line.use_specific_engineering_revision,
+										'uom' : line.uom,
+										'reference_item':line.item_code
+										
+										})
+
+									# std_bom.append('items',line)
 							std_bom.bom_creation_tool = doc.name
 							std_bom.save(ignore_permissions = True)
 							std_bom.submit()

@@ -1046,7 +1046,7 @@ def create_bom_creation_tool(current_bom,bom):
 				new_doc.table_of_standard_boms_produced = ''
 				new_doc.difference_between_previous_and_current_review_item_mappings = ''
 				new_doc.save()
-				new_doc.submit()
+				# new_doc.submit()
 				frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
 				frappe.db.commit()
 				frappe.msgprint("BOM Creation Tool Created For Mapped BOM <b>{0}</b>".format(bom))
