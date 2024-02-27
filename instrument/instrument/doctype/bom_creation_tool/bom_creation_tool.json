@@ -107,12 +107,12 @@
    "options": "Item Assignment Table For Mapped Item"
   },
   {
+   "allow_on_submit": 1,
    "fetch_from": "standard_item_code.default_bom",
    "fieldname": "standard_bom",
    "fieldtype": "Link",
    "label": "Previous Version of Standard BOM",
-   "options": "BOM",
-   "read_only": 1
+   "options": "BOM"
   },
   {
    "fieldname": "difference_between_previous_and_current_review_item_mappings",
@@ -162,7 +162,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2024-02-08 03:49:10.672402",
+ "modified": "2024-02-27 06:41:08.275969",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "BOM Creation Tool",
