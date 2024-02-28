@@ -18,7 +18,6 @@ frappe.ui.form.on('Package Document', {
 				console.log(r.message)
 				// // window.location.href = r.message;
 				}
-			}
 		})
 
 	},
