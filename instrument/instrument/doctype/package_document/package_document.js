@@ -5,8 +5,15 @@ frappe.ui.form.on('Package Document', {
 	refresh: function(frm) {
 		frm.add_custom_button(__('Copy Rows'),() => frm.events.copy(frm));
 		frm.add_custom_button(__('Copy Attachments From Side Bar'),() => frm.events.copy_attachments(frm));
-		frm.add_custom_button(__('Download'),() => frm.events.download_attachments(frm));
-
+		// frm.add_custom_button(__('Download'),() => frm.events.download_attachments(frm));
+		frm.add_custom_button(__('Download'), function() {
+			frm.trigger('download_attachments')
+			var file_url = frm.doc.file_url;
+			if (frm.doc.file_name) {
+				file_url = file_url.replace(/#/g, '%23');
+			}
+			window.open(file_url);
+		}, "fa fa-download");
 	},
 	download_attachments:function(frm){
 		frappe.call({
@@ -16,10 +23,12 @@ frappe.ui.form.on('Package Document', {
 			},
 			callback:function(r){
 				console.log(r.message)
-				// // window.location.href = r.message;
-				}
+				download()
+			}
 		})
-
+	},
+	download:function(frm){
+		
 	},
 	copy_attachments:function(frm){
 		return frm.call({

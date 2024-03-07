@@ -104,18 +104,23 @@ def get_attachments_as_zip(doc):
 		file_doc.insert(ignore_permissions=True)
 		frappe.db.commit()
 		package_doc.reload()
-	return full_path
+		# download_attachments(doc,file_name)
+	frappe.db.set_value("Package Document",doc.get('name'),'file_url',file_url)
+	frappe.db.set_value("Package Document",doc.get('name'),'file_name',file_name)
+	frappe.db.commit()
+	package_doc.reload()
+	return full_path,file_url,file_name
 
 
 @frappe.whitelist()
-def download_attachments(doc):
+def download_attachments(doc,file_name):
 	# doc = json.loads(doc)
 	# import openpyxl
 	from io import BytesIO
-	# file_path = frappe.utils.get_site_path("public")
+	file_path = frappe.utils.get_site_path("private")
 	# # now = datetime.now()
 	# fname = 
-	# wb = openpyxl.load_workbook(filename=file_path+fname)
+	wb = openpyxl.load_workbook(filename=file_path+fname)
 	xlsx_file = BytesIO()
 	# wb.save(xlsx_file)
 
