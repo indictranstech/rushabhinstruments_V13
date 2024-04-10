@@ -61,7 +61,7 @@ def generate_keys(user):
 
 @frappe.whitelist(allow_guest=True)
 def item_details_api():
-    return frappe.db.sql(f"""select a.item_code,a.item_name,a.item_group,a.is_sales_item,a.weight_uom,a.description,a.stock_uom,a.end_of_life,a.lead_time_days,b.default_warehouse  from `tabItem` a left join `tabItem Default` b ON a.item_code = b.parent""", as_dict=True)
+    return frappe.db.sql(f"""select a.item_code,a.item_name,a.item_group,a.is_sales_item,a.weight_uom,a.description,a.stock_uom,a.end_of_life,a.lead_time_days,b.default_warehouse,a.is_stock_item  from `tabItem` a left join `tabItem Default` b ON a.item_code = b.parent""", as_dict=True)
 
 
 @frappe.whitelist(allow_guest=True)
