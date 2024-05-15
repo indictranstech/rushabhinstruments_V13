@@ -502,44 +502,74 @@ class ConsolidatedPickList(Document):
 			if self.purpose == 'Material Transfer for Manufacture':
 				# batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse,sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 and b.batch_qty > 0 group by sle.warehouse,b.name order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
 				# batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse,sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse != '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse having qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+				# batch_data  = frappe.db.sql(
+				# 		"""
+				# 		SELECT
+				# 			sle.`warehouse` as warehouse,
+				# 			sle.`batch_no` as name,
+				# 			SUM(sle.`actual_qty`) AS `qty`,
+				# 			sle.item_code as item
+				# 		FROM
+				# 			`tabStock Ledger Entry` sle, `tabBatch` batch
+				# 		WHERE
+				# 			sle.batch_no = batch.name
+				# 			and sle.`item_code` in ('{0}')
+				# 			and batch.disabled = 0
+				# 			and sle.is_cancelled=0
+				# 			and sle.warehouse != '{1}'
+				# 		GROUP BY
+				# 			sle.`batch_no`
+				# 		HAVING `qty` > 0
+				# 		ORDER BY IFNULL(batch.`expiry_date`, '2200-01-01'), batch.`creation`
+				# 	""".format(joined_item_list,wip_warehouse),
+				# 		as_dict=1,debug=1
+				# 	)
 				batch_data  = frappe.db.sql(
 						"""
 						SELECT
 							sle.`warehouse` as warehouse,
-							sle.`batch_no` as name,
+							sle.`serial_and_batch_bundle` as serial_and_batch_bundle,
+							b.`name` as name , 
 							SUM(sle.`actual_qty`) AS `qty`,
-							sle.item_code as item
+							sle.`item_code` as item
 						FROM
-							`tabStock Ledger Entry` sle, `tabBatch` batch
+							`tabStock Ledger Entry` sle, `tabSerial and Batch Entry` sbe ,`tabBatch` b
 						WHERE
-							sle.batch_no = batch.name
+							sle.`serial_and_batch_bundle` = sbe.`parent` and sbe.`batch_no` = b.`name`
 							and sle.`item_code` in ('{0}')
-							and batch.disabled = 0
-							and sle.is_cancelled=0
-							and sle.warehouse != '{1}'
+							and b.`disabled` = 0
+							and sle.`is_cancelled`=0
+							and sle.`warehouse` != '{1}'
 						GROUP BY
-							sle.`batch_no`
+							sbe.`batch_no`
 						HAVING `qty` > 0
-						ORDER BY IFNULL(batch.`expiry_date`, '2200-01-01'), batch.`creation`
+						ORDER BY IFNULL(b.`expiry_date`, '2200-01-01'), b.`creation`
 					""".format(joined_item_list,wip_warehouse),
 						as_dict=1,debug=1
 					)
+
 			elif self.purpose == 'Manufacture':
 				if self.change_batches_as_per_previous_consolidated_pick_list == 1:
 					# for row in work_list:
 					work_order_list = [row.get("work_order") for row in work_list]
 					work_order_list ="', '".join(work_order_list)
 					having_clause = "having sum(sle.actual_qty) > 0"
-					correct_batch_nos = frappe.db.sql("""SELECT sle.batch_no, round(sum(sle.actual_qty),2) from `tabStock Ledger Entry` sle
-						INNER JOIN `tabBatch` batch on sle.batch_no = batch.name where
-						batch.disabled = 0
-						and sle.is_cancelled = 0
-						and sle.warehouse = '{0}'
-						and batch.docstatus < 2
-					group by batch_no having sum(sle.actual_qty) > 0
-					order by batch.expiry_date, sle.batch_no desc""".format(wip_warehouse),as_dict=1)
-					correct_batch_nos =  [row.get('batch_no') for row in correct_batch_nos]
-					print("=============correct_batch_nos",correct_batch_nos)
+					# correct_batch_nos = frappe.db.sql("""SELECT sle.batch_no, round(sum(sle.actual_qty),2) from `tabStock Ledger Entry` sle
+					# 	INNER JOIN `tabBatch` batch on sle.batch_no = batch.name where
+					# 	batch.disabled = 0
+					# 	and sle.is_cancelled = 0
+					# 	and sle.warehouse = '{0}'
+					# 	and batch.docstatus < 2
+					# group by batch_no having sum(sle.actual_qty) > 0
+					# order by batch.expiry_date, sle.batch_no desc""".format(wip_warehouse),as_dict=1)
+					correct_batch_nos = frappe.db.sql("""SELECT batch.`name`, round(sum(sle.`actual_qty`),2) from `tabStock Ledger Entry` sle,`tabSerial and Batch Entry` sbe, `tabBatch` batch where sle.`serial_and_batch_bundle` = sbe.`parent` and  sbe.`batch_no` = batch.`name` and
+						batch.`disabled` = 0
+						and sle.`is_cancelled` = 0
+						and sle.`warehouse` = '{0}'
+						and batch.`docstatus` < 2
+					group by batch.`name` having sum(sle.`actual_qty`) > 0
+					order by batch.`expiry_date`, sbe.`batch_no` desc""".format(wip_warehouse),as_dict=1,debug=1)
+					correct_batch_nos =  [row.get('name') for row in correct_batch_nos]
 					correct_batch_nos ="', '".join(correct_batch_nos)
 					batch_data = frappe.db.sql("""SELECT co.name as consolidated_pick_list,wo.batch_no as name,wo.work_order,wo.item_code as item,wo.picked_qty as qty from `tabWork Order Pick List Item` wo join `tabConsolidated Pick List` co on co.name = wo.parent where wo.work_order in ('{0}') and wo.batch_no in ('{1}') and co.purpose = 'Material Transfer for Manufacture' and co.docstatus=1 order by wo.work_order,wo.item_code""".format(work_order_list,correct_batch_nos),as_dict=1,debug=0)
 					# batch_nos = [row.get('name') for row in batch_data]
@@ -553,25 +583,48 @@ class ConsolidatedPickList(Document):
 						
 				else:
 					# batch_data = frappe.db.sql("""SELECT b.name,b.item, sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` sle on (b.name = sle.batch_no ) where sle.item_code in ('{0}')  and IFNULL(b.expiry_date, '2200-01-01') > %(today)s and sle.warehouse = '{1}' and b.disabled = 0 and sle.is_cancelled=0 group by b.name,sle.warehouse HAVING qty > 0 order by  b.creation ASC""".format(joined_item_list,wip_warehouse),{'today':today()},as_dict=1,debug=1)
+					# batch_data  = frappe.db.sql(
+					# 	"""
+					# 	SELECT
+					# 		sle.`warehouse` as warehouse,
+					# 		sle.`batch_no` as name,
+					# 		SUM(sle.`actual_qty`) AS `qty`,
+					# 		sle.item_code as item
+					# 	FROM
+					# 		`tabStock Ledger Entry` sle, `tabBatch` batch
+					# 	WHERE
+					# 		sle.batch_no = batch.name
+					# 		and sle.`item_code` in ('{0}')
+					# 		and batch.disabled = 0
+					# 		and sle.is_cancelled=0
+					# 		and sle.warehouse = '{1}'
+					# 	GROUP BY
+					# 		sle.`batch_no`
+					# 	HAVING `qty` > 0
+					# 	ORDER BY IFNULL(batch.`expiry_date`, '2200-01-01'), batch.`creation`
+					# """.format(joined_item_list,wip_warehouse),
+					# 	as_dict=1,debug=1
+					# )
 					batch_data  = frappe.db.sql(
 						"""
 						SELECT
 							sle.`warehouse` as warehouse,
-							sle.`batch_no` as name,
+							sle.`serial_and_batch_bundle` as serial_and_batch_bundle,
+							b.`name` as name , 
 							SUM(sle.`actual_qty`) AS `qty`,
-							sle.item_code as item
+							sle.`item_code` as item
 						FROM
-							`tabStock Ledger Entry` sle, `tabBatch` batch
+							`tabStock Ledger Entry` sle, `tabSerial and Batch Entry` sbe ,`tabBatch` b
 						WHERE
-							sle.batch_no = batch.name
+							sle.`serial_and_batch_bundle` = sbe.`parent` and sbe.`batch_no` = b.`name`
 							and sle.`item_code` in ('{0}')
-							and batch.disabled = 0
-							and sle.is_cancelled=0
-							and sle.warehouse = '{1}'
+							and b.`disabled` = 0
+							and sle.`is_cancelled`=0
+							and sle.`warehouse` = '{1}'
 						GROUP BY
-							sle.`batch_no`
+							sbe.`batch_no`
 						HAVING `qty` > 0
-						ORDER BY IFNULL(batch.`expiry_date`, '2200-01-01'), batch.`creation`
+						ORDER BY IFNULL(b.`expiry_date`, '2200-01-01'), b.`creation`
 					""".format(joined_item_list,wip_warehouse),
 						as_dict=1,debug=1
 					)
@@ -690,7 +743,9 @@ class ConsolidatedPickList(Document):
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 		item_list =  '(' + ','.join("'{}'".format(i) for i in item_list) + ')' if item_list else ()
 
-		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
+		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
+
+		batch_data = frappe.db.sql("""SELECT b.name,b.item,sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b ,`tabSerial and Batch Entry` sbe, `tabStock Ledger Entry` sle where sle.serial_and_batch_bundle = sbe.parent and sbe.batch_no = b.name and sle.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and sle.warehouse != '{1}'  group by b.name order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
 		
 		for row in batch_data:
 			calculate_remaining_so_batch_qty(row)
@@ -1901,7 +1956,7 @@ def get_pending_qty(work_order,purpose):
 		return qty
 
 def get_sub_assembly_items(bom_no, bom_data, to_produce_qty, indent=0):
-	data = get_children('BOM', parent = bom_no)
+	data = get_children(parent = bom_no)
 	for d in data:
 		if d.expandable:
 			parent_item_code = frappe.get_cached_value("BOM", bom_no, "item")
