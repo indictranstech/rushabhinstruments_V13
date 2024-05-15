@@ -62,6 +62,7 @@ class ProductionPlanningWithLeadTime(Document):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
 		self.sales_order_table = ''
 		open_so = get_sales_orders(self)
+		print("====================open_so",open_so)
 		open_mr = get_open_mr(self)
 		
 		if open_so or open_mr:
@@ -130,9 +131,11 @@ class ProductionPlanningWithLeadTime(Document):
 					})
 			# so_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 			sorted_so_data = sorted(so_data, key = lambda x: (x["delivery_date"],x["priority"]))
+			print("==============sorted_so_data",sorted_so_data)
 			count = 1
 			for row in sorted_so_data:
 				row.update({'idx':count})
+				print("=================",self.sorted_sales_order_table,row)
 				self.append('sorted_sales_order_table',row)
 				count = count + 1
 		return self.sorted_sales_order_table
@@ -459,7 +462,8 @@ class ProductionPlanningWithLeadTime(Document):
 		items_data = self.get_production_items()
 		for key, item in items_data.items():
 			set_default_warehouses(item, default_warehouses)
-			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'so_reference':item.get('so_reference')}) or frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'mr_reference':item.get('mr_reference')})
+			wo= frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'so_reference':item.get('so_reference'),'production_planning_with_lead_time':self.name}) or frappe.db.get_value("Work Order",{'production_item':item.get('production_item'),'mr_reference':item.get('mr_reference'),'production_planning_with_lead_time':self.name})
+			print("=============",wo)
 			if not wo: 
 				work_order = self.create_work_orders(item)
 				if work_order:
@@ -790,7 +794,7 @@ def get_raw_items_fg(bom,raw_data,qty):
 		return raw_data
 @frappe.whitelist()
 def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_name, warehouse_list, indent=0):
-	data = get_children('BOM', parent = bom_no)
+	data = get_children(parent = bom_no)
 	for d in data:
 		if d.expandable:
 			operation_time = frappe.db.sql("""SELECT sum(time_in_mins) as operation_time from `tabBOM Operation` where parent = '{0}'""".format(d.value),as_dict=1)
@@ -968,7 +972,7 @@ def get_sales_orders(self):
 					where pi.parent = so.name and pi.parent_item = so_item.item_code
 						and exists (select name from `tabBOM` bom where bom.item=pi.item_code
 							and bom.is_active = 1)))
-		""", self.as_dict(), as_dict=1)
+		""", self.as_dict(), as_dict=1,debug=1)
 
 	open_sales_orders = [so.name for so in open_so]
 	
