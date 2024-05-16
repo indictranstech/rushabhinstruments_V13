@@ -65,7 +65,7 @@ def validate(doc,method):
 			item_info.qty = total
 			item_info.idx = count
 			final_data.append(item_info)
-		doc.items = ''
+		doc.items = []
 		for i in final_data:
 			doc.append("items",i)
 

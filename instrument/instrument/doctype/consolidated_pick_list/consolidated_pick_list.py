@@ -330,7 +330,7 @@ class ConsolidatedPickList(Document):
 				'actual_end_date':row.get('actual_end_date')
 				})
 			final_data = sorted(final_item_list,key = lambda x:x["bom_level"])
-			self.work_orders = ''
+			self.work_orders = []
 			count = 1
 			for col in final_data:
 				col.update({'idx' : count})
@@ -847,7 +847,7 @@ class ConsolidatedPickList(Document):
 	@frappe.whitelist()
 	def get_fg_sales_orders(self):
 		filters={"delivery_start_date":self.delivery_start_date, "delivery_end_date":self.delivery_end_date, "customer":self.customer, "customer_po_number":self.customer_po_number, "sales_order":self.sales_order}
-		self.sales_order_table = ''
+		self.sales_order_table = []
 		self.purpose == "Sales Order Fulfillment"
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()
@@ -903,7 +903,7 @@ class ConsolidatedPickList(Document):
 	@frappe.whitelist()
 	def get_fg_purchase_orders(self):
 		filters={"start_date":self.start_date, "end_date":self.end_date, "supplier":self.supplier, "purchase_order": self.purchase_order}
-		self.purchase_order_table = ''
+		self.purchase_order_table = []
 		self.purpose == "Material Transfer for Subcontracted Goods"
 		fg_item_groups = frappe.db.sql("""SELECT item_group from `tabTable For Item Group`""",as_dict=1)
 		todays_date = datetime.date.today()

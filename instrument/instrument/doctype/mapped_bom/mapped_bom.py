@@ -194,7 +194,7 @@ class MappedBOM(WebsiteGenerator):
 				if item not in new_item_dict:
 					deleted_item_list.append(item_dict.get(item))
 			if len(deleted_item_list) > 0:
-				self.deleted_items = ''
+				self.deleted_items = []
 				for row in deleted_item_list:
 					self.append('deleted_items',{
 						'item_code':row.get("item_code"),
@@ -1041,10 +1041,10 @@ def create_bom_creation_tool(current_bom,bom):
 			if old_doc.docstatus == 1 :
 				new_doc = frappe.copy_doc(old_doc, ignore_no_copy=False)
 				new_doc.mapped_bom = bom
-				new_doc.review_item_mapping = ''
+				new_doc.review_item_mapping = []
 				new_doc.review_item_mappings()
-				new_doc.table_of_standard_boms_produced = ''
-				new_doc.difference_between_previous_and_current_review_item_mappings = ''
+				new_doc.table_of_standard_boms_produced = []
+				new_doc.difference_between_previous_and_current_review_item_mappings = []
 				new_doc.save()
 				# new_doc.submit()
 				frappe.db.set_value("Mapped BOM",{'name':bom},'propogate_to_descendent_bom',1)
