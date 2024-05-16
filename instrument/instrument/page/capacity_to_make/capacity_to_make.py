@@ -6,7 +6,7 @@ from datetime import datetime,date, timedelta
 from frappe.model.naming import make_autoname
 import time
 import json
-import pandas as pd
+# import pandas as pd
 from frappe import _
 from erpnext.manufacturing.doctype.bom.bom import get_bom_items_as_dict
 import operator
