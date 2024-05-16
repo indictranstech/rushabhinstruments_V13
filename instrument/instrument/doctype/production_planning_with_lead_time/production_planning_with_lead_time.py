@@ -112,7 +112,7 @@ class ProductionPlanningWithLeadTime(Document):
 	@frappe.whitelist()
 	def sort_so_data(self):
 		# sort so data based on delivery_date and priority
-		self.sorted_sales_order_table = ''
+		self.sorted_sales_order_table = []
 		if self.sales_order_table:
 			so_data = []
 			for row in self.sales_order_table:
@@ -141,7 +141,7 @@ class ProductionPlanningWithLeadTime(Document):
 		return self.sorted_sales_order_table
 	@frappe.whitelist()
 	def work_order_planning(self):
-		self.fg_items_table = ''
+		self.fg_items_table =  []
 		# fetch warehouse list from Rushabh settings
 		warehouse_list = get_warehouses()
 		# Get On hand stock
@@ -211,7 +211,7 @@ class ProductionPlanningWithLeadTime(Document):
 			return self.fg_items_table
 	@frappe.whitelist()
 	def sub_assembly_items(self):
-		self.sub_assembly_items_table = ''
+		self.sub_assembly_items_table = []
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
@@ -253,7 +253,7 @@ class ProductionPlanningWithLeadTime(Document):
 						
 	@frappe.whitelist()
 	def get_raw_materials(self):
-		self.raw_materials_table = ''
+		self.raw_materials_table = []
 		warehouse_list = get_warehouses()
 		# Get On hand stock
 		ohs = get_ohs(warehouse_list)
