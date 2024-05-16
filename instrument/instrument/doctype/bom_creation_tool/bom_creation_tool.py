@@ -33,7 +33,7 @@ class BOMCreationTool(Document):
 	def review_item_mappings(doc,method=None):
 		if doc.attribute_table:
 			final_items_review = []
-			doc.review_item_mapping = ''
+			doc.review_item_mapping = []
 			doc.difference_between_previous_and_current_review_item_mappings = ''
 			attributes_values = doc.attribute_table
 			bom_childs = []

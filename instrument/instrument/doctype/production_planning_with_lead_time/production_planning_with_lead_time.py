@@ -60,9 +60,8 @@ class ProductionPlanningWithLeadTime(Document):
 	@frappe.whitelist()
 	def get_open_sales_orders(self):
 		""" Pull sales orders  which are pending to deliver based on criteria selected"""
-		self.sales_order_table = ''
+		self.sales_order_table = []
 		open_so = get_sales_orders(self)
-		print("====================open_so",open_so)
 		open_mr = get_open_mr(self)
 		
 		if open_so or open_mr:

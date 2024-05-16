@@ -47,7 +47,7 @@ class BOMItemReplacementTool(Document):
 					item_list.append(row)
 				else:
 					item_list.append(row)
-			new_bom.items = ''
+			new_bom.items = []
 			for item in item_list:
 				new_bom.append('items',item)
 			if not old_bom.is_active:
@@ -85,7 +85,7 @@ class BOMItemReplacementTool(Document):
 					item_list.append(row)
 				else:
 					item_list.append(row)
-			new_bom.items = ''
+			new_bom.items = []
 			for item in item_list:
 				new_bom.append('items',item)
 			if not old_bom.is_active:

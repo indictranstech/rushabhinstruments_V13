@@ -6,9 +6,6 @@
   "doctype": "Print Style",
   "modified": "2017-08-18 00:44:25.023898",
   "name": "Monochrome",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
   "preview": "/assets/frappe/images/help/print-style-monochrome.png",
   "print_style_name": "Monochrome",
   "standard": 1
@@ -20,9 +17,6 @@
   "doctype": "Print Style",
   "modified": "2020-12-14 17:56:37.421390",
   "name": "Redesign",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
   "preview": null,
   "print_style_name": "Redesign",
   "standard": 1
@@ -34,9 +28,6 @@
   "doctype": "Print Style",
   "modified": "2017-08-18 00:43:48.675833",
   "name": "Classic",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
   "preview": "/assets/frappe/images/help/print-style-classic.png",
   "print_style_name": "Classic",
   "standard": 1
@@ -48,9 +39,6 @@
   "doctype": "Print Style",
   "modified": "2020-11-10 13:59:09.976381",
   "name": "Modern",
-  "parent": null,
-  "parentfield": null,
-  "parenttype": null,
   "preview": "/assets/frappe/images/help/print-style-modern.png",
   "print_style_name": "Modern",
   "standard": 1
