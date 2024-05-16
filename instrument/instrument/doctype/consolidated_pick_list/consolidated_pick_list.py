@@ -768,9 +768,9 @@ class ConsolidatedPickList(Document):
 		            row.update({"required_qty":rem_reqd_qty})
 
 		            serial_no = ""
-		            if frappe.get_cached_value("Item", row.get("item_code"), 'has_serial_no') == 1:
-		            	serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
-		            	serial_no = serial_nos
+		            # if frappe.get_cached_value("Item", row.get("item_code"), 'has_serial_no') == 1:
+		            # 	serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
+		            # 	serial_no = serial_nos
 
 		            if col.get("qty")>= row.get("required_qty"):
 		                batch_qty = col.get("qty") - row.get("required_qty") 
