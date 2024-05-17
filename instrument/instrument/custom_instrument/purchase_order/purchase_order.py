@@ -660,7 +660,7 @@ class PurchaseOrder(BuyingController):
 
 		self.check_on_hold_or_closed_status()
 
-		frappe.db.set(self, "status", "Cancelled")
+		self.db_set("status", "Cancelled")
 
 		self.update_prevdoc_status()
 
