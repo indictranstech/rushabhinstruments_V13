@@ -1,0 +1,254 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "naming_series:",
+ "creation": "2022-02-23 06:32:30.925808",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "from_date",
+  "from_delivery_date",
+  "customer",
+  "status",
+  "column_break_3",
+  "to_date",
+  "to_delivery_date",
+  "sales_order",
+  "item",
+  "sales_order_data_section",
+  "get_sales_orders",
+  "sales_order_table",
+  "sort_so_data",
+  "sorted_sales_order_table",
+  "work_order_planning",
+  "work_order_planning_section",
+  "fg_items_table",
+  "get_subassembly_items",
+  "sub_assembly_items_table",
+  "get_raw_materials",
+  "refresh_latest_date_availability",
+  "hide_zero_qty_item",
+  "raw_materials_table",
+  "download_raw_materials",
+  "section_break_eif32",
+  "prepare_final_work_orders",
+  "final_work_orders",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "From Date"
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "label": "Customer",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "To Date"
+  },
+  {
+   "fieldname": "sales_order",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sales Order",
+   "options": "Sales Order"
+  },
+  {
+   "fieldname": "sales_order_data_section",
+   "fieldtype": "Section Break",
+   "label": "Sales Order Data"
+  },
+  {
+   "fieldname": "sales_order_table",
+   "fieldtype": "Table",
+   "label": "Sales Order Table",
+   "options": "Sales Order Table"
+  },
+  {
+   "fieldname": "sorted_sales_order_table",
+   "fieldtype": "Table",
+   "label": "Sorted Sales Order Table",
+   "options": "Sorted Sales Orders",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sort_so_data",
+   "fieldtype": "Button",
+   "label": "Sort SO And MR Data"
+  },
+  {
+   "fieldname": "work_order_planning",
+   "fieldtype": "Button",
+   "label": "Work Order Planning"
+  },
+  {
+   "fieldname": "work_order_planning_section",
+   "fieldtype": "Section Break",
+   "label": "Work Order Planning"
+  },
+  {
+   "fieldname": "fg_items_table",
+   "fieldtype": "Table",
+   "label": "FG Items Table",
+   "options": "FG Items Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sub_assembly_items_table",
+   "fieldtype": "Table",
+   "label": "Sub Assembly Items Table",
+   "options": "Sub Assembly Items Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "get_raw_materials",
+   "fieldtype": "Button",
+   "label": "Get Raw Materials"
+  },
+  {
+   "fieldname": "raw_materials_table",
+   "fieldtype": "Table",
+   "label": "Raw Materials Table",
+   "options": "Raw Materials Table",
+   "read_only": 1
+  },
+  {
+   "fieldname": "final_work_orders",
+   "fieldtype": "Table",
+   "label": "Final Work Orders",
+   "options": "Final Work Orders",
+   "read_only": 1
+  },
+  {
+   "fieldname": "get_sales_orders",
+   "fieldtype": "Button",
+   "label": "Get Sales Orders And Material Requests"
+  },
+  {
+   "fieldname": "from_delivery_date",
+   "fieldtype": "Date",
+   "label": "From Delivery Date"
+  },
+  {
+   "fieldname": "to_delivery_date",
+   "fieldtype": "Date",
+   "label": "To Delivery Date"
+  },
+  {
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "get_subassembly_items",
+   "fieldtype": "Button",
+   "label": "Get Subassembly Items"
+  },
+  {
+   "fieldname": "prepare_final_work_orders",
+   "fieldtype": "Button",
+   "label": "Prepare Final Work Orders"
+  },
+  {
+   "fieldname": "download_raw_materials",
+   "fieldtype": "Button",
+   "label": "Download Raw Materials"
+  },
+  {
+   "fieldname": "section_break_eif32",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Production Planning With Lead Time",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "hide_zero_qty_item",
+   "fieldtype": "Check",
+   "label": "Hide Zero Qty Item"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Naming Series",
+   "options": "MFG-PT-.YYYY.-"
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nDraft\nSubmitted\nIn Progress\nCompleted\nCancelled",
+   "read_only": 1
+  },
+  {
+   "fieldname": "refresh_latest_date_availability",
+   "fieldtype": "Button",
+   "label": "Refresh Latest Date Availability"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2023-10-23 02:40:46.133418",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Production Planning With Lead Time",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

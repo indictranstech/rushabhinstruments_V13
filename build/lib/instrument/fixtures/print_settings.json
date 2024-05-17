@@ -1,0 +1,29 @@
+[
+ {
+  "add_draft_heading": 1,
+  "allow_page_break_inside_tables": 0,
+  "allow_print_for_cancelled": 0,
+  "allow_print_for_draft": 1,
+  "compact_item_print": 0,
+  "docstatus": 0,
+  "doctype": "Print Settings",
+  "enable_print_server": 0,
+  "enable_raw_printing": 0,
+  "font": "Default",
+  "font_size": 0.0,
+  "modified": "2022-10-27 11:20:35.914424",
+  "name": "Print Settings",
+  "parent": null,
+  "parentfield": null,
+  "parenttype": null,
+  "pdf_page_height": 215.0,
+  "pdf_page_size": "Custom",
+  "pdf_page_width": 280.0,
+  "print_style": "Modern",
+  "print_taxes_with_zero_amount": 0,
+  "print_uom_after_quantity": 0,
+  "repeat_header_footer": 0,
+  "send_print_as_pdf": 1,
+  "with_letterhead": 0
+ }
+]

@@ -1,0 +1,37 @@
+{
+ "add_total_row": 0,
+ "columns": [],
+ "creation": "2022-04-25 04:09:02.317044",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "json": "{}",
+ "letter_head": "Rushabh letterhead",
+ "modified": "2022-04-25 04:10:15.142524",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Work Order Pick List Item",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "ref_doctype": "Work Order Pick List",
+ "report_name": "Work Order Pick List Item",
+ "report_type": "Script Report",
+ "roles": [
+  {
+   "role": "Stock Manager"
+  },
+  {
+   "role": "Stock User"
+  },
+  {
+   "role": "Manufacturing Manager"
+  },
+  {
+   "role": "Manufacturing User"
+  }
+ ]
+}

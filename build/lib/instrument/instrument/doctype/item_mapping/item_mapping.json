@@ -1,0 +1,142 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "creation": "2021-10-18 04:55:14.023976",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "mapped_item",
+  "item_code",
+  "do_not_override_existing_bom",
+  "propogate_updates_to_affected_boms_status",
+  "attribute_table",
+  "override_mapped_bom_operation_table",
+  "bom_operations",
+  "old_standrad_item_code",
+  "data_for_compare"
+ ],
+ "fields": [
+  {
+   "fieldname": "mapped_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Mapped Item Name",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Standard Item Code ",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "attribute_table",
+   "fieldtype": "Table",
+   "label": "Attribute Table",
+   "options": "Attribute Table"
+  },
+  {
+   "default": "0",
+   "fieldname": "do_not_override_existing_bom",
+   "fieldtype": "Check",
+   "label": "Do Not Override Existing BOM"
+  },
+  {
+   "default": "0",
+   "fieldname": "override_mapped_bom_operation_table",
+   "fieldtype": "Check",
+   "label": "Override Mapped BOM Operation Table"
+  },
+  {
+   "depends_on": "override_mapped_bom_operation_table",
+   "fieldname": "bom_operations",
+   "fieldtype": "Table",
+   "label": "BOM Operations",
+   "options": "Item Operation"
+  },
+  {
+   "fieldname": "old_standrad_item_code",
+   "fieldtype": "Link",
+   "label": "Old Standrad Item Code",
+   "options": "Item"
+  },
+  {
+   "fieldname": "propogate_updates_to_affected_boms_status",
+   "fieldtype": "Select",
+   "label": "Propogate Updates To Affected BOMs Status",
+   "options": "\nPropogation Not Needed\nNeed To Run\nIn Process\nCompleted"
+  },
+  {
+   "fieldname": "data_for_compare",
+   "fieldtype": "Small Text",
+   "label": "Data For Compare"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2024-02-07 02:03:53.813247",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Item Mapping",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2022-02-23 06:50:26.297165",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item",
+  "qty",
+  "original_qty",
+  "date_to_be_ready",
+  "available_stock",
+  "shortage",
+  "lead_time",
+  "on_order_stock",
+  "order_in_days",
+  "latest_date_availability",
+  "readiness_status",
+  "mr_status"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item",
+   "options": "Item"
+  },
+  {
+   "columns": 1,
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty"
+  },
+  {
+   "columns": 2,
+   "description": "Date Format MM/DD/YYYY",
+   "fieldname": "date_to_be_ready",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date To Be Ready"
+  },
+  {
+   "columns": 1,
+   "fieldname": "available_stock",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Available Stock"
+  },
+  {
+   "columns": 1,
+   "fieldname": "shortage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Shortage "
+  },
+  {
+   "fieldname": "lead_time",
+   "fieldtype": "Int",
+   "label": "Lead Time"
+  },
+  {
+   "columns": 1,
+   "fieldname": "on_order_stock",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "On Order Stock"
+  },
+  {
+   "fieldname": "order_in_days",
+   "fieldtype": "Float",
+   "label": "Order in Days"
+  },
+  {
+   "columns": 1,
+   "description": "Date Format MM/DD/YYYY",
+   "fieldname": "latest_date_availability",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Latest Date Availability"
+  },
+  {
+   "columns": 2,
+   "fieldname": "readiness_status",
+   "fieldtype": "Color",
+   "in_list_view": 1,
+   "label": "Readiness Status"
+  },
+  {
+   "columns": 1,
+   "fieldname": "original_qty",
+   "fieldtype": "Float",
+   "label": "Original Qty"
+  },
+  {
+   "fieldname": "mr_status",
+   "fieldtype": "Data",
+   "label": "MR Status",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2023-10-23 02:45:29.727810",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "Raw Materials Table",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

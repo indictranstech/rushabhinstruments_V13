@@ -1,0 +1,226 @@
+{
+ "actions": [],
+ "autoname": "naming_series:",
+ "creation": "2021-10-21 01:42:32.663247",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "section_break_2",
+  "mapped_item",
+  "mapped_bom",
+  "status",
+  "column_break_3",
+  "override_existing_bom",
+  "item_mapping",
+  "standard_item_code",
+  "standard_bom",
+  "version_of_bom_released",
+  "section_break_5",
+  "item_assignment_table_for_mapped_item",
+  "attribute_table",
+  "review_item_mappings",
+  "review_item_mapping",
+  "table_of_standard_boms_produced",
+  "difference_between_previous_and_current_review_item_mappings",
+  "amended_from",
+  "check"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "override_existing_bom",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Override Existing BOM"
+  },
+  {
+   "fieldname": "attribute_table",
+   "fieldtype": "Table",
+   "label": "Attribute Table",
+   "options": "BOM Creation Attribute Table"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "BOM-.YYYY.-"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mapped_bom",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mapped BOM",
+   "options": "Mapped BOM",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_5",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "BOM Creation Tool",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "review_item_mapping",
+   "fieldtype": "Table",
+   "label": "Item Assignments Table",
+   "options": "Review Item Mapping"
+  },
+  {
+   "fieldname": "review_item_mappings",
+   "fieldtype": "Button",
+   "label": "Review Item Assignments"
+  },
+  {
+   "fieldname": "mapped_item",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Mapped Item",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "fieldname": "standard_item_code",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Standard Item Code",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_assignment_table_for_mapped_item",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Item Assignment Table For Mapped Item",
+   "options": "Item Assignment Table For Mapped Item"
+  },
+  {
+   "allow_on_submit": 1,
+   "fetch_from": "standard_item_code.default_bom",
+   "fieldname": "standard_bom",
+   "fieldtype": "Link",
+   "label": "Previous Version of Standard BOM",
+   "options": "BOM"
+  },
+  {
+   "fieldname": "difference_between_previous_and_current_review_item_mappings",
+   "fieldtype": "Table",
+   "label": "Difference Between Previous and Current Review Item Mappings",
+   "options": "Difference In Review Item Mappings Table"
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "no_copy": 1,
+   "options": "\nIn process\nCompleted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "version_of_bom_released",
+   "fieldtype": "Link",
+   "label": "Version Of BOM Released",
+   "options": "BOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_mapping",
+   "fieldtype": "Link",
+   "label": "Item Mapping",
+   "options": "Item Mapping"
+  },
+  {
+   "fieldname": "table_of_standard_boms_produced",
+   "fieldtype": "Table",
+   "label": "Table of Standard BOMs Produced",
+   "options": "Table of Standard BOMs Produced"
+  },
+  {
+   "default": "0",
+   "fieldname": "check",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "check"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2024-02-27 06:41:08.275969",
+ "modified_by": "Administrator",
+ "module": "instrument",
+ "name": "BOM Creation Tool",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing User",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Manufacturing Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Administrator",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
