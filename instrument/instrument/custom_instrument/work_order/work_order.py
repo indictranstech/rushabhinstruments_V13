@@ -33,7 +33,7 @@ from pathlib import Path
 from frappe.utils import getdate,time
 import glob
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 from frappe.utils import flt, cstr, nowdate, nowtime
 @frappe.whitelist()
 def check_stock(doc,method):

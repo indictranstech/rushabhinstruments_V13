@@ -63,8 +63,8 @@ def propogate_updates_to_affected_boms(doc):
 					if item.standard_item_code == old_standrad_item_code:
 						item.standard_item_code = doc.get('item_code')
 						item.item_mapping_retrived = doc.get('name')
-				new_doc.table_of_standard_boms_produced = ''
-				new_doc.difference_between_previous_and_current_review_item_mappings = ''
+				new_doc.table_of_standard_boms_produced = []
+				new_doc.difference_between_previous_and_current_review_item_mappings = []
 				new_doc.save()
 				new_bct_doc_list.append(new_doc.name)
 			else:
@@ -74,8 +74,8 @@ def propogate_updates_to_affected_boms(doc):
 					if item.standard_item_code == old_standrad_item_code:
 						item.standard_item_code = doc.get('item_code')
 						item.item_mapping_retrived = doc.get('name')
-				get_bct.table_of_standard_boms_produced = ''
-				get_bct.difference_between_previous_and_current_review_item_mappings = ''
+				get_bct.table_of_standard_boms_produced = []
+				get_bct.difference_between_previous_and_current_review_item_mappings = []
 				get_bct.save()
 				new_bct_doc_list.append(get_bct.name)
 				# mapped_bom = get_bct.mapped_bom
@@ -94,8 +94,8 @@ def propogate_updates_to_affected_boms(doc):
 						item.standard_item_code = doc.get('item_code')
 						item.item_mapping_retrived = doc.get('name')
 				# new_doc.standard_item_code = doc.get('item_code')
-				new_doc.table_of_standard_boms_produced = ''
-				new_doc.difference_between_previous_and_current_review_item_mappings = ''
+				new_doc.table_of_standard_boms_produced = []
+				new_doc.difference_between_previous_and_current_review_item_mappings = []
 				new_doc.save()
 				new_bct_doc_list.append(new_doc.name)
 			else:
@@ -105,8 +105,8 @@ def propogate_updates_to_affected_boms(doc):
 					if item.standard_item_code == old_standrad_item_code:
 						item.standard_item_code = doc.get('item_code')
 						item.item_mapping_retrived = doc.get('name')
-				get_bct.table_of_standard_boms_produced = ''
-				get_bct.difference_between_previous_and_current_review_item_mappings = ''
+				get_bct.table_of_standard_boms_produced = []
+				get_bct.difference_between_previous_and_current_review_item_mappings = []
 				get_bct.save()
 				new_bct_doc_list.append(get_bct.name)
 	item_mapping_doc = frappe.get_doc("Item Mapping",doc.get('name'))

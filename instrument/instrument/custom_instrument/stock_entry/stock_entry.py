@@ -28,7 +28,7 @@ from pathlib import Path
 from frappe.utils import getdate,time
 import glob
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 from frappe.utils import flt, cstr, nowdate, nowtime
 def after_insert(doc,method):
 	start_string = doc.name 
@@ -43,17 +43,17 @@ def after_insert(doc,method):
 	# file_name = doc.name + '.pdf'
 	# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Stock Entry' and attached_to_name=%s and file_name = %s""",
 	# 	(doc.name,file_name))
-	pdf_data=frappe.attach_print('Stock Entry',doc.name, print_format='Stock Entry')
+	# pdf_data=frappe.attach_print('Stock Entry',doc.name, print_format='Stock Entry')
 	
-	_file = frappe.get_doc({
-	"doctype": "File",
-	"file_name": pdf_data.get('fname'),
-	"attached_to_doctype": "Stock Entry",
-	"attached_to_name": doc.name,
-	"is_private": 1,
-	"content": pdf_data.get('fcontent')
-	})
-	_file.save()
+	# _file = frappe.get_doc({
+	# "doctype": "File",
+	# "file_name": pdf_data.get('fname'),
+	# "attached_to_doctype": "Stock Entry",
+	# "attached_to_name": doc.name,
+	# "is_private": 1,
+	# "content": pdf_data.get('fcontent')
+	# })
+	# _file.save()
 def validate(doc,method):
 	if doc.work_order and doc.stock_entry_type == 'Manufacture':
 		doc.to_warehouse = frappe.db.get_value("Work Order",{'name':doc.work_order},'fg_warehouse')
@@ -94,6 +94,10 @@ def validate(doc,method):
 		"content": pdf_data.get('fcontent')
 		})
 		_file.save()
+		if doc.consolidated_pick_list:
+			if doc.items:
+				for row in doc.items:
+					row.serial_and_batch_bundle = ''
 
 @frappe.whitelist()
 def on_submit(doc,method):

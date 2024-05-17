@@ -35,6 +35,7 @@ class BOMCreationTool(Document):
 			final_items_review = []
 			doc.review_item_mapping = []
 			doc.difference_between_previous_and_current_review_item_mappings = []
+
 			attributes_values = doc.attribute_table
 			bom_childs = []
 			bom_child_list = get_child_boms(doc.mapped_bom,bom_childs)

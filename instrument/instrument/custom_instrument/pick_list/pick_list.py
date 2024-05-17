@@ -26,7 +26,7 @@ from pathlib import Path
 from frappe.utils import getdate,time
 import glob
 from pathlib import Path
-import pandas as pd
+# import pandas as pd
 from frappe.utils import flt, cstr, nowdate, nowtime
 def label_img(doc,method):
 	url = frappe.db.get_value('URL Data',{'sourcedoctype_name':'Pick List'},'url')
