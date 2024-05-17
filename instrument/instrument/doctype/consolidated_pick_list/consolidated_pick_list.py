@@ -768,9 +768,9 @@ class ConsolidatedPickList(Document):
 		            row.update({"required_qty":rem_reqd_qty})
 
 		            serial_no = ""
-		            # if frappe.get_cached_value("Item", row.get("item_code"), 'has_serial_no') == 1:
-		            # 	serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
-		            # 	serial_no = serial_nos
+		            if frappe.get_cached_value("Item", row.get("item_code"), 'has_serial_no') == 1:
+		            	serial_nos = get_serial_no_batchwise(row.get("item_code"),col.get("name"), row.get("warehouse"), row.get("required_qty"))
+		            	serial_no = serial_nos
 
 		            if col.get("qty")>= row.get("required_qty"):
 		                batch_qty = col.get("qty") - row.get("required_qty") 
@@ -911,7 +911,7 @@ class ConsolidatedPickList(Document):
 		joined_fg_list = "', '".join(fg_item_groups)
 		if fg_item_groups:
 			if self.purpose == "Material Transfer for Subcontracted Goods":
-				fg_purchase_orders = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty , i.item_code ,i.name as purchase_order_item from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in ('{0}') and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2} group by po.name order by po.name""".format(joined_fg_list,todays_date, po_filter_condition(filters)),as_dict=1,debug=1)
+				fg_purchase_orders = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty , i.item_code ,i.name as purchase_order_item from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in ('{0}') and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted=1 and {2} group by po.name order by po.name""".format(joined_fg_list,todays_date, po_filter_condition(filters)),as_dict=1,debug=1)
 
 				# purchase_order = frappe.db.sql("""SELECT po.name, sum(i.qty) as pending_qty, i.item_code ,i.name as purchase_order_item  from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where i.item_group in ('{0}') and po.schedule_date >= '{1}' and po.docstatus=1 and po.status not in ('Completed','Cancel') and po.is_subcontracted='Yes' and {2} group by po.name""".format(joined_fg_list,todays_date, po_filter_condition(filters)),as_dict=1,debug=0)
 
@@ -1261,16 +1261,15 @@ def get_serial_nos(item_code,batch_id):
 	serial_nos = [item.name for item in serial_nos]
 	return serial_nos
 def get_serial_no_batchwise(item_code,batch_no,warehouse,qty):
-	if frappe.db.get_single_value("Stock Settings", "automatically_set_serial_nos_based_on_fifo"):
-		return ", ".join(frappe.db.sql_list("""SELECT name from `tabSerial No`
-			where item_code=%(item_code)s and warehouse=%(warehouse)s 
-			and batch_no=IF(%(batch_no)s IS NULL, batch_no, %(batch_no)s) order
-			by timestamp(purchase_date, purchase_time) asc limit %(qty)s""", {
-				"item_code": item_code,
-				"warehouse": warehouse,
-				"batch_no": batch_no,
-				"qty": abs(cint(qty))
-			}, debug=0))
+	return ", ".join(frappe.db.sql_list("""SELECT name from `tabSerial No`
+		where item_code=%(item_code)s and warehouse=%(warehouse)s 
+		and batch_no=IF(%(batch_no)s IS NULL, batch_no, %(batch_no)s) order
+		by timestamp(purchase_date, purchase_time) asc limit %(qty)s""", {
+			"item_code": item_code,
+			"warehouse": warehouse,
+			"batch_no": batch_no,
+			"qty": abs(cint(qty))
+		}, debug=0))
 
 def get_item_locations(self,item_list,company):
 	item_locations_dict = dict()
