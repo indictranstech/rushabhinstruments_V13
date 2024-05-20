@@ -573,9 +573,11 @@ class MappedBOM(WebsiteGenerator):
 				(self.item,self.name))
 		elif not frappe.db.exists(dict(doctype='Mapped BOM',item=self.item,is_default=1)) \
 			and self.is_active:
-			frappe.db.set(self, "is_default", 1)
+			self.db_set("is_default", 1)
+			frappe.db.commit()
 		else:
-			frappe.db.set(self, "is_default", 0)
+			self.db_set("is_default", 0)
+			frappe.db.commit()
 	def update_exploded_items(self, save=True):
 		""" Update Flat BOM, following will be correct data"""
 		self.get_exploded_items()
@@ -1259,20 +1261,40 @@ def check_bc_doc(mapped_bom,mapped_item):
 	# 	return True
 
 @frappe.whitelist()
-def create_bom_tree_for_item_mapping(mapped_item,mapped_bom):
+def validate_item_attribute(mapped_item,mapped_bom):
+	mapped_item_doc = frappe.get_doc("Item", mapped_item)
+	parent_attributes = []
+	for i in mapped_item_doc.item_attribute_table:
+		parent_attributes.append(i.attribute)
+	
+	mapped_bom_doc = frappe.get_doc("Mapped BOM", mapped_bom)
+	for j in mapped_bom_doc.items:
+		if j.is_map_item == 1:
+			itemDoc = frappe.get_doc("Item", j.item_code)
+			if len(itemDoc.item_attribute_table) != len(parent_attributes):
+				frappe.throw("Item {0} have no same Attribute item {1}!".format(j.item_code, mapped_item))
+
+			for rec in itemDoc.item_attribute_table:
+				if rec.attribute not in parent_attributes:
+					frappe.throw("Item {0} have no same Attribute item {1}!".format(j.item_code, mapped_item))
+
+@frappe.whitelist()
+def create_bom_tree_for_item_mapping(mapped_item,mapped_bom, allow_bom_creation_tool):
+	if int(allow_bom_creation_tool) == 0:
+		frappe.throw("Item {0} is not allowed on BOM Creation Tool".format(mapped_item))
+	
+	validate_item_attribute(mapped_item,mapped_bom)
+
 	bct_doc_list = []
 	if mapped_item and mapped_bom:
 		item_mappings = frappe.db.sql("""SELECT item_code from `tabItem Mapping` where mapped_item = '{0}'""".format(mapped_item),as_dict=1)
 		item_mappings_list = [row.item_code for row in item_mappings]
-		print("===============item_mappings_list",item_mappings_list)
 		check_existing = frappe.db.sql("""SELECT standard_item_code from `tabBOM Creation Tool` where mapped_bom = '{0}' and mapped_item = '{1}'""".format(mapped_bom,mapped_item),as_dict=1)
-		print("=============check_existing",check_existing)
 		if len(check_existing) > 0:
 			for row in check_existing:
 				if row.standard_item_code in item_mappings_list:
 					item_mappings_list.remove(row.standard_item_code)
 
-		print("================item_mapping",item_mappings_list)
 		bct_doc_list=[]
 		if len(item_mappings_list) > 0:
 			for row in item_mappings_list:

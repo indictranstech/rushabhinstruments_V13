@@ -34,7 +34,8 @@ class BOMCreationTool(Document):
 		if doc.attribute_table:
 			final_items_review = []
 			doc.review_item_mapping = []
-			doc.difference_between_previous_and_current_review_item_mappings = ''
+			doc.difference_between_previous_and_current_review_item_mappings = []
+
 			attributes_values = doc.attribute_table
 			bom_childs = []
 			bom_child_list = get_child_boms(doc.mapped_bom,bom_childs)
@@ -168,13 +169,25 @@ class BOMCreationTool(Document):
 			# doc.save()
 			return True
 	def difference_table_data(doc):
+		print("------")
+		print("------")
 		if doc.mapped_item and doc.mapped_bom and doc.standard_item_code:
+			print("------")
 			bom_creation_doc = frappe.db.get_value("BOM Creation Tool",{'mapped_item':doc.mapped_item,'standard_item_code':doc.standard_item_code,'docstatus':1},'name')
 
 			if bom_creation_doc:
+				print("****")
 				previous_mapping = frappe.db.sql("""SELECT * from `tabReview Item Mapping` where parent = '{0}'""".format(bom_creation_doc),as_dict=1)
+				attrs_list = []
+				for recs in previous_mapping:
+					attrs_list.append(recs.get('attribute_value'))
+				print(attrs_list)
+				print("previous_mapping", previous_mapping)
 				for i in doc.review_item_mapping:
-					if i not in previous_mapping:
+					# if i not in previous_mapping:
+					if i.attribute_value not in attrs_list:
+						print("111111")
+						print(i.attribute_value)
 						doc.append('difference_between_previous_and_current_review_item_mappings',i)
 
 				# current_dict = {row.mapped_item:row for row in doc.review_item_mapping}
@@ -195,6 +208,7 @@ class BOMCreationTool(Document):
 
 				for row in doc.review_item_mapping:
 					if row.mapped_item not in previous_mapping_dict:
+						print("2222222")
 						doc.append('difference_between_previous_and_current_review_item_mappings',{
 								'mapped_bom':row.mapped_bom,
 								'mapped_item':row.mapped_item,
@@ -208,7 +222,9 @@ class BOMCreationTool(Document):
 				if previous_mapping_dict:
 					dict_values = previous_mapping_dict.values()
 					dict_values_list = list(dict_values)
+					print(dict_values_list)
 					for row in dict_values_list:
+						print("333333")
 						doc.append('difference_between_previous_and_current_review_item_mappings',{
 								'mapped_bom':row.get("mapped_bom"),
 								'mapped_item':row.get("mapped_item"),
@@ -450,8 +466,8 @@ def get_map_item_attributes(mapped_bom,mapped_item,standard_item_code,item_mappi
 		final_bom_list.append(mapped_bom)
 		# final_bom_list.remove(mapped_bom)
 		
-		if len(final_bom_list) == 1 :
-			 item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent = '{0}' and is_map_item = 1""".format(final_bom_list[0]),as_dict=1)
+		if len(final_bom_list) == 1:
+			item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent = '{0}' and is_map_item = 1""".format(final_bom_list[0]),as_dict=1)
 		else:
 			item_list = frappe.db.sql("""SELECT item_code,parent from `tabMapped BOM Item` where parent in {0} and is_map_item = 1""".format(tuple(final_bom_list)),as_dict=1)
 		for row in item_list:	

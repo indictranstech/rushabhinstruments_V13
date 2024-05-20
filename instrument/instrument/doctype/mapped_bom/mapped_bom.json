@@ -11,6 +11,7 @@
   "company",
   "item_name",
   "uom",
+  "allow_bom_creation_tool",
   "cb0",
   "is_active",
   "is_default",
@@ -580,16 +581,26 @@
    "label": "Propogate Update To Descendent BOM Status",
    "no_copy": 1,
    "options": "Propogation Not Needed\nNeed To Run Propogate Update To Descendent BOMs\nIn Process\nCompleted"
+  },
+  {
+   "allow_on_submit": 1,
+   "default": "0",
+   "fetch_from": "item.custom_allow_bom_creation_tool",
+   "fetch_if_empty": 1,
+   "fieldname": "allow_bom_creation_tool",
+   "fieldtype": "Check",
+   "label": "Allow BOM Creation Tool"
   }
  ],
  "icon": "fa fa-sitemap",
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-12-11 04:30:02.808541",
+ "modified": "2024-05-09 02:02:21.552936",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "Mapped BOM",
+ "naming_rule": "Expression",
  "owner": "Administrator",
  "permissions": [
   {
@@ -623,5 +634,6 @@
  "show_name_in_global_search": 1,
  "sort_field": "modified",
  "sort_order": "DESC",
+ "states": [],
  "track_changes": 1
 }

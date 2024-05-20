@@ -13,7 +13,8 @@ frappe.ui.form.on('Mapped BOM', {
 					method:"instrument.instrument.doctype.mapped_bom.mapped_bom.create_bom_tree_for_item_mapping",
 					args:{
 						mapped_item:frm.doc.item,
-						mapped_bom:frm.doc.name
+						mapped_bom:frm.doc.name,
+						allow_bom_creation_tool: frm.doc.allow_bom_creation_tool
 					},
 					callback:function(r){
 						if(r.message== true){
@@ -166,6 +167,7 @@ frappe.ui.form.on('Mapped BOM', {
 			return {
 				filters: [
 					['Item','is_map_item', '=', 1],
+					['Item','custom_allow_bom_creation_tool', '=', 1],
 				]
 			}
 	    }
