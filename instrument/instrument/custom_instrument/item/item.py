@@ -87,7 +87,7 @@ def validate(doc,method):
 
 	if doc.item_defaults:
 		for row in doc.item_defaults:
-			if row.default_warehouse not in warehouse_list:
+			if row.default_warehouse and row.default_warehouse not in warehouse_list:
 				doc.append('warehouses',{
 					'warehouse':row.default_warehouse
 					})
