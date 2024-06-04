@@ -220,3 +220,95 @@ def on_trash(doc, method=None):
 		for row in doc.items:
 			frappe.db.set_value("Raw Materials Table", {'item':row.item_code, 'parent':doc.production_planning_with_lead_time}, "mr_status", "")
 			frappe.db.commit()
+
+@frappe.whitelist()
+def create_purchase_order_in_bulk(data):
+	frappe.enqueue(
+				"instrument.instrument.custom_instrument.material_request.material_request.create_bulk_po",
+				data = data,
+				queue='long',
+				timeout=1500)
+@frappe.whitelist()
+def create_bulk_po(data):
+	try:
+		if data:
+			data = json.loads(data)
+			item_list = []
+			mr_list = [row.get('name') for row in data.get("purchase_order_data")]
+			mr_list = "', '".join(mr_list)
+
+			item_list = frappe.db.sql("""SELECT mri.item_code from `tabMaterial Request` mr join `tabMaterial Request Item` mri on mri.parent = mr.name and mri.rfq_required = 0 and mri.parent in ('{0}') and mri.item_code not in (SELECT distinct poi.item_code from `tabPurchase Order Item` poi join `tabPurchase Order` po on po.name = poi.parent where poi.material_request = mri.parent)""".format(mr_list),as_dict=1,debug=0)
+
+			item_list = [row.get('item_code') for row in item_list]
+			item_list = "', '".join(item_list)
+
+
+			# for row in data.get("purchase_order_data"):
+			# 	doc = frappe.get_doc("Material Request", row.get("name"))
+			# 	for d in doc.items:
+			# 		if not d.rfq_required:
+			# 			item_list.append(d.item_code)
+			# 			print("==========item_list",item_list)
+			# 			po_item_list = frappe.db.sql("""SELECT distinct poi.item_code from `tabPurchase Order Item` poi join `tabPurchase Order` po on po.name = poi.parent where poi.material_request = '{0}'""".format(doc.name),as_dict=1,debug=0)
+			# 			po_item_list = [poi.item_code for poi in po_item_list]
+			# 			print("==========po_item_list",po_item_list)
+			# 		for row in po_item_list:
+			# 			if row in item_list:
+			# 				item_list.remove(row)
+			# item_list = "', '".join(item_list)
+			no_supplier = frappe.db.sql("""SELECT parent
+				from `tabItem Default`
+				where parent in ('{0}') and
+				default_supplier IS NULL
+				""".format(item_list),as_dict=1,debug=0)
+			no_supplier = [item.parent for item in no_supplier]
+			if no_supplier:
+				frappe.throw("Please Add Default Supplier For Items {0}".format(no_supplier))
+			supplier = frappe.db.sql("""SELECT distinct default_supplier
+				from `tabItem Default`
+				where parent in ('{0}') and
+				default_supplier IS NOT NULL
+				""".format(item_list),as_dict=1,debug=0)
+			if supplier:
+				supplier_list = [item.get("default_supplier") for item in supplier]
+			po_list = []
+			for row in supplier_list:
+				# mr_list= [col.get('name') for col in data.get('purchase_order_data')]
+				# mr_list = "', '".join(mr_list)
+				# for col in data.get("purchase_order_data"):
+				item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent in ('{2}') and (mri.qty-mri.ordered_qty) > 0""".format(row,item_list,mr_list),as_dict=1,debug=0)
+				po = create_purchase_order(item_lists,row,item_list)
+				po_list.append(po)
+			if po_list:
+				po_list = ["""<a href="/app/Form/Purchase Order/{0}">{1}</a>""".format(m, m) \
+					for m in po_list]
+				msgprint(_("{0} created").format(comma_and(po_list)))
+			else :
+				msgprint(_("No purchase order created"))
+			return po_list
+	except Exception as e:
+		traceback = frappe.get_traceback()
+		frappe.log_error(
+			title=_("Error while creating Purchase Order"),
+			message=traceback,
+		)
+		raise e
+
+def create_purchase_order(item_lists,supplier,item_list):
+	# update material request & material request item in purchase order item
+	if item_lists:
+		# check_po = frappe.db.sql("""SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.item_code in ('{0}') and po.supplier = '{1}' and po.docstatus in (0,2)""".format(item_list,supplier),as_dict=1)
+		# print("============check_po",check_po)
+		# print("=============item_lists",item_lists)
+		# if not check_po:
+		po_doc = frappe.new_doc("Purchase Order")
+		if po_doc:
+			po_doc.supplier = supplier
+			po_doc.schedule_date = item_lists[0].get('schedule_date')
+			for item in item_lists:
+				item['material_request'] = item.parent
+				item['material_request_item'] = item.name
+				# item['qty'] = item.consolidate_qty
+				po_doc.append('items',item)
+			po_doc.save()
+			return po_doc.name

@@ -63,6 +63,10 @@ def on_submit(doc, method = None):
 			# message = "Purchase Order : " + "https://uatrushabhinstruments.indictranstech.com/app/purchase-order/{0}".format(doc.name) +" "+ "URL :"+ "localhost:8000{0}".format(file_url_email),
 			# attachments = file_att,
 			)
+	if doc.custom_material_request_reference:
+		for row in doc.custom_material_request_reference:
+			frappe.db.set_value("Material Request Item",{'name':row.material_request_item,'parent':row.material_request},'ordered_qty',row.ordered_qty)
+			frappe.db.commit()
 	
 
 @frappe.whitelist()
@@ -71,28 +75,29 @@ def get_engineering_revisions_for_filter(doctype, txt, searchfield, start, page_
 	return frappe.db.sql(""" SELECT name FROM `tabEngineering Revision` where item_code = '{0}' """.format(filters.get("item_code")))
 
 def after_insert(doc,method):
-	pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
+	pass
+	# pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
 	
-	_file = frappe.get_doc({
-	"doctype": "File",
-	"file_name": pdf_data.get('fname'),
-	"attached_to_doctype": "Purchase Order",
-	"attached_to_name": doc.name,
-	"is_private": 1,
-	"content": pdf_data.get('fcontent')
-	})
-	_file.save()
-
-	p_file = frappe.get_doc({
-	"doctype": "File",
-	"file_name": pdf_data.get('fname'),
+	# _file = frappe.get_doc({
+	# "doctype": "File",
+	# "file_name": pdf_data.get('fname'),
 	# "attached_to_doctype": "Purchase Order",
 	# "attached_to_name": doc.name,
-	"is_private": 0,
-	"content": pdf_data.get('fcontent'),
-	"email_log_check":1
-	})
-	p_file.save()
+	# "is_private": 1,
+	# "content": pdf_data.get('fcontent')
+	# })
+	# _file.save()
+
+	# p_file = frappe.get_doc({
+	# "doctype": "File",
+	# "file_name": pdf_data.get('fname'),
+	# # "attached_to_doctype": "Purchase Order",
+	# # "attached_to_name": doc.name,
+	# "is_private": 0,
+	# "content": pdf_data.get('fcontent'),
+	# "email_log_check":1
+	# })
+	# p_file.save()
 def validate(doc,method):
 	if doc.items:
 		for item in doc.items:
@@ -100,31 +105,31 @@ def validate(doc,method):
 			item.default_engineering_revision = engineering_revision
 	frappe.db.sql("""delete from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
 		(doc.name))
-	if not doc.get("__islocal"):
-		# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
-		# 	(doc.name))
-		pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
+	# if not doc.get("__islocal"):
+	# 	# frappe.db.sql("""DELETE from `tabFile` where attached_to_doctype='Purchase Order' and attached_to_name=%s""",
+	# 	# 	(doc.name))
+	# 	pdf_data=frappe.attach_print('Purchase Order',doc.name, print_format='Purchase Order Print')
 		
-		_file = frappe.get_doc({
-		"doctype": "File",
-		"file_name": pdf_data.get('fname'),
-		"attached_to_doctype": "Purchase Order",
-		"attached_to_name": doc.name,
-		"is_private": 1,
-		"content": pdf_data.get('fcontent')
-		})
-		_file.save()
+	# 	_file = frappe.get_doc({
+	# 	"doctype": "File",
+	# 	"file_name": pdf_data.get('fname'),
+	# 	"attached_to_doctype": "Purchase Order",
+	# 	"attached_to_name": doc.name,
+	# 	"is_private": 1,
+	# 	"content": pdf_data.get('fcontent')
+	# 	})
+	# 	_file.save()
 
-		p_file = frappe.get_doc({
-		"doctype": "File",
-		"file_name": pdf_data.get('fname'),
-		# "attached_to_doctype": "Purchase Order",
-		# "attached_to_name": doc.name,
-		"is_private": 0,
-		"content": pdf_data.get('fcontent'),
-		"email_log_check":1
-		})
-		p_file.save()
+	# 	p_file = frappe.get_doc({
+	# 	"doctype": "File",
+	# 	"file_name": pdf_data.get('fname'),
+	# 	# "attached_to_doctype": "Purchase Order",
+	# 	# "attached_to_name": doc.name,
+	# 	"is_private": 0,
+	# 	"content": pdf_data.get('fcontent'),
+	# 	"email_log_check":1
+	# 	})
+	# 	p_file.save()
 
 # def attach_purchasing_docs(doc, method):
 # 	for row in doc.items:
@@ -1170,7 +1175,8 @@ def make_purchase_receipt(source_name, target_doc=None, ignore_permissions=True)
 def consolidate_qty(doc):
 	doc = json.loads(doc)
 	doc = frappe.get_doc("Purchase Order",doc.get('name'))
-	if doc.get('items'):
+	if doc.get('items') and not doc.get('custom_ignore_required_by_date'):
+		print("================if")
 		item_data = doc.get('items')
 		item_dict = {(item.item_code,item.schedule_date):item.schedule_date for item in doc.get('items')}
 		final_data = []
@@ -1185,6 +1191,41 @@ def consolidate_qty(doc):
 					item_info = info
 			item_info.qty = total
 			item_info.idx = count
+			final_data.append(item_info)
+		doc.items = []
+		for i in final_data:
+			doc.append("items",i)
+		doc.save()
+	else:
+		print("==============else",doc.get('custom_ignore_required_by_date'))
+		item_data = doc.get('items')
+		print("========item_data",item_data)
+		item_dict = {item.item_code:item.schedule_date for item in doc.get('items')}
+
+		print("===========item_dict",item_dict)
+		schedule_date = {item.schedule_date:item.item_code for item in doc.get('items')}
+		schedule_date = [d for d in schedule_date]
+		print("===========schedule_date",schedule_date)
+		final_data = []
+		mr_ref = dict()
+		count = 0
+		for item in item_dict:
+			total = 0
+			count = count + 1
+			for info in doc.get('items'):
+				item_dict = info.get('item_code')
+				if item ==  item_dict:
+					total = total + info.get('qty')
+					item_info = info
+					doc.append('custom_material_request_reference',{
+						'material_request':info.get('material_request'),
+						'material_request_item':info.get('material_request_item'),
+						'ordered_qty':info.get('qty')
+						})
+			item_info.qty = total
+			item_info.idx = count
+			item_info.schedule_date = schedule_date[0]
+
 			final_data.append(item_info)
 		doc.items = []
 		for i in final_data:
