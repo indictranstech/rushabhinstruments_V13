@@ -277,7 +277,7 @@ def create_bulk_po(data):
 				# mr_list = "', '".join(mr_list)
 				# for col in data.get("purchase_order_data"):
 				item_lists = frappe.db.sql("""SELECT distinct mri.* from `tabItem` i join `tabMaterial Request Item` mri on mri.item_code = i.item_code join `tabItem Default` id on id.parent = i.name where id.default_supplier = '{0}' and i.item_code in ('{1}') and mri.parent in ('{2}') and (mri.qty-mri.ordered_qty) > 0""".format(row,item_list,mr_list),as_dict=1,debug=0)
-				po = create_purchase_order(item_lists,row,item_list)
+				po = create_purchase_orders(item_lists,row,item_list)
 				po_list.append(po)
 			if po_list:
 				po_list = ["""<a href="/app/Form/Purchase Order/{0}">{1}</a>""".format(m, m) \
@@ -294,7 +294,7 @@ def create_bulk_po(data):
 		)
 		raise e
 
-def create_purchase_order(item_lists,supplier,item_list):
+def create_purchase_orders(item_lists,supplier,item_list):
 	# update material request & material request item in purchase order item
 	if item_lists:
 		# check_po = frappe.db.sql("""SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.item_code in ('{0}') and po.supplier = '{1}' and po.docstatus in (0,2)""".format(item_list,supplier),as_dict=1)
@@ -312,3 +312,20 @@ def create_purchase_order(item_lists,supplier,item_list):
 				po_doc.append('items',item)
 			po_doc.save()
 			return po_doc.name
+
+def create_purchase_order(item_lists,supplier,doc,item_list):
+	# update material request & material request item in purchase order item
+	if item_lists:
+		check_po = frappe.db.sql("""SELECT po.name from `tabPurchase Order` po join `tabPurchase Order Item` poi on poi.parent = po.name where poi.item_code in ('{0}') and po.supplier = '{1}' and po.docstatus in (0,2)""".format(item_list,supplier),as_dict=1)
+		print("============check_po",check_po)
+		if not check_po:
+			po_doc = frappe.new_doc("Purchase Order")
+			if po_doc:
+				po_doc.supplier = supplier
+				po_doc.schedule_date = doc.schedule_date
+				for item in item_lists:
+					item['material_request'] = doc.name
+					item['material_request_item'] = item.name
+					po_doc.append('items',item)
+				po_doc.save()
+				return po_doc.name
