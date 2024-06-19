@@ -9,7 +9,7 @@ def execute(filters=None):
 	data = get_data(filters)
 	return columns, data
 def get_data(filters):
-	data = frappe.db.sql("""SELECT bi.item_code as item,b.name as reference_bom,bi.bom_no ,i.default_bom from `tabBOM Item` bi join `tabBOM` b on b.name = bi.parent join `tabItem` i on i.item_code = bi.item_code where i.default_bom != bi.bom_no""",as_dict=1)
+	data = frappe.db.sql("""SELECT bi.item_code as item,b.name as reference_bom,bi.bom_no ,i.default_bom from `tabBOM Item` bi join `tabBOM` b on b.name = bi.parent join `tabItem` i on i.item_code = bi.item_code where i.default_bom != bi.bom_no and b.is_default=1 and b.is_active =1""",as_dict=1)
 	data1 = frappe.db.sql("""SELECT bi.is_map_item,bi.item_code as item,b.name as reference_mapped_bom,bi.mapped_bom  from `tabMapped BOM Item` bi join `tabMapped BOM` b on b.name = bi.parent join `tabItem` i on i.item_code = bi.item_code where i.default_bom != bi.bom_no""",as_dict=1)
 	if data1:
 		for row in data1:
