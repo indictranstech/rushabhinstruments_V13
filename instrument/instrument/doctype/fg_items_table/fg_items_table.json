@@ -21,7 +21,8 @@
   "sales_order_item",
   "material_request_item",
   "remark",
-  "partial_remark"
+  "partial_remark",
+  "sourced_by_supplier"
  ],
  "fields": [
   {
@@ -123,17 +124,24 @@
    "fieldtype": "Small Text",
    "label": "Partial Remark",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "sourced_by_supplier",
+   "fieldtype": "Check",
+   "label": "Sourced By Supplier"
   }
  ],
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2022-06-27 07:11:40.529398",
+ "modified": "2024-06-20 02:16:50.597201",
  "modified_by": "Administrator",
  "module": "instrument",
  "name": "FG Items Table",
  "owner": "Administrator",
  "permissions": [],
  "sort_field": "modified",
- "sort_order": "DESC"
+ "sort_order": "DESC",
+ "states": []
 }

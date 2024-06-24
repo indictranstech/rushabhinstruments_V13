@@ -932,18 +932,18 @@ class ConsolidatedPickList(Document):
 		qty_prod = {}
 		ohs = get_current_stock()
 		for itm in self.purchase_order_table:
-			fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code ,i.name as purchase_order_item from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where po.name='{0}' """.format(itm.purchase_order),as_dict=1,debug=0)
+			fg_purchase_orders = frappe.db.sql("""SELECT po.name, i.qty as pending_qty , i.item_code ,i.fg_item,i.name as purchase_order_item from `tabPurchase Order` po join `tabPurchase Order Item` i on i.parent = po.name where po.name='{0}' """.format(itm.purchase_order),as_dict=1,debug=0)
 
 			for row in fg_purchase_orders:
-				if row.get("item_code") in ohs:
-					if row.get("pending_qty") <= ohs.get(row.get("item_code")):
+				if row.get("fg_item") in ohs:
+					if row.get("pending_qty") <= ohs.get(row.get("fg_item")):
 						qty_will_be_delivered = row.get("pending_qty")
-						remaining_qty = flt(ohs.get(row.get("item_code"))) - flt(row.get("pending_qty"))
-						ohs.update({row.get("item_code"):remaining_qty})
+						remaining_qty = flt(ohs.get(row.get("fg_item"))) - flt(row.get("pending_qty"))
+						ohs.update({row.get("fg_item"):remaining_qty})
 						row['qty_can_be_pulled'] = qty_will_be_delivered
-					elif row.get("pending_qty") > ohs.get(row.get("item_code")) and ohs.get(row.get("item_code")) >= 0: 
-						qty_will_be_delivered = ohs.get(row.get("item_code"))
-						ohs.update({row.get("item_code"):0})
+					elif row.get("pending_qty") > ohs.get(row.get("fg_item")) and ohs.get(row.get("fg_item")) >= 0: 
+						qty_will_be_delivered = ohs.get(row.get("fg_item"))
+						ohs.update({row.get("fg_item"):0})
 						row['qty_can_be_pulled'] = qty_will_be_delivered
 				else : 
 					qty_will_be_delivered = 0
@@ -951,7 +951,7 @@ class ConsolidatedPickList(Document):
 				
 				self.append('pick_list_purchase_order_table',{
 					'purchase_order':row.get('name'),
-					'item':row.get('item_code'),
+					'item':row.get('fg_item'),
 					'qty':row.get('pending_qty'),
 					'qty_can_be_pulled' :row.get('qty_can_be_pulled')
 				})
@@ -968,11 +968,11 @@ class ConsolidatedPickList(Document):
 				# Get all the avaialble locations for required items
 				if self.purpose == 'Material Transfer for Subcontracted Goods':
 					# final_raw_item_list.append({'item_code':item.item, 'required_qty':item.qty, 'purchase_order':item.purchase_order})
-					po_raw_data = frappe.db.sql("""SELECT main_item_code, rm_item_code as item_code, required_qty, parent as purchase_order,name as purchase_order_item from `tabPurchase Order Item Supplied` where parent='{0}' and main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1)
+					po_raw_data = frappe.db.sql("""SELECT si.main_item_code,si.rm_item_code as item_code, si.required_qty, si.parent as sub_order,si.name as sub_order_item ,so.purchase_order from `tabSubcontracting Order Supplied Item` si join `tabSubcontracting Order` so on so.name = si.parent where so.purchase_order='{0}' and si.main_item_code='{1}' """.format(item.purchase_order, item.item), as_dict=1,debug=1)
 					final_raw_item_list.extend(po_raw_data)
 		
 		for row in final_raw_item_list:
-			item_locations_dict = get_so_and_po_item_locations(self, row.get('item_code'), self.company, row.get('required_qty'),row.get('purchase_order'), row.get("main_item_code"),row.get('purchase_order_item'))
+			item_locations_dict = get_so_and_po_item_locations(self, row.get('item_code'), self.company, row.get('required_qty'),row.get('purchase_order'), row.get("main_item_code"),row.get('sub_order_item'))
 			final_data.append(item_locations_dict)
 		
 		for item in final_data:
@@ -1001,7 +1001,9 @@ class ConsolidatedPickList(Document):
 		wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 		item_list =  '(' + ','.join("'{}'".format(i) for i in item_list) + ')' if item_list else ()
 
-		batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
+		# batch_data = frappe.db.sql("""SELECT b.name,b.item, `tabStock Ledger Entry`.warehouse, sum(`tabStock Ledger Entry`.actual_qty) as qty from `tabBatch` b join `tabStock Ledger Entry` ignore index (item_code, warehouse) on (b.name = `tabStock Ledger Entry`.batch_no ) where `tabStock Ledger Entry`.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and `tabStock Ledger Entry`.warehouse != '{1}'  group by batch_id order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
+
+		batch_data = frappe.db.sql("""SELECT b.name,b.item,sle.warehouse, sum(sle.actual_qty) as qty from `tabBatch` b ,`tabSerial and Batch Entry` sbe, `tabStock Ledger Entry` sle where sle.serial_and_batch_bundle = sbe.parent and sbe.batch_no = b.name and sle.item_code in {0}  and (b.expiry_date >= CURDATE() or b.expiry_date IS NULL) and sle.warehouse != '{1}'  group by b.name order by b.expiry_date ASC, b.creation ASC""".format(item_list, wip_warehouse),as_dict=1,debug=1)
 
 		# print("=dddddd", batch_data)
 		for row in batch_data:
@@ -1987,9 +1989,11 @@ def create_stock_entry_for_po(purchase_order, item, row_name, name):
 	t_warehouse = frappe.db.get_value("Purchase Order", purchase_order, "supplier_warehouse")
 	wip_warehouse = frappe.db.get_single_value("Manufacturing Settings",'default_wip_warehouse')
 	if len(stock_entry)==0:
+		subcontracting_order = frappe.db.get_value("Subcontracting Order",{'purchase_order':purchase_order},'name')
 		doc = frappe.new_doc("Stock Entry")
 		doc.stock_entry_type = "Send to Subcontractor"
-		doc.purchase_order = purchase_order
+		# doc.purchase_order = purchase_order
+		doc.subcontracting_order = subcontracting_order
 		for row in po_raw_data:
 			if t_warehouse != row.get("warehouse"): 
 				doc.append("items", {

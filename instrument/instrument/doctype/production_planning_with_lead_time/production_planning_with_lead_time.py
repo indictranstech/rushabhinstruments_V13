@@ -40,6 +40,7 @@ from frappe.utils import now
 from openpyxl.styles import Font
 from openpyxl.utils import get_column_letter
 from copy import deepcopy
+import json
 
 class ProductionPlanningWithLeadTime(Document):
 	def onload(self):
@@ -158,6 +159,7 @@ class ProductionPlanningWithLeadTime(Document):
 		if self.sales_order_table:
 			fg_data = []
 			for row in self.sales_order_table:
+				check_subcontracted_item = frappe.db.get_value("Item",row.item,'is_sub_contracted_item')
 				fg_data.append({
 					'sales_order':row.sales_order,
 					'material_request':row.material_request,
@@ -169,7 +171,8 @@ class ProductionPlanningWithLeadTime(Document):
 					'days_to_deliver':row.days_to_deliver,
 					'makeup_days':row.makeup_days,
 					'sales_order_item':row.sales_order_item,
-					'material_request_item':row.material_request_item
+					'material_request_item':row.material_request_item,
+					'sourced_by_supplier':1 if check_subcontracted_item else 0
 					})
 		# fg_data = frappe.db.sql("""SELECT * from `tabSales Order Table` where parent = '{0}'""".format(self.name),as_dict=1)
 		if fg_data:
@@ -245,7 +248,9 @@ class ProductionPlanningWithLeadTime(Document):
 						# date_to_be_ready = datetime.datetime.strptime(row.get('date_to_be_ready'), '%Y-%m-%d')
 						# date_to_be_ready = date_to_be_ready.date()
 						# date_to_be_ready = (date_to_be_ready-timedelta(total_operation_time_in_days)-timedelta(makeup_days))
-						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark'),'parent_item_code':row.get('item')})
+						# final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark'),'parent_item_code':row.get('item')})
+						final_row.update({'total_operation_time':item.get('total_operation_time'),'date_to_be_ready':item.get('date_to_be_ready'),'planned_start_date':item.get('planned_start_date'),'fg_row_name':item.get('row_name'),'remark':item.get('remark'), 'partial_remark':item.get('partial_remark'),'parent_item_code':row.get('item'),'sourced_by_supplier':item.get('sourced_by_supplier')})
+
 						self.append('sub_assembly_items_table',final_row)
 			
 			return self.sub_assembly_items_table
@@ -408,23 +413,24 @@ class ProductionPlanningWithLeadTime(Document):
 			item_list = []
 			for row in self.fg_items_table:
 				fg_item_dict = dict()
-				if row.planned_qty > 0:
+				if row.planned_qty > 0 and row.sourced_by_supplier ==0:
 					for item in self.sub_assembly_items_table:
 						item_dict = dict()
-						if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
-						# if item.sales_order == row.sales_order and item.qty >0:
-							item_dict.update({
-								'item':item.item,
-								'qty':item.qty,
-								'sales_order':item.sales_order,
-								'material_request':item.material_request,
-								'bom':item.bom,
-								'total_operation_time':item.total_operation_time,
-								'date_to_be_ready':item.planned_start_date,
-								'is_subassembly' : 1,
-								'parent_item_code':row.item
-								})
-							item_list.append(item_dict)
+						if item.sourced_by_supplier ==0:
+							if item.sales_order == row.sales_order and item.qty >0 and item.fg_row_name == row.name:
+							# if item.sales_order == row.sales_order and item.qty >0:
+								item_dict.update({
+									'item':item.item,
+									'qty':item.qty,
+									'sales_order':item.sales_order,
+									'material_request':item.material_request,
+									'bom':item.bom,
+									'total_operation_time':item.total_operation_time,
+									'date_to_be_ready':item.planned_start_date,
+									'is_subassembly' : 1,
+									'parent_item_code':row.item
+									})
+								item_list.append(item_dict)
 					fg_item_dict.update({
 						'item':row.item,
 						'qty':row.planned_qty,
@@ -591,7 +597,6 @@ class ProductionPlanningWithLeadTime(Document):
 		# 			else:
 		# 				planned_data_dict = {}
 		# return planned_data_dict
-	
 	@frappe.whitelist()
 	def make_material_request(self):
 		"""Create Material Requests grouped by Sales Order and Material Request Type"""
@@ -740,6 +745,81 @@ class ProductionPlanningWithLeadTime(Document):
 				self.raw_materials_table = qty
 				# self.reload()
 	
+	@frappe.whitelist()
+	def create_purchase_order_for_subcontract(self):
+		default_company = frappe.db.get_single_value("Global Defaults", "default_company")
+		item_list = []
+		po_item_list = frappe.db.sql("""SELECT distinct fg.item from `tabFG Items Table` fg where fg.parent = '{0}' and fg.planned_qty > 0 and fg.sourced_by_supplier = 1""".format(self.name),as_dict=1,debug=0)
+		po_item_list = [poi.item for poi in po_item_list]
+		if po_item_list:
+			for item in po_item_list:
+				item_list.append(item)
+		sub_item_list = frappe.db.sql("""SELECT distinct sfg.item from `tabSub Assembly Items Table` sfg where sfg.parent = '{0}' and sfg.qty > 0 and sfg.sourced_by_supplier = 1""".format(self.name),as_dict=1,debug=1)
+		sub_item_list = [poi.item for poi in sub_item_list]
+		if sub_item_list:
+			for item in sub_item_list:
+				item_list.append(item)
+		item_list = "', '".join(item_list)
+		no_supplier = frappe.db.sql("""SELECT parent
+			from `tabItem Default`
+			where parent in ('{0}') and
+			default_supplier IS NULL
+			""".format(item_list),as_dict=1,debug=0)
+		no_supplier = [item.parent for item in no_supplier]
+		if no_supplier:
+			frappe.throw("Please Add Default Supplier For Items {0}".format(no_supplier))
+		supplier = frappe.db.sql("""SELECT distinct default_supplier
+			from `tabItem Default`
+			where parent in ('{0}') and
+			default_supplier IS NOT NULL
+			""".format(item_list),as_dict=1,debug=0)
+		if supplier:
+			supplier_list = [item.get("default_supplier") for item in supplier]
+		if self.fg_items_table:
+			for row in self.fg_items_table:
+				subcontracting_item = frappe.db.get_value("Item",{'name':row.item},'custom_subcontracting_item')
+				if row.planned_qty > 0 and row.sourced_by_supplier == 1:
+					po_doc = frappe.new_doc("Purchase Order")
+					if po_doc:
+						item_doc = get_item_defaults(row.item, default_company)
+						subcontracting_item_doc = get_item_defaults(subcontracting_item, default_company)
+						po_doc.supplier = item_doc.get('default_supplier')
+						po_doc.is_subcontracted = 1
+						po_doc.custom_production_planning_with_lead_time = self.name
+						po_doc.append('items',{
+							'item_code':subcontracting_item,
+							'fg_item':row.item,
+							'fg_item_qty':row.planned_qty,
+							'item_name':subcontracting_item_doc.get('item_name'),
+							'qty':row.planned_qty,
+							'uom':subcontracting_item_doc.get('uom'),
+							'schedule_date':row.planned_start_date,
+							'bom':row.bom
+							})
+						# print("=============po_doc",json.loads(po_doc.items))
+						po_doc.save()
+			for row in self.sub_assembly_items_table:
+				subcontracting_item = frappe.db.get_value("Item",{'name':row.item},'custom_subcontracting_item')
+				if row.qty > 0 and row.sourced_by_supplier == 1:
+					po_doc = frappe.new_doc("Purchase Order")
+					if po_doc:
+						item_doc = get_item_defaults(row.item, default_company)
+						subcontracting_item_doc = get_item_defaults(subcontracting_item, default_company)
+						print("-================",item_doc.get('default_supplier'),row.item)
+						po_doc.supplier = item_doc.get('default_supplier')
+						po_doc.is_subcontracted = "Yes"
+						po_doc.append('items',{
+							'item_code':subcontracting_item,
+							'fg_item':row.item,
+							'fg_item_qty':row.qty,
+							'item_name':item_doc.get('item_name'),
+							'qty':row.qty,
+							'uom':subcontracting_item_doc.get('uom'),
+							'schedule_date':row.planned_start_date,
+							'bom':row.bom
+							})
+						po_doc.custom_production_planning_with_lead_time = self.name
+						po_doc.save()
 @frappe.whitelist()
 def download_xlsx(fname):
 	file_path = frappe.utils.get_site_path("public")
@@ -810,7 +890,7 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 			partial_qty_dict=get_partial_qty(date_to_be_ready, d.item_code, warehouse_list)
 			partial_workstation_availability=check_partial_workstation_availability(date_to_be_ready,d.value, stock_qty)
 			partial_remark = "{0}{1}".format(partial_qty_dict.get("partial_remark"), partial_workstation_availability.get("remark") if partial_workstation_availability else "")
-
+			check_subcontracted_item = frappe.db.get_value("Item",d.item_code,'is_sub_contracted_item')
 			bom_data.append(frappe._dict({
 				'parent_item_code': parent_item_code,
 				'description': d.description,
@@ -828,7 +908,9 @@ def get_sub_assembly_item(bom_no, bom_data, to_produce_qty,date_to_be_ready,row_
 				'total_operation_time':total_operation_time_in_days,
 				'row_name':row_name,
 				'remark':date_dict.get("remark") if date_dict else "",
-				"partial_remark": partial_remark
+				"partial_remark": partial_remark,
+				'sourced_by_supplier':1 if check_subcontracted_item else 0
+
 			}))
 			if d.value:
 
