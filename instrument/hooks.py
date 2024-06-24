@@ -236,7 +236,7 @@ doc_events = {
 
 override_doctype_class = {
 	"Purchase Order": "instrument.instrument.custom_instrument.purchase_order.purchase_order.PurchaseOrder",
-	"Sales Invoice": "instrument.instrument.custom_instrument.sales_invoice.sales_invoice.SalesInvoice"
+	# "Sales Invoice": "instrument.instrument.custom_instrument.sales_invoice.sales_invoice.SalesInvoice"
 }
 
 # Document Events
