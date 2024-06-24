@@ -56,6 +56,17 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 					}
 				});
 			},__("Menu"))
+			cur_frm.add_custom_button(__('Create Purchase Orders For Subcontract'),function(){
+				frappe.call({
+					method: "create_purchase_order_for_subcontract",
+					freeze : true,
+					freeze_message: __("Creating Purchase Orders For Subcontract..."),
+					doc: frm.doc,
+					callback: function(r) {
+
+					}
+				});
+			},__("Menu"))
 		}
 	},
 	validate:function(frm){
@@ -161,6 +172,16 @@ frappe.ui.form.on('Production Planning With Lead Time', {
 			freeze_message: __("Preparing Work Orders For FG items..."),
 			callback: function(r) {
 				refresh_field("final_work_orders");
+			}
+		});
+	},
+	create_purchase_order_for_subcontract:function(frm){
+		frappe.call({
+			method: "create_purchase_order_for_subcontract",
+			doc: frm.doc,
+			freeze: true,
+			freeze_message: __("Creating Purchase Orders For Subcontract..."),
+			callback: function(r) {
 			}
 		});
 	}
