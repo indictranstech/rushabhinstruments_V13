@@ -207,7 +207,7 @@ def create_payment_entry(data=None):
                     inv["reference_name"] = ref_doc.name
                     pe_doc.append("references", inv)
         pe_doc.append("deductions", {
-            "account":"Credit Card Processing Fees - RI",
+            "account":"Credit Card Processing Fee - RI",
             "cost_center":"Main - RI",
             "amount": data.get("credit_card_processing_amount")
         })
