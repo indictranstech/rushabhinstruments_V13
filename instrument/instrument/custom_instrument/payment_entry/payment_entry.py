@@ -31,48 +31,48 @@ def after_insert(doc,method):
 	_file.save()
 
 
-def create_pdf_for_check_and_attached(doc,method):
-	import pdfkit
-	from PyPDF2 import PdfFileReader, PdfFileWriter
-	import io
-	from frappe.utils import get_files_path
-	data = {}
-	child_data = []
-	options={}
-	options["margin-right"] = "2mm"
-	options["margin-left"] = "2mm"
-	options["margin-top"] = "2mm"
-	data["posting_date"] = doc.posting_date
-	data["party_name"] = doc.party_name
-	data["paid_amount"] = doc.paid_amount
-	data["total_allocated_amount"] = doc.total_allocated_amount
-	for row in doc.references:
-		child_data.append({
-			"reference_name":row.reference_name, 
-			"date":row.due_date,
-			"original_amount":row.total_amount,
-			"balance_amount":row.outstanding_amount,
-			"payment":row.allocated_amount 
-		})
-	data["references"] = child_data
+# def create_pdf_for_check_and_attached(doc,method):
+# 	import pdfkit
+# 	from PyPDF2 import PdfFileReader, PdfFileWriter
+# 	import io
+# 	from frappe.utils import get_files_path
+# 	data = {}
+# 	child_data = []
+# 	options={}
+# 	options["margin-right"] = "2mm"
+# 	options["margin-left"] = "2mm"
+# 	options["margin-top"] = "2mm"
+# 	data["posting_date"] = doc.posting_date
+# 	data["party_name"] = doc.party_name
+# 	data["paid_amount"] = doc.paid_amount
+# 	data["total_allocated_amount"] = doc.total_allocated_amount
+# 	for row in doc.references:
+# 		child_data.append({
+# 			"reference_name":row.reference_name, 
+# 			"date":row.due_date,
+# 			"original_amount":row.total_amount,
+# 			"balance_amount":row.outstanding_amount,
+# 			"payment":row.allocated_amount 
+# 		})
+# 	data["references"] = child_data
 
-	path = "instrument/instrument/custom_instrument/payment_entry/payment_entry.html"
-	html = frappe.render_template(path,{'data':data})
-	filedata = pdfkit.from_string(html, False, options=options)
-	file_path = get_files_path(is_private=1)
-	file_name = "Cheque-Print-"+doc.name+".pdf"
-	full_path = file_path+ "/"+file_name
-	file_url = '/private/files/'+file_name
-	with open(full_path,"wb") as f:
-		f.write(filedata)
+# 	path = "instrument/instrument/custom_instrument/payment_entry/payment_entry.html"
+# 	html = frappe.render_template(path,{'data':data})
+# 	filedata = pdfkit.from_string(html, False, options=options)
+# 	file_path = get_files_path(is_private=1)
+# 	file_name = "Cheque-Print-"+doc.name+".pdf"
+# 	full_path = file_path+ "/"+file_name
+# 	file_url = '/private/files/'+file_name
+# 	with open(full_path,"wb") as f:
+# 		f.write(filedata)
 
-	file_doc = frappe.new_doc("File")
-	file_doc.file_name =file_name
-	file_doc.folder = "Home/Attachments"
-	file_doc.attached_to_doctype = doc.doctype
-	file_doc.attached_to_name = doc.name
-	file_doc.file_url = file_url
-	file_doc.insert(ignore_permissions=True)
-	frappe.db.commit()
+# 	file_doc = frappe.new_doc("File")
+# 	file_doc.file_name =file_name
+# 	file_doc.folder = "Home/Attachments"
+# 	file_doc.attached_to_doctype = doc.doctype
+# 	file_doc.attached_to_name = doc.name
+# 	file_doc.file_url = file_url
+# 	file_doc.insert(ignore_permissions=True)
+# 	frappe.db.commit()
 
 

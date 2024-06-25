@@ -185,7 +185,7 @@ doc_events = {
  	"Payment Entry":{
  	"validate":"instrument.instrument.custom_instrument.payment_entry.payment_entry.validate",
  	"after_insert":"instrument.instrument.custom_instrument.payment_entry.payment_entry.after_insert",
- 	"on_submit":"instrument.instrument.custom_instrument.payment_entry.payment_entry.create_pdf_for_check_and_attached"
+ 	# "on_submit":"instrument.instrument.custom_instrument.payment_entry.payment_entry.create_pdf_for_check_and_attached"
  	},
  	"BOM Update Log":{
  	"validate":"instrument.instrument.custom_instrument.bom_update_log.bom_update_log.validate"
